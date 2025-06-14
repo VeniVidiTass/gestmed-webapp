@@ -1,0 +1,32 @@
+{
+  "name": "gestmed-webapp",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start:all": "docker-compose up -d",
+    "stop:all": "docker-compose down",
+    "backend:dev": "cd backend && npm run dev",
+    "backend:install": "cd backend && npm install",
+    "db:init": "psql -U gestmed_user -d gestmed -f backend/sql/init.sql",
+    "logs:frontend": "docker-compose logs -f frontend",
+    "logs:backend": "docker-compose logs -f backend",
+    "logs:db": "docker-compose logs -f postgres"
+  },
+  "dependencies": {
+    "@primevue/themes": "^4.3.5",
+    "axios": "^1.10.0",
+    "pinia": "^3.0.3",
+    "primeicons": "^7.0.0",
+    "primevue": "^4.3.5",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.3",
+    "vite": "^6.3.5"
+  }
+}

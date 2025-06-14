@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: gestmed-postgres
+    environment:
+      POSTGRES_DB: gestmed
+      POSTGRES_USER: gestmed_user
+      POSTGRES_PASSWORD: gestmed_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gestmed_user -d gestmed"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gestmed-backend
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: gestmed
+      DB_USER: gestmed_user
+      DB_PASSWORD: gestmed_password
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run dev
+
+  # Frontend Vue.js
+  #frontend:
+  #  build:
+  #    context: .
+  #    dockerfile: Dockerfile.frontend
+  #  container_name: gestmed-frontend
+  #  environment:
+  #    VITE_API_BASE_URL: http://localhost:3001/api
+  #  ports:
+  #    - "5173:5173"
+  #  volumes:
+  #    - .:/usr/src/app
+  #    - /usr/src/app/node_modules
+  #  command: npm run dev -- --host 0.0.0.0
+
+  adminer:
+    image: adminer:latest
+    container_name: gestmed-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

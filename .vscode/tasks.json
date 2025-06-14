@@ -1,0 +1,24 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "GestMed: Avvia Sviluppo Completo",
+			"type": "shell",
+			"command": "docker-compose up -d && npm run dev",
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": [],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		}
+	]
+}
