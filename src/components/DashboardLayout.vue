@@ -75,7 +75,8 @@ export default defineComponent({
       { name: 'Dashboard', label: 'Dashboard', route: '/dashboard', icon: 'pi pi-home' },
       { name: 'Patients', label: 'Pazienti', route: '/patients', icon: 'pi pi-users' },
       { name: 'Doctors', label: 'Medici', route: '/doctors', icon: 'pi pi-user-plus' },
-      { name: 'Calendar', label: 'Calendario', route: '/calendar', icon: 'pi pi-calendar' }
+      { name: 'Calendar', label: 'Calendario', route: '/calendar', icon: 'pi pi-calendar' },
+      { name: 'ALive', label: 'A-Live', route: '/a-live', icon: 'pi pi-circle text-success' }
     ]
 
     const isMobile = computed(() => windowWidth.value <= 768)

@@ -2,9 +2,9 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "GestMed: Avvia Sviluppo Completo",
+			"label": "GestMed: Avvia setup sviluppo",
 			"type": "shell",
-			"command": "docker-compose up -d && npm run dev",
+			"command": "docker-compose -f docker-compose-only-backend.yml up -d && npm run dev",
 			"group": "build",
 			"isBackground": true,
 			"problemMatcher": [],

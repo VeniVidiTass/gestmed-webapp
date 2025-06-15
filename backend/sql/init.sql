@@ -55,10 +55,21 @@ CREATE TABLE IF NOT EXISTS appointments (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create appointment logs table
+CREATE TABLE IF NOT EXISTS appointment_logs (
+    id SERIAL PRIMARY KEY,
+    appointment_id INTEGER REFERENCES appointments(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(255) DEFAULT 'Admin User'
+);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments(appointment_date);
 CREATE INDEX IF NOT EXISTS idx_appointments_patient ON appointments(patient_id);
 CREATE INDEX IF NOT EXISTS idx_appointments_doctor ON appointments(doctor_id);
+CREATE INDEX IF NOT EXISTS idx_appointment_logs_appointment ON appointment_logs(appointment_id);
 CREATE INDEX IF NOT EXISTS idx_patients_email ON patients(email);
 CREATE INDEX IF NOT EXISTS idx_doctors_email ON doctors(email);
 
@@ -78,14 +89,21 @@ INSERT INTO doctors (name, email, phone, specialization, license_number, availab
 ('Dr. Luca Romano', 'luca.romano@gestmed.com', '+39 333 555 6666', 'Medicina Generale', 'LIC005678', '{"monday": "08:00-18:00", "tuesday": "08:00-18:00", "wednesday": "08:00-18:00", "thursday": "08:00-18:00", "friday": "08:00-16:00"}');
 
 INSERT INTO appointments (patient_id, doctor_id, appointment_date, status, notes) VALUES
-(1, 1, '2025-06-15 10:00:00', 'scheduled', 'Controllo cardiologico di routine'),
-(2, 2, '2025-06-15 14:30:00', 'scheduled', 'Visita pediatrica per controllo crescita'),
+(1, 1, '2025-06-15 10:00:00', 'in_progress', 'Controllo cardiologico di routine'),
+(2, 2, '2025-06-15 14:30:00', 'in_progress', 'Visita pediatrica per controllo crescita'),
 (3, 5, '2025-06-16 09:15:00', 'scheduled', 'Controllo diabete e terapia'),
 (4, 1, '2025-06-16 11:00:00', 'scheduled', 'Controllo pressione arteriosa'),
 (5, 3, '2025-06-17 15:30:00', 'scheduled', 'Consulto ortopedico per dolore al ginocchio'),
 (1, 5, '2025-06-18 16:00:00', 'scheduled', 'Visita generale di controllo'),
 (2, 4, '2025-06-19 10:30:00', 'scheduled', 'Controllo dermatologico'),
 (3, 1, '2025-06-20 08:45:00', 'scheduled', 'Follow-up cardiologico');
+
+-- Insert sample appointment logs
+INSERT INTO appointment_logs (appointment_id, title, description, created_at) VALUES
+(1, 'Inizio visita', 'Paziente arrivato in orario. Pressione arteriosa rilevata: 120/80 mmHg', '2025-06-15 10:05:00'),
+(1, 'ECG eseguito', 'Elettrocardiogramma eseguito con risultati nella norma', '2025-06-15 10:15:00'),
+(2, 'Controllo peso e altezza', 'Peso: 25 kg, Altezza: 120 cm. Crescita regolare', '2025-06-15 14:35:00'),
+(2, 'Vaccinazioni', 'Controllo calendario vaccinale - tutto in regola', '2025-06-15 14:45:00');
 
 -- Grant permissions to the gestmed_user
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO gestmed_user;

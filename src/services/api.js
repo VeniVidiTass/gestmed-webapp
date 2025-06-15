@@ -216,9 +216,17 @@ export const apiService = {
     clearCacheByPattern('/dashboard')
     return api.delete(`/appointments/${id}`)
   },
-
   // Health check
-  healthCheck: () => api.get('/health')
+  healthCheck: () => api.get('/health'),
+
+  // A-Live Appointments API
+  getAliveLogs: () => api.get('/alive-appointments'),
+  
+  getAppointmentLogs: (appointmentId) => api.get(`/alive-appointments/${appointmentId}/logs`),
+  
+  addAppointmentLog: (appointmentId, data) => api.post(`/alive-appointments/${appointmentId}/logs`, data),
+  
+  updateAppointmentStatus: (appointmentId, status) => api.put(`/alive-appointments/${appointmentId}/status`, { status })
 }
 
 export default api
