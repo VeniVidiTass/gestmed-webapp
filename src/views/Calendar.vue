@@ -5,9 +5,9 @@
       <div class="page-header">
         <div class="filters-section">
           <div class="filter-group">
-            <label for="doctor-filter" class="filter-label">Medico:</label> <Select id="doctor-filter"
-              v-model="selectedDoctor" :options="doctorOptions" optionLabel="label" optionValue="value"
-              placeholder="Tutti i medici" @change="loadAppointments" :showClear="true" />
+            <label for="doctor-filter" class="filter-label">Medico:</label>
+            <Select id="doctor-filter" v-model="selectedDoctor" :options="doctorOptions" optionLabel="label"
+              optionValue="value" placeholder="Tutti i medici" @change="loadAppointments" :showClear="true" />
           </div>
           <div class="filter-group">
             <label for="date-filter" class="filter-label">Data:</label>
@@ -93,17 +93,20 @@
 
 <script>
 import { defineComponent, ref, computed, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
 import DashboardLayout from '../components/DashboardLayout.vue'
 import AppointmentForm from '../components/AppointmentForm.vue'
 import Button from 'primevue/button'
 import Calendar from 'primevue/calendar'
 import Select from 'primevue/select'
 import Dialog from 'primevue/dialog'
-import { apiService } from '../services/api.js'
+import { useAppointmentsStore } from '../stores/appointments.js'
+import { useDoctorsStore } from '../stores/doctors.js'
+import { usePatientsStore } from '../stores/patients.js'
+import { useAppStore } from '../stores/app.js'
 
 export default defineComponent({
-  name: 'CalendarView', components: {
+  name: 'CalendarView',
+  components: {
     DashboardLayout,
     AppointmentForm,
     Button,
@@ -112,13 +115,13 @@ export default defineComponent({
     Dialog
   },
   setup() {
-    const toast = useToast()
+    // Store instances
+    const appointmentsStore = useAppointmentsStore()
+    const doctorsStore = useDoctorsStore()
+    const patientsStore = usePatientsStore()
+    const appStore = useAppStore()
 
-    const appointments = ref([])
-    const doctors = ref([])
-    const patients = ref([])
-    const loading = ref(false)
-
+    // Local reactive data
     const selectedDoctor = ref(null)
     const selectedDate = ref(null)
     const currentWeekStart = ref(getStartOfWeek(new Date()))
@@ -140,7 +143,7 @@ export default defineComponent({
 
     const doctorOptions = computed(() => [
       { label: 'Tutti i medici', value: null },
-      ...doctors.value.map(doctor => ({
+      ...doctorsStore.allDoctors.map(doctor => ({
         label: `Dr. ${doctor.name} - ${doctor.specialization}`,
         value: doctor.id
       }))
@@ -166,7 +169,6 @@ export default defineComponent({
 
     const loadAppointments = async () => {
       try {
-        loading.value = true
         const params = {}
 
         if (selectedDoctor.value) {
@@ -177,41 +179,15 @@ export default defineComponent({
           params.date = selectedDate.value.toISOString().split('T')[0]
         }
 
-        const data = await apiService.getAppointments(params)
-        appointments.value = data
+        await appointmentsStore.fetchAppointments(params, true)
       } catch (error) {
         console.error('Error loading appointments:', error)
-        toast.add({
-          severity: 'error',
-          summary: 'Errore',
-          detail: 'Errore nel caricamento degli appuntamenti',
-          life: 3000
-        })
-      } finally {
-        loading.value = false
-      }
-    }
-
-    const loadDoctors = async () => {
-      try {
-        const data = await apiService.getDoctors()
-        doctors.value = data
-      } catch (error) {
-        console.error('Error loading doctors:', error)
-      }
-    }
-
-    const loadPatients = async () => {
-      try {
-        const data = await apiService.getPatients()
-        patients.value = data
-      } catch (error) {
-        console.error('Error loading patients:', error)
+        // Error notifications are handled by the store
       }
     }
 
     const getAppointmentsForSlot = (date, hour) => {
-      return appointments.value.filter(appointment => {
+      return appointmentsStore.appointments.filter(appointment => {
         const appointmentDate = new Date(appointment.appointment_date)
         const appointmentDateStr = appointmentDate.toISOString().split('T')[0]
         const appointmentHour = appointmentDate.getHours()
@@ -289,32 +265,15 @@ export default defineComponent({
     const handleSaveAppointment = async (appointmentData) => {
       try {
         if (dialogMode.value === 'create') {
-          await apiService.createAppointment(appointmentData)
-          toast.add({
-            severity: 'success',
-            summary: 'Successo',
-            detail: 'Appuntamento creato con successo',
-            life: 3000
-          })
+          await appointmentsStore.createAppointment(appointmentData)
         } else if (dialogMode.value === 'edit') {
-          await apiService.updateAppointment(selectedAppointment.value.id, appointmentData)
-          toast.add({
-            severity: 'success',
-            summary: 'Successo',
-            detail: 'Appuntamento aggiornato con successo',
-            life: 3000
-          })
+          await appointmentsStore.updateAppointment(selectedAppointment.value.id, appointmentData)
         }
         loadAppointments()
         closeAppointmentDialog()
       } catch (error) {
         console.error('Error saving appointment:', error)
-        toast.add({
-          severity: 'error',
-          summary: 'Errore',
-          detail: 'Errore nel salvataggio dell\'appuntamento',
-          life: 3000
-        })
+        // Error notifications are handled by the store
       }
     }
 
@@ -326,17 +285,23 @@ export default defineComponent({
       preselectedHour.value = null
     }
 
-    onMounted(() => {
-      loadDoctors()
-      loadPatients()
-      loadAppointments()
+    onMounted(async () => {
+      // Carica i dati da tutti gli store
+      await Promise.all([
+        doctorsStore.fetchDoctors(),
+        patientsStore.fetchPatients(),
+        loadAppointments()
+      ])
     })
 
     return {
-      appointments,
-      doctors,
-      patients,
-      loading,
+      // Store data
+      appointments: appointmentsStore.appointments,
+      doctors: doctorsStore.allDoctors,
+      patients: patientsStore.allPatients,
+      loading: appStore.isLoading,
+
+      // Local reactive data
       selectedDoctor,
       selectedDate,
       currentWeekStart,

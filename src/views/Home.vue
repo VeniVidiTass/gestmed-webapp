@@ -8,7 +8,13 @@
           <p class="hero-subtitle">Sistema di Gestione per Strutture Sanitarie</p>
         </div>
 
-        <div class="features-grid">
+        <div class="cta-section">
+          <Button label="Accedi alla Dashboard" icon="pi pi-sign-in" class="p-button-lg cta-button"
+            @click="goToDashboard" />
+          <p class="login-note">Login demo - Clicca per accedere al sistema</p>
+        </div>
+
+        <!-- <div class="features-grid">
           <div class="feature-card custom-card">
             <i class="pi pi-users feature-icon text-primary"></i>
             <h3>Gestione Pazienti</h3>
@@ -32,13 +38,7 @@
             <h3>Dashboard Analytics</h3>
             <p>Visualizza statistiche e metriche in tempo reale per ottimizzare la gestione.</p>
           </div>
-        </div>
-
-        <div class="cta-section">
-          <Button label="Accedi alla Dashboard" icon="pi pi-sign-in" class="p-button-lg cta-button"
-            @click="goToDashboard" />
-          <p class="login-note">Login demo - Clicca per accedere al sistema</p>
-        </div>
+        </div> -->
       </div>
     </div>
 

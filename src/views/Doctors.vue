@@ -91,8 +91,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { defineComponent, ref, computed, onMounted } from 'vue'
 import { useConfirm } from 'primevue/useconfirm'
 import DashboardLayout from '../components/DashboardLayout.vue'
 import DoctorForm from '../components/DoctorForm.vue'
@@ -103,7 +102,8 @@ import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Tag from 'primevue/tag'
-import { apiService } from '../services/api.js'
+import { useDoctorsStore } from '../stores/doctors.js'
+import { useAppStore } from '../stores/app.js'
 
 export default defineComponent({
   name: 'Doctors',
@@ -119,11 +119,12 @@ export default defineComponent({
     Tag
   },
   setup() {
-    const toast = useToast()
+    // Store instances
+    const doctorsStore = useDoctorsStore()
+    const appStore = useAppStore()
     const confirm = useConfirm()
 
-    const doctors = ref([])
-    const loading = ref(false)
+    // Local reactive state (solo per UI)
     const searchQuery = ref('')
     const doctorDialogVisible = ref(false)
     const availabilityDialogVisible = ref(false)
@@ -132,22 +133,18 @@ export default defineComponent({
 
     let searchTimeout = null
 
+    // Computed properties - utilizzo stato centralizzato
+    const doctors = computed(() => doctorsStore.filteredDoctors)
+    const loading = computed(() => appStore.isLoading)    // Actions - utilizzo store methods
     const loadDoctors = async (search = '') => {
       try {
-        loading.value = true
-        const params = search ? { search } : {}
-        const data = await apiService.getDoctors(params)
-        doctors.value = data
+        // Aggiorna i filtri nello store
+        doctorsStore.setFilters({ search })
+        // Carica i dottori utilizzando lo store
+        await doctorsStore.fetchDoctors({}, true) // force refresh per la ricerca
       } catch (error) {
+        // Gli errori sono gestiti automaticamente dallo store
         console.error('Error loading doctors:', error)
-        toast.add({
-          severity: 'error',
-          summary: 'Errore',
-          detail: 'Errore nel caricamento dei medici',
-          life: 3000
-        })
-      } finally {
-        loading.value = false
       }
     }
 
@@ -199,58 +196,26 @@ export default defineComponent({
 
     const deleteDoctor = async (doctorId) => {
       try {
-        await apiService.deleteDoctor(doctorId)
-        doctors.value = doctors.value.filter(d => d.id !== doctorId)
-        toast.add({
-          severity: 'success',
-          summary: 'Successo',
-          detail: 'Medico eliminato con successo',
-          life: 3000
-        })
+        await doctorsStore.deleteDoctor(doctorId)
+        // Le notificazioni di successo sono gestite automaticamente dallo store
       } catch (error) {
+        // Gli errori sono gestiti automaticamente dallo store
         console.error('Error deleting doctor:', error)
-        toast.add({
-          severity: 'error',
-          summary: 'Errore',
-          detail: 'Errore nell\'eliminazione del medico',
-          life: 3000
-        })
       }
     }
 
     const handleSaveDoctor = async (doctorData) => {
       try {
         if (dialogMode.value === 'create') {
-          const newDoctor = await apiService.createDoctor(doctorData)
-          doctors.value.unshift(newDoctor)
-          toast.add({
-            severity: 'success',
-            summary: 'Successo',
-            detail: 'Medico creato con successo',
-            life: 3000
-          })
+          await doctorsStore.createDoctor(doctorData)
         } else if (dialogMode.value === 'edit') {
-          const updatedDoctor = await apiService.updateDoctor(selectedDoctor.value.id, doctorData)
-          const index = doctors.value.findIndex(d => d.id === selectedDoctor.value.id)
-          if (index !== -1) {
-            doctors.value[index] = updatedDoctor
-          }
-          toast.add({
-            severity: 'success',
-            summary: 'Successo',
-            detail: 'Medico aggiornato con successo',
-            life: 3000
-          })
+          await doctorsStore.updateDoctor(selectedDoctor.value.id, doctorData)
         }
+        // Le notificazioni di successo sono gestite automaticamente dallo store
         closeDoctorDialog()
       } catch (error) {
+        // Gli errori sono gestiti automaticamente dallo store
         console.error('Error saving doctor:', error)
-        toast.add({
-          severity: 'error',
-          summary: 'Errore',
-          detail: 'Errore nel salvataggio del medico',
-          life: 3000
-        })
       }
     }
 
@@ -260,18 +225,22 @@ export default defineComponent({
       dialogMode.value = 'view'
     }
 
-    onMounted(() => {
-      loadDoctors()
+    onMounted(async () => {
+      // Carica i dottori utilizzando lo store con cache intelligente
+      await doctorsStore.fetchDoctors()
     })
 
     return {
+      // Stato reattivo centralizzato
       doctors,
       loading,
+      // Stato locale per UI
       searchQuery,
       doctorDialogVisible,
       availabilityDialogVisible,
       selectedDoctor,
       dialogMode,
+      // Actions
       loadDoctors,
       debouncedSearch,
       searchDoctors,
