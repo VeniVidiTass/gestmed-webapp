@@ -4,7 +4,7 @@
 		{
 			"label": "GestMed: Avvia setup sviluppo",
 			"type": "shell",
-			"command": "docker-compose -f docker-compose-only-backend.yml up -d && npm run dev",
+			"command": "docker-compose -f docker-compose-only-backend.yml up -d && cd ./webapp && npm run dev",
 			"group": "build",
 			"isBackground": true,
 			"problemMatcher": [],

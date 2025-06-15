@@ -47,7 +47,7 @@ services:
 
   frontend:
     build:
-      context: .
+      context: ./webapp
       dockerfile: Dockerfile.frontend
     container_name: gestmed-frontend
     environment:
