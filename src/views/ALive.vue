@@ -104,44 +104,16 @@
                                     <div class="info-row">
                                         <i class="pi pi-calendar"></i>
                                         <span><strong>Data:</strong> {{ formatDate(appointment.appointment_date)
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <div class="info-row">
                                         <i class="pi pi-clock"></i>
                                         <span><strong>Ora:</strong> {{ formatTime(appointment.appointment_date)
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <div class="info-row" v-if="appointment.notes">
                                         <i class="pi pi-file-edit"></i>
                                         <span><strong>Note:</strong> {{ appointment.notes }}</span>
-                                    </div>
-                                </div>
-
-                                <!-- Logs Section -->
-                                <div v-if="showLogs[appointment.id]" class="logs-section">
-                                    <Divider />
-                                    <div class="logs-header">
-                                        <h4>
-                                            <i class="pi pi-history"></i>
-                                            Log Attività
-                                        </h4>
-                                        <Button label="Aggiungi Log" icon="pi pi-plus" class="p-button-sm"
-                                            @click="openLogForm(appointment)" />
-                                    </div>
-
-                                    <div class="logs-list">
-                                        <div v-if="getAppointmentLogs(appointment.id).length === 0" class="no-logs">
-                                            <p>Nessun log presente per questo appuntamento.</p>
-                                        </div>
-                                        <div v-else v-for="log in getAppointmentLogs(appointment.id)" :key="log.id"
-                                            class="log-item">
-                                            <div class="log-header">
-                                                <h5>{{ log.title }}</h5>
-                                                <span class="log-time">{{ formatDateTime(log.created_at) }}</span>
-                                            </div>
-                                            <p class="log-description">{{ log.description }}</p>
-                                            <small class="log-author">Creato da: {{ log.created_by }}</small>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -149,12 +121,86 @@
                     </Card>
                 </div>
             </div>
-        </div>
-
-        <!-- Add Log Dialog -->
+        </div> <!-- Add Log Dialog -->
         <AliveLogForm v-model:visible="showLogForm" :appointment-id="selectedAppointment?.id"
             :appointment-title="`${selectedAppointment?.patient_name} - Dr. ${selectedAppointment?.doctor_name}`"
             :loading="logLoading" @submit="handleLogSubmit" @cancel="closeLogForm" />
+
+        <!-- Logs View Dialog -->
+        <Dialog v-model:visible="showLogsDialog" modal
+            :header="`Log Attività - ${selectedLogAppointment?.patient_name} - Dr. ${selectedLogAppointment?.doctor_name}`"
+            :style="{ width: '60vw' }" :breakpoints="{ '960px': '75vw', '641px': '90vw' }">
+
+            <div class="logs-dialog-content">
+                <!-- Appointment Info Card -->
+                <Card class="appointment-info-card" :class="{
+                    'status-in-progress': selectedLogAppointment?.status === 'in_progress',
+                    'status-scheduled': selectedLogAppointment?.status === 'scheduled'
+                }">
+                    <template #content>
+                        <div class="appointment-content">
+                            <div class="appointment-header-info">
+                                <Tag :value="getStatusLabel(selectedLogAppointment?.status)"
+                                    :severity="getStatusSeverity(selectedLogAppointment?.status)"
+                                    :icon="getStatusIcon(selectedLogAppointment?.status)" />
+                            </div>
+
+                            <div class="appointment-info">
+                                <div class="info-row">
+                                    <i class="pi pi-user"></i>
+                                    <span><strong>Paziente:</strong> {{ selectedLogAppointment?.patient_name }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <i class="pi pi-user-plus"></i>
+                                    <span><strong>Medico:</strong> Dr. {{ selectedLogAppointment?.doctor_name }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <i class="pi pi-calendar"></i>
+                                    <span><strong>Data:</strong> {{ formatDate(selectedLogAppointment?.appointment_date)
+                                        }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <i class="pi pi-clock"></i>
+                                    <span><strong>Ora:</strong> {{ formatTime(selectedLogAppointment?.appointment_date)
+                                        }}</span>
+                                </div>
+                                <div class="info-row" v-if="selectedLogAppointment?.notes">
+                                    <i class="pi pi-file-edit"></i>
+                                    <span><strong>Note:</strong> {{ selectedLogAppointment?.notes }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </Card>
+
+                <!-- Logs Section -->
+                <div class="logs-section">
+                    <div class="logs-header">
+                        <h4>
+                            <i class="pi pi-history"></i>
+                            Log Attività
+                        </h4>
+                        <Button label="Aggiungi Log" icon="pi pi-plus" class="p-button-sm"
+                            @click="openLogFormFromDialog" />
+                    </div>
+
+                    <div class="logs-list">
+                        <div v-if="getAppointmentLogs(selectedLogAppointment?.id).length === 0" class="no-logs">
+                            <p>Nessun log presente per questo appuntamento.</p>
+                        </div>
+                        <div v-else v-for="log in getAppointmentLogs(selectedLogAppointment?.id)" :key="log.id"
+                            class="log-item">
+                            <div class="log-header">
+                                <h5>{{ log.title }}</h5>
+                                <span class="log-time">{{ formatDateTime(log.created_at) }}</span>
+                            </div>
+                            <p class="log-description">{{ log.description }}</p>
+                            <small class="log-author">Creato da: {{ log.created_by }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Dialog>
     </DashboardLayout>
 </template>
 
@@ -170,10 +216,10 @@ import Tag from 'primevue/tag'
 import Message from 'primevue/message'
 import Divider from 'primevue/divider'
 import Select from 'primevue/select'
+import Dialog from 'primevue/dialog'
 
 export default defineComponent({
-    name: 'ALive',
-    components: {
+    name: 'ALive', components: {
         DashboardLayout,
         AliveLogForm,
         Card,
@@ -181,16 +227,17 @@ export default defineComponent({
         Tag,
         Message,
         Divider,
-        Select
+        Select,
+        Dialog
     },
     setup() {
         const store = useAliveLogsStore()
-        const { showSuccess, showError } = useNotifications()
-
-        // State
+        const { showSuccess, showError } = useNotifications() // State
         const showLogs = ref({})
         const showLogForm = ref(false)
+        const showLogsDialog = ref(false)
         const selectedAppointment = ref(null)
+        const selectedLogAppointment = ref(null)
         const logLoading = ref(false)
 
         // Status options for dropdown
@@ -275,10 +322,11 @@ export default defineComponent({
         }
 
         const toggleLogs = async (appointmentId) => {
-            if (showLogs.value[appointmentId]) {
-                showLogs.value[appointmentId] = false
-            } else {
-                showLogs.value[appointmentId] = true
+            const appointment = appointments.value.find(app => app.id === appointmentId)
+            if (appointment) {
+                selectedLogAppointment.value = appointment
+                showLogsDialog.value = true
+
                 // Load logs if not already loaded
                 if (!store.appointmentLogs[appointmentId]) {
                     await store.fetchAppointmentLogs(appointmentId)
@@ -294,6 +342,11 @@ export default defineComponent({
         const closeLogForm = () => {
             showLogForm.value = false
             selectedAppointment.value = null
+        }
+
+        const openLogFormFromDialog = () => {
+            selectedAppointment.value = selectedLogAppointment.value
+            showLogForm.value = true
         }
 
         const handleLogSubmit = async (logData) => {
@@ -342,7 +395,9 @@ export default defineComponent({
             inProgressAppointments,
             showLogs,
             showLogForm,
+            showLogsDialog,
             selectedAppointment,
+            selectedLogAppointment,
             logLoading,
             statusOptions,
             // Methods
@@ -354,10 +409,10 @@ export default defineComponent({
             formatDateTime,
             getStatusLabel,
             getStatusSeverity,
-            getStatusIcon,
-            toggleLogs,
+            getStatusIcon, toggleLogs,
             openLogForm,
             closeLogForm,
+            openLogFormFromDialog,
             handleLogSubmit,
             updateStatus
         }
@@ -620,6 +675,31 @@ export default defineComponent({
 .log-author {
     color: var(--text-color-secondary);
     font-size: 0.75rem;
+}
+
+/* Logs Dialog Styles */
+.logs-dialog-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.appointment-info-card {
+    border-left: 4px solid var(--surface-200);
+}
+
+.appointment-info-card.status-in-progress {
+    border-left-color: var(--green-500);
+}
+
+.appointment-info-card.status-scheduled {
+    border-left-color: var(--blue-500);
+}
+
+.appointment-header-info {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
 }
 
 @media (max-width: 768px) {

@@ -1,0 +1,2 @@
+- gestire i log alive su un'altro db sql a posta per i websocket
+- gestire autenticazione tramite header nginx e oauth2-proxy
