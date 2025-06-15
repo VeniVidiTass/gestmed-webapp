@@ -7,45 +7,41 @@
           <h1 class="hero-title text-primary">GestMed</h1>
           <p class="hero-subtitle">Sistema di Gestione per Strutture Sanitarie</p>
         </div>
-        
+
         <div class="features-grid">
           <div class="feature-card custom-card">
             <i class="pi pi-users feature-icon text-primary"></i>
             <h3>Gestione Pazienti</h3>
             <p>Gestisci facilmente i dati dei pazienti con ricerca avanzata e storico medico completo.</p>
           </div>
-          
+
           <div class="feature-card custom-card">
             <i class="pi pi-user-plus feature-icon text-primary"></i>
             <h3>Gestione Medici</h3>
             <p>Organizza il personale medico con specializzazioni e disponibilità in tempo reale.</p>
           </div>
-          
+
           <div class="feature-card custom-card">
             <i class="pi pi-calendar feature-icon text-primary"></i>
             <h3>Calendario Prenotazioni</h3>
             <p>Sistema di prenotazioni integrato con vista calendario e gestione appuntamenti.</p>
           </div>
-          
+
           <div class="feature-card custom-card">
             <i class="pi pi-chart-line feature-icon text-primary"></i>
             <h3>Dashboard Analytics</h3>
             <p>Visualizza statistiche e metriche in tempo reale per ottimizzare la gestione.</p>
           </div>
         </div>
-        
+
         <div class="cta-section">
-          <Button 
-            label="Accedi alla Dashboard" 
-            icon="pi pi-sign-in" 
-            class="p-button-lg cta-button"
-            @click="goToDashboard"
-          />
+          <Button label="Accedi alla Dashboard" icon="pi pi-sign-in" class="p-button-lg cta-button"
+            @click="goToDashboard" />
           <p class="login-note">Login demo - Clicca per accedere al sistema</p>
         </div>
       </div>
     </div>
-    
+
     <footer class="home-footer">
       <div class="footer-content">
         <p>&copy; 2025 GestMed - Sistema di Gestione Sanitaria</p>
@@ -186,20 +182,20 @@ export default defineComponent({
   .hero-title {
     font-size: 3rem;
   }
-  
+
   .hero-subtitle {
     font-size: 1.25rem;
   }
-  
+
   .features-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
-  
+
   .feature-card {
     padding: 1.5rem;
   }
-  
+
   .hero-section {
     padding: 1rem;
   }

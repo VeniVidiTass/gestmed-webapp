@@ -38,7 +38,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
       appStore.clearError()
 
       const response = await apiService.getDashboardData()
-      
+
       data.value = {
         totalPatients: response.totalPatients || 0,
         totalDoctors: response.totalDoctors || 0,
@@ -48,9 +48,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
         recentAppointments: response.recentAppointments || [],
         statistics: response.statistics || {}
       }
-      
+
       lastFetched.value = Date.now()
-      
+
       return data.value
     } catch (error) {
       appStore.handleApiError(error)
@@ -96,11 +96,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
     // State
     data,
     lastFetched,
-    
+
     // Getters
     dashboardData,
     isDataStale,
-    
+
     // Actions
     fetchDashboardData,
     updatePatientCount,

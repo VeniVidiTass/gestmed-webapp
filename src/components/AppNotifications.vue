@@ -2,22 +2,16 @@
   <Toast />
   <div v-if="notifications.length" class="notification-container">
     <TransitionGroup name="notification" tag="div" class="notifications-list">
-      <div
-        v-for="notification in notifications"
-        :key="notification.id"
-        :class="['custom-notification', `notification-${notification.severity}`]"
-      >
+      <div v-for="notification in notifications" :key="notification.id"
+        :class="['custom-notification', `notification-${notification.severity}`]">
         <div class="notification-content">
           <i :class="getNotificationIcon(notification.severity)"></i>
           <div class="notification-text">
             <h4 v-if="notification.summary">{{ notification.summary }}</h4>
             <p>{{ notification.detail }}</p>
           </div>
-          <Button
-            icon="pi pi-times"
-            class="p-button-text p-button-sm notification-close"
-            @click="removeNotification(notification.id)"
-          />
+          <Button icon="pi pi-times" class="p-button-text p-button-sm notification-close"
+            @click="removeNotification(notification.id)" />
         </div>
       </div>
     </TransitionGroup>

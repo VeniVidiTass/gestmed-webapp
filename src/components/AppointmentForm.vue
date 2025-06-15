@@ -3,88 +3,47 @@
     <form @submit.prevent="handleSubmit">
       <div class="form-grid">
         <div class="form-field">
-          <label for="patient" class="field-label">Paziente *</label>          <Select
-            id="patient"
-            v-model="formData.patient_id"
-            :options="patientOptions"
-            optionLabel="label"
-            optionValue="value"
-            :disabled="mode === 'view'"
-            :class="{ 'p-invalid': errors.patient_id }"
-            placeholder="Seleziona paziente"
-            :filter="true"
-            filterPlaceholder="Cerca paziente..."
-          />
+          <label for="patient" class="field-label">Paziente *</label> <Select id="patient" v-model="formData.patient_id"
+            :options="patientOptions" optionLabel="label" optionValue="value" :disabled="mode === 'view'"
+            :class="{ 'p-invalid': errors.patient_id }" placeholder="Seleziona paziente" :filter="true"
+            filterPlaceholder="Cerca paziente..." />
           <small v-if="errors.patient_id" class="p-error">{{ errors.patient_id }}</small>
         </div>
 
         <div class="form-field">
-          <label for="doctor" class="field-label">Medico *</label>          <Select
-            id="doctor"
-            v-model="formData.doctor_id"
-            :options="doctorOptions"
-            optionLabel="label"
-            optionValue="value"
-            :disabled="mode === 'view'"
-            :class="{ 'p-invalid': errors.doctor_id }"
-            placeholder="Seleziona medico"
-            :filter="true"
-            filterPlaceholder="Cerca medico..."
-          />
+          <label for="doctor" class="field-label">Medico *</label> <Select id="doctor" v-model="formData.doctor_id"
+            :options="doctorOptions" optionLabel="label" optionValue="value" :disabled="mode === 'view'"
+            :class="{ 'p-invalid': errors.doctor_id }" placeholder="Seleziona medico" :filter="true"
+            filterPlaceholder="Cerca medico..." />
           <small v-if="errors.doctor_id" class="p-error">{{ errors.doctor_id }}</small>
         </div>
 
         <div class="form-field">
           <label for="appointment_date" class="field-label">Data *</label>
-          <Calendar
-            id="appointment_date"
-            v-model="formData.appointment_date"
-            :disabled="mode === 'view'"
-            :class="{ 'p-invalid': errors.appointment_date }"
-            dateFormat="dd/mm/yy"
-            :showIcon="true"
-            placeholder="Seleziona data"
-            :minDate="new Date()"
-          />
+          <Calendar id="appointment_date" v-model="formData.appointment_date" :disabled="mode === 'view'"
+            :class="{ 'p-invalid': errors.appointment_date }" dateFormat="dd/mm/yy" :showIcon="true"
+            placeholder="Seleziona data" :minDate="new Date()" />
           <small v-if="errors.appointment_date" class="p-error">{{ errors.appointment_date }}</small>
         </div>
 
         <div class="form-field">
           <label for="appointment_time" class="field-label">Orario *</label>
-          <Calendar
-            id="appointment_time"
-            v-model="formData.appointment_time"
-            :disabled="mode === 'view'"
-            :class="{ 'p-invalid': errors.appointment_time }"
-            timeOnly
-            hourFormat="24"
-            placeholder="Seleziona orario"
-            :showIcon="true"
-          />
+          <Calendar id="appointment_time" v-model="formData.appointment_time" :disabled="mode === 'view'"
+            :class="{ 'p-invalid': errors.appointment_time }" timeOnly hourFormat="24" placeholder="Seleziona orario"
+            :showIcon="true" />
           <small v-if="errors.appointment_time" class="p-error">{{ errors.appointment_time }}</small>
         </div>
 
         <div class="form-field">
-          <label for="status" class="field-label">Stato</label>          <Select
-            id="status"
-            v-model="formData.status"
-            :options="statusOptions"
-            optionLabel="label"
-            optionValue="value"
-            :disabled="mode === 'view'"
-            placeholder="Seleziona stato"
-          />
+          <label for="status" class="field-label">Stato</label> <Select id="status" v-model="formData.status"
+            :options="statusOptions" optionLabel="label" optionValue="value" :disabled="mode === 'view'"
+            placeholder="Seleziona stato" />
         </div>
 
         <div class="form-field form-field-full">
           <label for="notes" class="field-label">Note</label>
-          <Textarea 
-            id="notes"
-            v-model="formData.notes" 
-            :disabled="mode === 'view'"
-            rows="4"
-            placeholder="Note sull'appuntamento..."
-          />
+          <Textarea id="notes" v-model="formData.notes" :disabled="mode === 'view'" rows="4"
+            placeholder="Note sull'appuntamento..." />
         </div>
       </div>
 
@@ -114,37 +73,14 @@
 
       <!-- Action buttons -->
       <div class="form-actions">
-        <Button 
-          label="Annulla" 
-          icon="pi pi-times"
-          class="p-button-text"
-          type="button"
-          @click="$emit('cancel')"
-        />
-        
+        <Button label="Annulla" icon="pi pi-times" class="p-button-text" type="button" @click="$emit('cancel')" />
+
         <div class="action-buttons-right">
-          <Button 
-            v-if="mode === 'view'"
-            label="Modifica" 
-            icon="pi pi-pencil"
-            type="button"
-            @click="switchToEditMode"
-          />
-          <Button 
-            v-if="mode === 'view' && appointment"
-            label="Elimina" 
-            icon="pi pi-trash"
-            class="p-button-danger"
-            type="button"
-            @click="confirmDelete"
-          />
-          <Button 
-            v-if="mode !== 'view'"
-            :label="mode === 'create' ? 'Crea Appuntamento' : 'Salva Modifiche'" 
-            :icon="mode === 'create' ? 'pi pi-plus' : 'pi pi-check'"
-            type="submit"
-            :loading="loading"
-          />
+          <Button v-if="mode === 'view'" label="Modifica" icon="pi pi-pencil" type="button" @click="switchToEditMode" />
+          <Button v-if="mode === 'view' && appointment" label="Elimina" icon="pi pi-trash" class="p-button-danger"
+            type="button" @click="confirmDelete" />
+          <Button v-if="mode !== 'view'" :label="mode === 'create' ? 'Crea Appuntamento' : 'Salva Modifiche'"
+            :icon="mode === 'create' ? 'pi pi-plus' : 'pi pi-check'" type="submit" :loading="loading" />
         </div>
       </div>
     </form>
@@ -202,14 +138,14 @@ export default defineComponent({
     const confirm = useConfirm()
     const loading = ref(false)
     const errors = ref({})
-    
+
     const statusOptions = [
       { label: 'Programmato', value: 'scheduled' },
       { label: 'Confermato', value: 'confirmed' },
       { label: 'Annullato', value: 'cancelled' },
       { label: 'Completato', value: 'completed' }
     ]
-    
+
     const formData = ref({
       patient_id: null,
       doctor_id: null,
@@ -218,26 +154,26 @@ export default defineComponent({
       status: 'scheduled',
       notes: ''
     })
-    
-    const patientOptions = computed(() => 
+
+    const patientOptions = computed(() =>
       props.patients.map(patient => ({
         label: `${patient.name} - ${patient.email}`,
         value: patient.id
       }))
     )
-    
-    const doctorOptions = computed(() => 
+
+    const doctorOptions = computed(() =>
       props.doctors.map(doctor => ({
         label: `Dr. ${doctor.name} - ${doctor.specialization}`,
         value: doctor.id
       }))
     )
-    
+
     // Watch for appointment changes
     watch(() => props.appointment, (newAppointment) => {
       if (newAppointment) {
         const appointmentDate = new Date(newAppointment.appointment_date)
-        
+
         formData.value = {
           patient_id: newAppointment.patient_id,
           doctor_id: newAppointment.doctor_id,
@@ -251,21 +187,21 @@ export default defineComponent({
         const now = new Date()
         let appointmentDate = now
         let appointmentTime = now
-        
+
         // Handle preselected date and hour
         if (props.preselectedDate) {
           appointmentDate = new Date(props.preselectedDate)
         }
-        
+
         if (props.preselectedHour !== null) {
           appointmentTime = new Date()
           appointmentTime.setHours(props.preselectedHour, 0, 0, 0)
-          
+
           if (props.preselectedDate) {
             appointmentDate.setHours(props.preselectedHour, 0, 0, 0)
           }
         }
-        
+
         formData.value = {
           patient_id: null,
           doctor_id: null,
@@ -277,48 +213,48 @@ export default defineComponent({
       }
       errors.value = {}
     }, { immediate: true })
-    
+
     const validateForm = () => {
       errors.value = {}
-      
+
       if (!formData.value.patient_id) {
         errors.value.patient_id = 'Il paziente è obbligatorio'
       }
-      
+
       if (!formData.value.doctor_id) {
         errors.value.doctor_id = 'Il medico è obbligatorio'
       }
-      
+
       if (!formData.value.appointment_date) {
         errors.value.appointment_date = 'La data è obbligatoria'
       }
-      
+
       if (!formData.value.appointment_time) {
         errors.value.appointment_time = 'L\'orario è obbligatorio'
       }
-      
+
       return Object.keys(errors.value).length === 0
     }
-    
+
     const handleSubmit = async () => {
       if (!validateForm()) {
         return
       }
-      
+
       try {
         loading.value = true
-        
+
         // Combine date and time
         const appointmentDateTime = new Date(formData.value.appointment_date)
         const timeComponent = new Date(formData.value.appointment_time)
-        
+
         appointmentDateTime.setHours(
           timeComponent.getHours(),
           timeComponent.getMinutes(),
           0,
           0
         )
-        
+
         const submitData = {
           patient_id: formData.value.patient_id,
           doctor_id: formData.value.doctor_id,
@@ -326,7 +262,7 @@ export default defineComponent({
           status: formData.value.status,
           notes: formData.value.notes
         }
-        
+
         emit('save', submitData)
       } catch (error) {
         console.error('Error in form submission:', error)
@@ -334,11 +270,11 @@ export default defineComponent({
         loading.value = false
       }
     }
-    
+
     const switchToEditMode = () => {
       emit('switch-mode', 'edit')
     }
-    
+
     const confirmDelete = () => {
       confirm.require({
         message: 'Sei sicuro di voler eliminare questo appuntamento?',
@@ -350,7 +286,7 @@ export default defineComponent({
         accept: () => emit('delete', props.appointment.id)
       })
     }
-    
+
     const formatDateTime = (dateString) => {
       if (!dateString) return '-'
       return new Date(dateString).toLocaleDateString('it-IT', {
@@ -361,7 +297,7 @@ export default defineComponent({
         minute: '2-digit'
       })
     }
-    
+
     return {
       formData,
       errors,
@@ -458,26 +394,26 @@ export default defineComponent({
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .details-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .form-actions {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
   }
-  
+
   .action-buttons-right {
     justify-content: center;
     flex-wrap: wrap;
   }
-  
+
   .form-actions .p-button {
     width: 100%;
   }
-  
+
   .action-buttons-right .p-button {
     flex: 1;
     min-width: 120px;

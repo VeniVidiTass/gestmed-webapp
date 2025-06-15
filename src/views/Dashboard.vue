@@ -1,6 +1,6 @@
 <template>
   <DashboardLayout>
-    <div class="dashboard-page">      <!-- Stats Cards -->
+    <div class="dashboard-page"> <!-- Stats Cards -->
       <div class="stats-grid">
         <div class="stat-card custom-card">
           <div class="stat-content">
@@ -11,7 +11,7 @@
             <i class="pi pi-users stat-icon"></i>
           </div>
         </div>
-        
+
         <div class="stat-card custom-card">
           <div class="stat-content">
             <div class="stat-info">
@@ -21,7 +21,7 @@
             <i class="pi pi-user-plus stat-icon"></i>
           </div>
         </div>
-        
+
         <div class="stat-card custom-card">
           <div class="stat-content">
             <div class="stat-info">
@@ -31,7 +31,7 @@
             <i class="pi pi-calendar stat-icon"></i>
           </div>
         </div>
-        
+
         <div class="stat-card custom-card">
           <div class="stat-content">
             <div class="stat-info">
@@ -42,25 +42,16 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Recent Appointments -->
       <div class="dashboard-sections">
         <div class="section-card custom-card">
           <div class="section-header">
             <h3>Prossimi Appuntamenti</h3>
-            <Button 
-              label="Vedi Tutti" 
-              icon="pi pi-calendar"
-              class="p-button-text p-button-sm"
-              @click="goToCalendar"
-            />
+            <Button label="Vedi Tutti" icon="pi pi-calendar" class="p-button-text p-button-sm" @click="goToCalendar" />
           </div>
-            <div class="appointments-list" v-if="dashboardData.recentAppointments?.length">
-            <div 
-              v-for="appointment in dashboardData.recentAppointments" 
-              :key="appointment.id"
-              class="appointment-item"
-            >
+          <div class="appointments-list" v-if="dashboardData.recentAppointments?.length">
+            <div v-for="appointment in dashboardData.recentAppointments" :key="appointment.id" class="appointment-item">
               <div class="appointment-time">
                 <i class="pi pi-clock"></i>
                 {{ formatDateTime(appointment.appointment_date) }}
@@ -71,48 +62,33 @@
                   Dr. {{ appointment.doctor_name }} - {{ appointment.doctor_specialization || 'Medico Generico' }}
                 </div>
               </div>
-              <Badge 
-                :value="appointment.status" 
-                :severity="getStatusSeverity(appointment.status)"
-              />
+              <Badge :value="appointment.status" :severity="getStatusSeverity(appointment.status)" />
             </div>
           </div>
-          
+
           <div v-else class="empty-state">
             <i class="pi pi-calendar"></i>
             <p>Nessun appuntamento programmato</p>
           </div>
         </div>
-        
+
         <!-- Quick Actions -->
         <div class="section-card custom-card">
           <div class="section-header">
             <h3>Azioni Rapide</h3>
           </div>
-          
+
           <div class="quick-actions">
-            <Button 
-              label="Nuovo Paziente" 
-              icon="pi pi-user-plus"
-              class="p-button-outlined quick-action-btn"
-              @click="goToPatients"
-            />
-            <Button 
-              label="Nuovo Medico" 
-              icon="pi pi-plus"
-              class="p-button-outlined quick-action-btn"
-              @click="goToDoctors"
-            />
-            <Button 
-              label="Nuovo Appuntamento" 
-              icon="pi pi-calendar-plus"
-              class="quick-action-btn"
-              @click="goToCalendar"
-            />
+            <Button label="Nuovo Paziente" icon="pi pi-user-plus" class="p-button-outlined quick-action-btn"
+              @click="goToPatients" />
+            <Button label="Nuovo Medico" icon="pi pi-plus" class="p-button-outlined quick-action-btn"
+              @click="goToDoctors" />
+            <Button label="Nuovo Appuntamento" icon="pi pi-calendar-plus" class="quick-action-btn"
+              @click="goToCalendar" />
           </div>
         </div>
       </div>
-        <!-- Loading overlay -->
+      <!-- Loading overlay -->
       <div v-if="isLoading" class="loading-overlay">
         <div class="loading-spinner">
           <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
@@ -143,11 +119,11 @@ export default defineComponent({
     const router = useRouter()
     const dashboardStore = useDashboardStore()
     const appStore = useAppStore()
-    
+
     // Reactive refs from stores
     const { dashboardData } = storeToRefs(dashboardStore)
     const { isLoading } = storeToRefs(appStore)
-    
+
     const formatDateTime = (dateString) => {
       if (!dateString) return ''
       const date = new Date(dateString)
@@ -159,7 +135,7 @@ export default defineComponent({
         minute: '2-digit'
       })
     }
-    
+
     const getStatusSeverity = (status) => {
       const severityMap = {
         'pending': 'warn',
@@ -169,19 +145,19 @@ export default defineComponent({
       }
       return severityMap[status] || 'info'
     }
-    
+
     const goToPatients = () => {
       router.push('/patients')
     }
-    
+
     const goToDoctors = () => {
       router.push('/doctors')
     }
-    
+
     const goToCalendar = () => {
       router.push('/calendar')
     }
-    
+
     onMounted(async () => {
       try {
         await dashboardStore.fetchDashboardData()
@@ -189,7 +165,7 @@ export default defineComponent({
         console.error('Error loading dashboard:', error)
       }
     })
-    
+
     return {
       dashboardData,
       isLoading,
@@ -365,21 +341,21 @@ export default defineComponent({
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
-  
+
   .stat-card {
     padding: 1rem;
   }
-  
+
   .stat-number {
     font-size: 1.5rem;
   }
-  
+
   .appointment-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
   }
-  
+
   .appointment-time {
     min-width: auto;
   }

@@ -5,7 +5,7 @@ export function useLoading() {
   const appStore = useAppStore()
 
   const isLoading = computed(() => appStore.isLoading)
-  
+
   const setLoading = (loading) => {
     appStore.setLoading(loading)
   }

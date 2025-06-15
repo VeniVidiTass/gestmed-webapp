@@ -5,39 +5,18 @@
       <div class="page-header">
         <div class="search-section">
           <div class="p-inputgroup">
-            <InputText 
-              v-model="searchQuery" 
-              placeholder="Cerca medici per nome, specializzazione o email..."
-              @input="debouncedSearch"
-              class="search-input"
-            />
-            <Button 
-              icon="pi pi-search" 
-              class="p-button-primary"
-              @click="searchDoctors"
-            />
+            <InputText v-model="searchQuery" placeholder="Cerca medici per nome, specializzazione o email..."
+              @input="debouncedSearch" class="search-input" />
+            <Button icon="pi pi-search" class="p-button-primary" @click="searchDoctors" />
           </div>
         </div>
-        <Button 
-          label="Nuovo Medico" 
-          icon="pi pi-plus"
-          class="p-button-primary"
-          @click="openNewDoctorDialog"
-        />
+        <Button label="Nuovo Medico" icon="pi pi-plus" class="p-button-primary" @click="openNewDoctorDialog" />
       </div>
 
       <!-- Doctors Table -->
       <div class="table-container custom-card">
-        <DataTable 
-          :value="doctors" 
-          :loading="loading"
-          paginator 
-          :rows="10"
-          :rowsPerPageOptions="[10, 25, 50]"
-          responsiveLayout="scroll"
-          emptyMessage="Nessun medico trovato"
-          class="doctors-table"
-        >
+        <DataTable :value="doctors" :loading="loading" paginator :rows="10" :rowsPerPageOptions="[10, 25, 50]"
+          responsiveLayout="scroll" emptyMessage="Nessun medico trovato" class="doctors-table">
           <Column field="name" header="Nome" sortable>
             <template #body="{ data }">
               <div class="doctor-name">
@@ -46,13 +25,13 @@
               </div>
             </template>
           </Column>
-          
+
           <Column field="specialization" header="Specializzazione" sortable>
             <template #body="{ data }">
               <Tag :value="data.specialization" class="specialization-tag" />
             </template>
           </Column>
-          
+
           <Column field="email" header="Email" sortable>
             <template #body="{ data }">
               <a :href="`mailto:${data.email}`" class="email-link">
@@ -60,51 +39,35 @@
               </a>
             </template>
           </Column>
-          
+
           <Column field="phone" header="Telefono" sortable>
             <template #body="{ data }">
               <span class="phone-number">{{ data.phone }}</span>
             </template>
           </Column>
-          
+
           <Column field="license_number" header="Numero Licenza" sortable>
             <template #body="{ data }">
               <code class="license-code">{{ data.license_number }}</code>
             </template>
           </Column>
-          
+
           <Column header="Disponibilità" style="min-width: 120px;">
             <template #body="{ data }">
-              <Button 
-                icon="pi pi-calendar" 
-                class="p-button-rounded p-button-text p-button-sm"
-                @click="viewAvailability(data)"
-                v-tooltip.top="'Visualizza Disponibilità'"
-              />
+              <Button icon="pi pi-calendar" class="p-button-rounded p-button-text p-button-sm"
+                @click="viewAvailability(data)" v-tooltip.top="'Visualizza Disponibilità'" />
             </template>
           </Column>
-          
+
           <Column header="Azioni" :exportable="false" style="min-width: 150px;">
             <template #body="{ data }">
               <div class="action-buttons">
-                <Button 
-                  icon="pi pi-eye" 
-                  class="p-button-rounded p-button-text p-button-sm"
-                  @click="viewDoctor(data)"
-                  v-tooltip.top="'Visualizza'"
-                />
-                <Button 
-                  icon="pi pi-pencil" 
-                  class="p-button-rounded p-button-text p-button-sm"
-                  @click="editDoctor(data)"
-                  v-tooltip.top="'Modifica'"
-                />
-                <Button 
-                  icon="pi pi-trash" 
-                  class="p-button-rounded p-button-text p-button-sm p-button-danger"
-                  @click="confirmDeleteDoctor(data)"
-                  v-tooltip.top="'Elimina'"
-                />
+                <Button icon="pi pi-eye" class="p-button-rounded p-button-text p-button-sm" @click="viewDoctor(data)"
+                  v-tooltip.top="'Visualizza'" />
+                <Button icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-sm" @click="editDoctor(data)"
+                  v-tooltip.top="'Modifica'" />
+                <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-sm p-button-danger"
+                  @click="confirmDeleteDoctor(data)" v-tooltip.top="'Elimina'" />
               </div>
             </template>
           </Column>
@@ -112,31 +75,15 @@
       </div>
 
       <!-- Doctor Dialog -->
-      <Dialog 
-        v-model:visible="doctorDialogVisible" 
-        :modal="true"
+      <Dialog v-model:visible="doctorDialogVisible" :modal="true"
         :header="dialogMode === 'create' ? 'Nuovo Medico' : dialogMode === 'edit' ? 'Modifica Medico' : 'Dettagli Medico'"
-        :style="{ width: '700px' }"
-        :maximizable="false"
-        :closable="true"
-      >
-        <DoctorForm 
-          :doctor="selectedDoctor"
-          :mode="dialogMode"
-          @save="handleSaveDoctor"
-          @cancel="closeDoctorDialog"
-        />
+        :style="{ width: '700px' }" :maximizable="false" :closable="true">
+        <DoctorForm :doctor="selectedDoctor" :mode="dialogMode" @save="handleSaveDoctor" @cancel="closeDoctorDialog" />
       </Dialog>
 
       <!-- Availability Dialog -->
-      <Dialog 
-        v-model:visible="availabilityDialogVisible" 
-        :modal="true"
-        header="Disponibilità Medico"
-        :style="{ width: '500px' }"
-        :maximizable="false"
-        :closable="true"
-      >
+      <Dialog v-model:visible="availabilityDialogVisible" :modal="true" header="Disponibilità Medico"
+        :style="{ width: '500px' }" :maximizable="false" :closable="true">
         <AvailabilityView :doctor="selectedDoctor" />
       </Dialog>
     </div>
@@ -174,7 +121,7 @@ export default defineComponent({
   setup() {
     const toast = useToast()
     const confirm = useConfirm()
-    
+
     const doctors = ref([])
     const loading = ref(false)
     const searchQuery = ref('')
@@ -182,9 +129,9 @@ export default defineComponent({
     const availabilityDialogVisible = ref(false)
     const selectedDoctor = ref(null)
     const dialogMode = ref('view') // 'view', 'edit', 'create'
-    
+
     let searchTimeout = null
-    
+
     const loadDoctors = async (search = '') => {
       try {
         loading.value = true
@@ -203,41 +150,41 @@ export default defineComponent({
         loading.value = false
       }
     }
-    
+
     const debouncedSearch = () => {
       clearTimeout(searchTimeout)
       searchTimeout = setTimeout(() => {
         loadDoctors(searchQuery.value)
       }, 300)
     }
-    
+
     const searchDoctors = () => {
       loadDoctors(searchQuery.value)
     }
-    
+
     const openNewDoctorDialog = () => {
       selectedDoctor.value = null
       dialogMode.value = 'create'
       doctorDialogVisible.value = true
     }
-    
+
     const viewDoctor = (doctor) => {
       selectedDoctor.value = { ...doctor }
       dialogMode.value = 'view'
       doctorDialogVisible.value = true
     }
-    
+
     const editDoctor = (doctor) => {
       selectedDoctor.value = { ...doctor }
       dialogMode.value = 'edit'
       doctorDialogVisible.value = true
     }
-    
+
     const viewAvailability = (doctor) => {
       selectedDoctor.value = { ...doctor }
       availabilityDialogVisible.value = true
     }
-    
+
     const confirmDeleteDoctor = (doctor) => {
       confirm.require({
         message: `Sei sicuro di voler eliminare il medico Dr. ${doctor.name}?`,
@@ -249,7 +196,7 @@ export default defineComponent({
         accept: () => deleteDoctor(doctor.id)
       })
     }
-    
+
     const deleteDoctor = async (doctorId) => {
       try {
         await apiService.deleteDoctor(doctorId)
@@ -270,7 +217,7 @@ export default defineComponent({
         })
       }
     }
-    
+
     const handleSaveDoctor = async (doctorData) => {
       try {
         if (dialogMode.value === 'create') {
@@ -306,17 +253,17 @@ export default defineComponent({
         })
       }
     }
-    
+
     const closeDoctorDialog = () => {
       doctorDialogVisible.value = false
       selectedDoctor.value = null
       dialogMode.value = 'view'
     }
-    
+
     onMounted(() => {
       loadDoctors()
     })
-    
+
     return {
       doctors,
       loading,
@@ -415,11 +362,11 @@ export default defineComponent({
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-section {
     max-width: none;
   }
-  
+
   .action-buttons {
     justify-content: center;
   }

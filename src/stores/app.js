@@ -34,7 +34,7 @@ export const useAppStore = defineStore('app', () => {
       ...notification,
       timestamp: new Date()
     })
-    
+
     // Auto remove after 5 seconds if not persistent
     if (!notification.persistent) {
       setTimeout(() => {
@@ -69,9 +69,9 @@ export const useAppStore = defineStore('app', () => {
   // Global error handler
   function handleApiError(error) {
     console.error('API Error:', error)
-    
+
     let message = 'Si è verificato un errore. Riprova più tardi.'
-    
+
     if (error.response) {
       switch (error.response.status) {
         case 400:
@@ -111,12 +111,12 @@ export const useAppStore = defineStore('app', () => {
     notifications,
     theme,
     sidebarVisible,
-    
+
     // Getters
     isLoading,
     hasError,
     isDarkTheme,
-    
+
     // Actions
     setLoading,
     setError,

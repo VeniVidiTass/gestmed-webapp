@@ -36,14 +36,14 @@ export const useAppointmentsStore = defineStore('appointments', () => {
     if (!lastFetched.value) return true
     return Date.now() - lastFetched.value > cacheTimeout
   })
-  
+
   const todayAppointments = computed(() => {
     const today = new Date().toISOString().split('T')[0]
-    return appointments.value.filter(apt => 
+    return appointments.value.filter(apt =>
       apt.appointment_date?.startsWith(today)
     )
   })
-  
+
   const upcomingAppointments = computed(() => {
     const now = new Date()
     return appointments.value.filter(apt => {
@@ -51,11 +51,11 @@ export const useAppointmentsStore = defineStore('appointments', () => {
       return aptDate > now && apt.status !== 'cancelled'
     }).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date))
   })
-  
-  const pendingAppointments = computed(() => 
+
+  const pendingAppointments = computed(() =>
     appointments.value.filter(apt => apt.status === 'pending')
   )
-  
+
   const appointmentsByStatus = computed(() => {
     const grouped = {}
     appointments.value.forEach(apt => {
@@ -67,7 +67,7 @@ export const useAppointmentsStore = defineStore('appointments', () => {
     })
     return grouped
   })
-  
+
   const appointmentsByDoctor = computed(() => {
     const grouped = {}
     appointments.value.forEach(apt => {
@@ -85,7 +85,7 @@ export const useAppointmentsStore = defineStore('appointments', () => {
 
     if (filters.value.search) {
       const search = filters.value.search.toLowerCase()
-      filtered = filtered.filter(apt => 
+      filtered = filtered.filter(apt =>
         apt.patient_name?.toLowerCase().includes(search) ||
         apt.doctor_name?.toLowerCase().includes(search) ||
         apt.notes?.toLowerCase().includes(search)
@@ -105,13 +105,13 @@ export const useAppointmentsStore = defineStore('appointments', () => {
     }
 
     if (filters.value.dateFrom) {
-      filtered = filtered.filter(apt => 
+      filtered = filtered.filter(apt =>
         new Date(apt.appointment_date) >= new Date(filters.value.dateFrom)
       )
     }
 
     if (filters.value.dateTo) {
-      filtered = filtered.filter(apt => 
+      filtered = filtered.filter(apt =>
         new Date(apt.appointment_date) <= new Date(filters.value.dateTo)
       )
     }
@@ -144,7 +144,7 @@ export const useAppointmentsStore = defineStore('appointments', () => {
       })
 
       const response = await apiService.getAppointments(queryParams)
-      
+
       // L'API restituisce direttamente l'array di appuntamenti
       if (Array.isArray(response)) {
         appointments.value = response
@@ -164,9 +164,9 @@ export const useAppointmentsStore = defineStore('appointments', () => {
           totalPages: response.totalPages || 0
         }
       }
-      
+
       lastFetched.value = Date.now()
-      
+
       return appointments.value
     } catch (error) {
       appStore.handleApiError(error)
@@ -194,13 +194,13 @@ export const useAppointmentsStore = defineStore('appointments', () => {
 
       const appointment = await apiService.getAppointment(id)
       currentAppointment.value = appointment
-      
+
       // Update in appointments array if exists
       const index = appointments.value.findIndex(a => a.id === id)
       if (index !== -1) {
         appointments.value[index] = appointment
       }
-      
+
       return appointment
     } catch (error) {
       appStore.handleApiError(error)
@@ -216,25 +216,25 @@ export const useAppointmentsStore = defineStore('appointments', () => {
       appStore.clearError()
 
       const newAppointment = await apiService.createAppointment(appointmentData)
-      
+
       // Add to appointments array
       appointments.value.unshift(newAppointment)
       pagination.value.total += 1
-      
+
       // Update dashboard if it's for today
       const today = new Date().toISOString().split('T')[0]
       if (newAppointment.appointment_date?.startsWith(today)) {
         dashboardStore.updateTodayAppointments(1)
       }
-      
+
       dashboardStore.addRecentAppointment(newAppointment)
-      
+
       appStore.addNotification({
         severity: 'success',
         summary: 'Successo',
         detail: 'Appuntamento creato con successo'
       })
-      
+
       return newAppointment
     } catch (error) {
       appStore.handleApiError(error)
@@ -250,24 +250,24 @@ export const useAppointmentsStore = defineStore('appointments', () => {
       appStore.clearError()
 
       const updatedAppointment = await apiService.updateAppointment(id, appointmentData)
-      
+
       // Update in appointments array
       const index = appointments.value.findIndex(a => a.id === id)
       if (index !== -1) {
         appointments.value[index] = updatedAppointment
       }
-      
+
       // Update current appointment if it's the same
       if (currentAppointment.value?.id === id) {
         currentAppointment.value = updatedAppointment
       }
-      
+
       appStore.addNotification({
         severity: 'success',
         summary: 'Successo',
         detail: 'Appuntamento aggiornato con successo'
       })
-      
+
       return updatedAppointment
     } catch (error) {
       appStore.handleApiError(error)
@@ -283,32 +283,32 @@ export const useAppointmentsStore = defineStore('appointments', () => {
       appStore.clearError()
 
       await apiService.deleteAppointment(id)
-      
+
       // Remove from appointments array
       const index = appointments.value.findIndex(a => a.id === id)
       if (index !== -1) {
         const deletedAppointment = appointments.value[index]
         appointments.value.splice(index, 1)
         pagination.value.total -= 1
-        
+
         // Update dashboard if it was for today
         const today = new Date().toISOString().split('T')[0]
         if (deletedAppointment.appointment_date?.startsWith(today)) {
           dashboardStore.updateTodayAppointments(-1)
         }
       }
-      
+
       // Clear current appointment if it's the same
       if (currentAppointment.value?.id === id) {
         currentAppointment.value = null
       }
-      
+
       appStore.addNotification({
         severity: 'success',
         summary: 'Successo',
         detail: 'Appuntamento eliminato con successo'
       })
-      
+
       return true
     } catch (error) {
       appStore.handleApiError(error)
@@ -321,20 +321,20 @@ export const useAppointmentsStore = defineStore('appointments', () => {
   async function updateAppointmentStatus(id, status) {
     try {
       const updatedAppointment = await updateAppointment(id, { status })
-      
+
       const statusMessages = {
         'confirmed': 'Appuntamento confermato',
         'cancelled': 'Appuntamento cancellato',
         'completed': 'Appuntamento completato',
         'pending': 'Appuntamento in attesa'
       }
-      
+
       appStore.addNotification({
         severity: status === 'cancelled' ? 'warn' : 'info',
         summary: 'Status aggiornato',
         detail: statusMessages[status] || 'Status appuntamento aggiornato'
       })
-      
+
       return updatedAppointment
     } catch (error) {
       throw error
@@ -373,7 +373,7 @@ export const useAppointmentsStore = defineStore('appointments', () => {
     pagination,
     filters,
     lastFetched,
-    
+
     // Getters
     allAppointments,
     isDataStale,
@@ -383,7 +383,7 @@ export const useAppointmentsStore = defineStore('appointments', () => {
     appointmentsByStatus,
     appointmentsByDoctor,
     filteredAppointments,
-    
+
     // Actions
     fetchAppointments,
     fetchAppointment,

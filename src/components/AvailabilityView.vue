@@ -4,14 +4,10 @@
       <h4>Dr. {{ doctor.name }}</h4>
       <p class="specialization">{{ doctor.specialization }}</p>
     </div>
-    
+
     <div class="availability-schedule">
-      <div 
-        v-for="day in daysOfWeek" 
-        :key="day.value"
-        class="schedule-day"
-        :class="{ 'day-available': isDayAvailable(day.value), 'day-unavailable': !isDayAvailable(day.value) }"
-      >
+      <div v-for="day in daysOfWeek" :key="day.value" class="schedule-day"
+        :class="{ 'day-available': isDayAvailable(day.value), 'day-unavailable': !isDayAvailable(day.value) }">
         <div class="day-name">
           {{ day.label }}
         </div>
@@ -27,7 +23,7 @@
         </div>
       </div>
     </div>
-    
+
     <div class="availability-summary">
       <div class="summary-item">
         <i class="pi pi-calendar"></i>
@@ -62,10 +58,10 @@ export default defineComponent({
       { value: 'saturday', label: 'Sabato' },
       { value: 'sunday', label: 'Domenica' }
     ]
-    
+
     const parseAvailability = () => {
       if (!props.doctor?.availability) return {}
-      
+
       try {
         if (typeof props.doctor.availability === 'string') {
           return JSON.parse(props.doctor.availability)
@@ -76,50 +72,50 @@ export default defineComponent({
         return {}
       }
     }
-    
+
     const availability = computed(() => parseAvailability())
-    
+
     const isDayAvailable = (day) => {
       return availability.value[day] && availability.value[day] !== ''
     }
-    
+
     const getDayHours = (day) => {
       const dayAvailability = availability.value[day]
       if (!dayAvailability) return ''
-      
+
       if (typeof dayAvailability === 'string') {
         // Format: "09:00-17:00"
         return dayAvailability.replace('-', ' - ')
       }
-      
+
       if (dayAvailability.start && dayAvailability.end) {
         return `${dayAvailability.start} - ${dayAvailability.end}`
       }
-      
+
       return ''
     }
-    
+
     const calculateHours = (timeRange) => {
       if (!timeRange) return 0
-      
+
       try {
         const [start, end] = timeRange.split('-')
         const [startHour, startMin] = start.split(':').map(Number)
         const [endHour, endMin] = end.split(':').map(Number)
-        
+
         const startTotalMin = startHour * 60 + startMin
         const endTotalMin = endHour * 60 + endMin
-        
+
         return (endTotalMin - startTotalMin) / 60
       } catch (error) {
         return 0
       }
     }
-    
+
     const availableDaysCount = computed(() => {
       return daysOfWeek.filter(day => isDayAvailable(day.value)).length
     })
-    
+
     const totalWeeklyHours = computed(() => {
       let total = 0
       daysOfWeek.forEach(day => {
@@ -132,7 +128,7 @@ export default defineComponent({
       })
       return Math.round(total * 10) / 10 // Round to 1 decimal place
     })
-    
+
     return {
       daysOfWeek,
       isDayAvailable,
@@ -255,13 +251,13 @@ export default defineComponent({
     flex-direction: column;
     gap: 0.75rem;
   }
-  
+
   .schedule-day {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .day-hours {
     width: 100%;
     justify-content: flex-start;

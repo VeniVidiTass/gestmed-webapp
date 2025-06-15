@@ -5,103 +5,60 @@
       <div class="page-header">
         <div class="filters-section">
           <div class="filter-group">
-            <label for="doctor-filter" class="filter-label">Medico:</label>            <Select
-              id="doctor-filter"
-              v-model="selectedDoctor"
-              :options="doctorOptions"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Tutti i medici"
-              @change="loadAppointments"
-              :showClear="true"
-            />
-          </div>            <div class="filter-group">
-            <label for="date-filter" class="filter-label">Data:</label>            <Calendar
-              id="date-filter"
-              v-model="selectedDate"
-              dateFormat="dd/mm/yy"
-              :showIcon="true"
-              placeholder="Seleziona data"
-              @date-select="loadAppointments"
-              :showClear="true"
-            />
+            <label for="doctor-filter" class="filter-label">Medico:</label> <Select id="doctor-filter"
+              v-model="selectedDoctor" :options="doctorOptions" optionLabel="label" optionValue="value"
+              placeholder="Tutti i medici" @change="loadAppointments" :showClear="true" />
+          </div>
+          <div class="filter-group">
+            <label for="date-filter" class="filter-label">Data:</label>
+            <Calendar id="date-filter" v-model="selectedDate" dateFormat="dd/mm/yy" :showIcon="true"
+              placeholder="Seleziona data" @date-select="loadAppointments" :showClear="true" />
           </div>
         </div>
-        
-        <Button 
-          label="Nuovo Appuntamento" 
-          icon="pi pi-plus"
-          class="p-button-primary add-appointment-btn"
-          @click="openNewAppointmentDialog"
-        />
+
+        <Button label="Nuovo Appuntamento" icon="pi pi-plus" class="p-button-primary add-appointment-btn"
+          @click="openNewAppointmentDialog" />
       </div>
 
       <!-- Calendar View -->
       <div class="calendar-container custom-card">
         <div class="calendar-header">
           <div class="calendar-navigation">
-            <Button 
-              icon="pi pi-chevron-left" 
-              class="p-button-text p-button-sm"
-              @click="previousWeek"
-            />
+            <Button icon="pi pi-chevron-left" class="p-button-text p-button-sm" @click="previousWeek" />
             <h3 class="calendar-title">
               {{ formatWeekRange(currentWeekStart) }}
             </h3>
-            <Button 
-              icon="pi pi-chevron-right" 
-              class="p-button-text p-button-sm"
-              @click="nextWeek"
-            />
+            <Button icon="pi pi-chevron-right" class="p-button-text p-button-sm" @click="nextWeek" />
           </div>
-          
+
           <div class="view-controls">
-            <Button 
-              label="Oggi" 
-              class="p-button-text p-button-sm"
-              @click="goToToday"
-            />
+            <Button label="Oggi" class="p-button-text p-button-sm" @click="goToToday" />
           </div>
         </div>
-        
+
         <div class="calendar-grid">
           <!-- Time slots column -->
           <div class="time-column">
             <div class="time-header">Orario</div>
-            <div 
-              v-for="hour in timeSlots" 
-              :key="hour"
-              class="time-slot"
-            >
+            <div v-for="hour in timeSlots" :key="hour" class="time-slot">
               {{ hour }}:00
             </div>
           </div>
-          
+
           <!-- Days columns -->
-          <div 
-            v-for="day in weekDays" 
-            :key="day.date"
-            class="day-column"
-          >            <div class="day-header">
+          <div v-for="day in weekDays" :key="day.date" class="day-column">
+            <div class="day-header">
               <div class="day-name">{{ day.name }}</div>
               <div class="day-date">{{ day.displayDate }}</div>
             </div>
-            
+
             <div class="day-slots">
-              <div 
-                v-for="hour in timeSlots" 
-                :key="`${day.date}-${hour}`"
-                class="hour-slot"
-                @click="openAppointmentDialog(day.date, hour)"
-              >
+              <div v-for="hour in timeSlots" :key="`${day.date}-${hour}`" class="hour-slot"
+                @click="openAppointmentDialog(day.date, hour)">
                 <!-- Appointments for this hour -->
-                <div 
-                  v-for="appointment in getAppointmentsForSlot(day.date, hour)"
-                  :key="appointment.id"
-                  class="appointment-card"
-                  :class="getAppointmentClass(appointment)"
-                  @click.stop="viewAppointment(appointment)"
-                >
+                <div v-for="appointment in getAppointmentsForSlot(day.date, hour)" :key="appointment.id"
+                  class="appointment-card" :class="getAppointmentClass(appointment)"
+                  @click.stop="viewAppointment(appointment)">
                   <div class="appointment-time">
                     {{ formatTime(appointment.appointment_date) }}
                   </div>
@@ -119,33 +76,17 @@
       </div>
 
       <!-- Appointment Dialog -->
-      <Dialog 
-        v-model:visible="appointmentDialogVisible" 
-        :modal="true"
+      <Dialog v-model:visible="appointmentDialogVisible" :modal="true"
         :header="dialogMode === 'create' ? 'Nuovo Appuntamento' : dialogMode === 'edit' ? 'Modifica Appuntamento' : 'Dettagli Appuntamento'"
-        :style="{ width: '600px' }"
-        :maximizable="false"
-        :closable="true"
-      >
-        <AppointmentForm 
-          :appointment="selectedAppointment"
-          :mode="dialogMode"
-          :doctors="doctors"
-          :patients="patients"
-          :preselectedDate="preselectedDate"
-          :preselectedHour="preselectedHour"
-          @save="handleSaveAppointment"
-          @cancel="closeAppointmentDialog"
-        />
+        :style="{ width: '600px' }" :maximizable="false" :closable="true">
+        <AppointmentForm :appointment="selectedAppointment" :mode="dialogMode" :doctors="doctors" :patients="patients"
+          :preselectedDate="preselectedDate" :preselectedHour="preselectedHour" @save="handleSaveAppointment"
+          @cancel="closeAppointmentDialog" />
       </Dialog>
 
       <!-- Floating Action Button -->
-      <Button 
-        icon="pi pi-plus" 
-        class="p-button-rounded p-button-primary floating-button"
-        @click="openNewAppointmentDialog"
-        v-tooltip.left="'Nuovo Appuntamento'"
-      />
+      <Button icon="pi pi-plus" class="p-button-rounded p-button-primary floating-button"
+        @click="openNewAppointmentDialog" v-tooltip.left="'Nuovo Appuntamento'" />
     </div>
   </DashboardLayout>
 </template>
@@ -162,7 +103,7 @@ import Dialog from 'primevue/dialog'
 import { apiService } from '../services/api.js'
 
 export default defineComponent({
-  name: 'CalendarView',  components: {
+  name: 'CalendarView', components: {
     DashboardLayout,
     AppointmentForm,
     Button,
@@ -172,31 +113,31 @@ export default defineComponent({
   },
   setup() {
     const toast = useToast()
-    
+
     const appointments = ref([])
     const doctors = ref([])
     const patients = ref([])
     const loading = ref(false)
-    
+
     const selectedDoctor = ref(null)
     const selectedDate = ref(null)
     const currentWeekStart = ref(getStartOfWeek(new Date()))
-    
+
     const appointmentDialogVisible = ref(false)
     const selectedAppointment = ref(null)
     const dialogMode = ref('view')
     const preselectedDate = ref(null)
     const preselectedHour = ref(null)
-    
+
     const timeSlots = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
-    
+
     function getStartOfWeek(date) {
       const d = new Date(date)
       const day = d.getDay()
       const diff = d.getDate() - day + (day === 0 ? -6 : 1) // Adjust for Monday start
       return new Date(d.setDate(diff))
     }
-    
+
     const doctorOptions = computed(() => [
       { label: 'Tutti i medici', value: null },
       ...doctors.value.map(doctor => ({
@@ -204,38 +145,38 @@ export default defineComponent({
         value: doctor.id
       }))
     ])
-    
+
     const weekDays = computed(() => {
       const days = []
       const start = new Date(currentWeekStart.value)
-      
+
       for (let i = 0; i < 7; i++) {
         const date = new Date(start)
         date.setDate(start.getDate() + i)
-          days.push({
+        days.push({
           name: date.toLocaleDateString('it-IT', { weekday: 'short' }),
           date: date.toISOString().split('T')[0],
           displayDate: date.toLocaleDateString('it-IT'),
           fullDate: new Date(date)
         })
       }
-      
+
       return days
     })
-    
+
     const loadAppointments = async () => {
       try {
         loading.value = true
         const params = {}
-        
+
         if (selectedDoctor.value) {
           params.doctor_id = selectedDoctor.value
         }
-        
+
         if (selectedDate.value) {
           params.date = selectedDate.value.toISOString().split('T')[0]
         }
-        
+
         const data = await apiService.getAppointments(params)
         appointments.value = data
       } catch (error) {
@@ -250,7 +191,7 @@ export default defineComponent({
         loading.value = false
       }
     }
-    
+
     const loadDoctors = async () => {
       try {
         const data = await apiService.getDoctors()
@@ -259,7 +200,7 @@ export default defineComponent({
         console.error('Error loading doctors:', error)
       }
     }
-    
+
     const loadPatients = async () => {
       try {
         const data = await apiService.getPatients()
@@ -268,17 +209,17 @@ export default defineComponent({
         console.error('Error loading patients:', error)
       }
     }
-    
+
     const getAppointmentsForSlot = (date, hour) => {
       return appointments.value.filter(appointment => {
         const appointmentDate = new Date(appointment.appointment_date)
         const appointmentDateStr = appointmentDate.toISOString().split('T')[0]
         const appointmentHour = appointmentDate.getHours()
-        
+
         return appointmentDateStr === date && appointmentHour === hour
       })
     }
-    
+
     const getAppointmentClass = (appointment) => {
       const statusClasses = {
         'scheduled': 'appointment-scheduled',
@@ -288,41 +229,41 @@ export default defineComponent({
       }
       return statusClasses[appointment.status] || 'appointment-scheduled'
     }
-    
+
     const formatTime = (dateString) => {
       return new Date(dateString).toLocaleTimeString('it-IT', {
         hour: '2-digit',
         minute: '2-digit'
       })
     }
-    
+
     const formatWeekRange = (startDate) => {
       const start = new Date(startDate)
       const end = new Date(start)
       end.setDate(start.getDate() + 6)
-      
+
       return `${start.toLocaleDateString('it-IT')} - ${end.toLocaleDateString('it-IT')}`
     }
-    
+
     const previousWeek = () => {
       const newStart = new Date(currentWeekStart.value)
       newStart.setDate(newStart.getDate() - 7)
       currentWeekStart.value = newStart
       loadAppointments()
     }
-    
+
     const nextWeek = () => {
       const newStart = new Date(currentWeekStart.value)
       newStart.setDate(newStart.getDate() + 7)
       currentWeekStart.value = newStart
       loadAppointments()
     }
-    
+
     const goToToday = () => {
       currentWeekStart.value = getStartOfWeek(new Date())
       loadAppointments()
     }
-    
+
     const openNewAppointmentDialog = () => {
       selectedAppointment.value = null
       preselectedDate.value = null
@@ -330,7 +271,7 @@ export default defineComponent({
       dialogMode.value = 'create'
       appointmentDialogVisible.value = true
     }
-    
+
     const openAppointmentDialog = (date, hour) => {
       selectedAppointment.value = null
       preselectedDate.value = date
@@ -338,13 +279,13 @@ export default defineComponent({
       dialogMode.value = 'create'
       appointmentDialogVisible.value = true
     }
-    
+
     const viewAppointment = (appointment) => {
       selectedAppointment.value = { ...appointment }
       dialogMode.value = 'view'
       appointmentDialogVisible.value = true
     }
-    
+
     const handleSaveAppointment = async (appointmentData) => {
       try {
         if (dialogMode.value === 'create') {
@@ -376,7 +317,7 @@ export default defineComponent({
         })
       }
     }
-    
+
     const closeAppointmentDialog = () => {
       appointmentDialogVisible.value = false
       selectedAppointment.value = null
@@ -384,13 +325,13 @@ export default defineComponent({
       preselectedDate.value = null
       preselectedHour.value = null
     }
-    
+
     onMounted(() => {
       loadDoctors()
       loadPatients()
       loadAppointments()
     })
-    
+
     return {
       appointments,
       doctors,
@@ -637,7 +578,7 @@ export default defineComponent({
   .calendar-grid {
     grid-template-columns: 60px repeat(7, 1fr);
   }
-  
+
   .time-slot {
     font-size: 0.625rem;
   }
@@ -648,34 +589,34 @@ export default defineComponent({
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .filters-section {
     justify-content: space-between;
   }
-  
+
   .calendar-grid {
     grid-template-columns: 50px repeat(7, 1fr);
     min-height: 400px;
   }
-  
+
   .hour-slot {
     height: 40px;
   }
-  
+
   .time-header,
   .day-header {
     height: 40px;
   }
-  
+
   .appointment-card {
     font-size: 0.625rem;
     padding: 0.25rem;
   }
-  
+
   .day-name {
     font-size: 0.625rem;
   }
-  
+
   .day-date {
     font-size: 0.75rem;
   }

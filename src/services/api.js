@@ -52,7 +52,7 @@ api.interceptors.response.use(
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
         return cached.data
       }
-      
+
       // Cache new response
       requestCache.set(response.config.cacheKey, {
         data: response.data,
@@ -87,10 +87,10 @@ api.interceptors.response.use(
     // Retry logic for network errors
     if (!error.response && !originalRequest._retry) {
       originalRequest._retry = true
-      
+
       // Wait 1 second before retry
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       return api(originalRequest)
     }
 
@@ -138,18 +138,18 @@ export const apiService = {
   },
 
   getPatient: (id) => api.get(`/patients/${id}`),
-  
+
   createPatient: (data) => {
     clearCacheByPattern('/patients')
     return api.post('/patients', data)
   },
-  
+
   updatePatient: (id, data) => {
     clearCacheByPattern('/patients')
     clearCacheByPattern(`/patients/${id}`)
     return api.put(`/patients/${id}`, data)
   },
-  
+
   deletePatient: (id) => {
     clearCacheByPattern('/patients')
     clearCacheByPattern(`/patients/${id}`)
@@ -167,18 +167,18 @@ export const apiService = {
   },
 
   getDoctor: (id) => api.get(`/doctors/${id}`),
-  
+
   createDoctor: (data) => {
     clearCacheByPattern('/doctors')
     return api.post('/doctors', data)
   },
-  
+
   updateDoctor: (id, data) => {
     clearCacheByPattern('/doctors')
     clearCacheByPattern(`/doctors/${id}`)
     return api.put(`/doctors/${id}`, data)
   },
-  
+
   deleteDoctor: (id) => {
     clearCacheByPattern('/doctors')
     clearCacheByPattern(`/doctors/${id}`)
@@ -196,20 +196,20 @@ export const apiService = {
   },
 
   getAppointment: (id) => api.get(`/appointments/${id}`),
-  
+
   createAppointment: (data) => {
     clearCacheByPattern('/appointments')
     clearCacheByPattern('/dashboard')
     return api.post('/appointments', data)
   },
-  
+
   updateAppointment: (id, data) => {
     clearCacheByPattern('/appointments')
     clearCacheByPattern(`/appointments/${id}`)
     clearCacheByPattern('/dashboard')
     return api.put(`/appointments/${id}`, data)
   },
-  
+
   deleteAppointment: (id) => {
     clearCacheByPattern('/appointments')
     clearCacheByPattern(`/appointments/${id}`)

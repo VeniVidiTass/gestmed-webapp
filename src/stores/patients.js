@@ -37,7 +37,7 @@ export const usePatientsStore = defineStore('patients', () => {
 
     if (filters.value.search) {
       const search = filters.value.search.toLowerCase()
-      filtered = filtered.filter(patient => 
+      filtered = filtered.filter(patient =>
         patient.name?.toLowerCase().includes(search) ||
         patient.email?.toLowerCase().includes(search) ||
         patient.phone?.includes(search) ||
@@ -77,8 +77,8 @@ export const usePatientsStore = defineStore('patients', () => {
 
       if (filters.value.status) {
         queryParams.status = filters.value.status
-      }      const response = await apiService.getPatients(queryParams)
-      
+      } const response = await apiService.getPatients(queryParams)
+
       // L'API restituisce direttamente l'array di pazienti
       if (Array.isArray(response)) {
         patients.value = response
@@ -98,9 +98,9 @@ export const usePatientsStore = defineStore('patients', () => {
           totalPages: response.totalPages || 0
         }
       }
-      
+
       lastFetched.value = Date.now()
-      
+
       return patients.value
     } catch (error) {
       appStore.handleApiError(error)
@@ -128,13 +128,13 @@ export const usePatientsStore = defineStore('patients', () => {
 
       const patient = await apiService.getPatient(id)
       currentPatient.value = patient
-      
+
       // Update in patients array if exists
       const index = patients.value.findIndex(p => p.id === id)
       if (index !== -1) {
         patients.value[index] = patient
       }
-      
+
       return patient
     } catch (error) {
       appStore.handleApiError(error)
@@ -150,21 +150,21 @@ export const usePatientsStore = defineStore('patients', () => {
       appStore.clearError()
 
       const newPatient = await apiService.createPatient(patientData)
-      
+
       // Add to patients array
       patients.value.unshift(newPatient)
       pagination.value.total += 1
-      
+
       // Update dashboard
       dashboardStore.updatePatientCount(1)
       dashboardStore.addRecentPatient(newPatient)
-      
+
       appStore.addNotification({
         severity: 'success',
         summary: 'Successo',
         detail: 'Paziente creato con successo'
       })
-      
+
       return newPatient
     } catch (error) {
       appStore.handleApiError(error)
@@ -180,24 +180,24 @@ export const usePatientsStore = defineStore('patients', () => {
       appStore.clearError()
 
       const updatedPatient = await apiService.updatePatient(id, patientData)
-      
+
       // Update in patients array
       const index = patients.value.findIndex(p => p.id === id)
       if (index !== -1) {
         patients.value[index] = updatedPatient
       }
-      
+
       // Update current patient if it's the same
       if (currentPatient.value?.id === id) {
         currentPatient.value = updatedPatient
       }
-      
+
       appStore.addNotification({
         severity: 'success',
         summary: 'Successo',
         detail: 'Paziente aggiornato con successo'
       })
-      
+
       return updatedPatient
     } catch (error) {
       appStore.handleApiError(error)
@@ -213,28 +213,28 @@ export const usePatientsStore = defineStore('patients', () => {
       appStore.clearError()
 
       await apiService.deletePatient(id)
-      
+
       // Remove from patients array
       const index = patients.value.findIndex(p => p.id === id)
       if (index !== -1) {
         patients.value.splice(index, 1)
         pagination.value.total -= 1
       }
-      
+
       // Clear current patient if it's the same
       if (currentPatient.value?.id === id) {
         currentPatient.value = null
       }
-      
+
       // Update dashboard
       dashboardStore.updatePatientCount(-1)
-      
+
       appStore.addNotification({
         severity: 'success',
         summary: 'Successo',
         detail: 'Paziente eliminato con successo'
       })
-      
+
       return true
     } catch (error) {
       appStore.handleApiError(error)
@@ -268,12 +268,12 @@ export const usePatientsStore = defineStore('patients', () => {
     pagination,
     filters,
     lastFetched,
-    
+
     // Getters
     allPatients,
     isDataStale,
     filteredPatients,
-    
+
     // Actions
     fetchPatients,
     fetchPatient,

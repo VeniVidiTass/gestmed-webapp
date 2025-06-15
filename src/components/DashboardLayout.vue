@@ -7,51 +7,32 @@
           <i class="pi pi-heart text-primary"></i>
           <span class="logo-text text-primary">GestMed</span>
         </div>
-        <Button 
-          icon="pi pi-times" 
-          class="p-button-text sidebar-close-btn"
-          @click="closeSidebar"
-          v-if="isMobile"
-        />
+        <Button icon="pi pi-times" class="p-button-text sidebar-close-btn" @click="closeSidebar" v-if="isMobile" />
       </div>
-      
+
       <div class="sidebar-content">
         <nav class="nav-menu">
-          <router-link 
-            v-for="item in menuItems" 
-            :key="item.name"
-            :to="item.route" 
-            class="nav-item"
-            :class="{ 'nav-item-active': $route.name === item.name }"
-          >
+          <router-link v-for="item in menuItems" :key="item.name" :to="item.route" class="nav-item"
+            :class="{ 'nav-item-active': $route.name === item.name }">
             <i :class="item.icon"></i>
             <span class="nav-label">{{ item.label }}</span>
           </router-link>
         </nav>
       </div>
-      
+
       <div class="sidebar-footer">
-        <Button 
-          label="Logout" 
-          icon="pi pi-sign-out" 
-          class="p-button-text logout-btn"
-          @click="logout"
-        />
+        <Button label="Logout" icon="pi pi-sign-out" class="p-button-text logout-btn" @click="logout" />
       </div>
     </div>
-    
+
     <!-- Main Content -->
     <div class="layout-content">
       <!-- Mobile Header -->
       <div class="mobile-header" v-if="isMobile">
-        <Button 
-          icon="pi pi-bars" 
-          class="p-button-text menu-toggle"
-          @click="toggleSidebar"
-        />
+        <Button icon="pi pi-bars" class="p-button-text menu-toggle" @click="toggleSidebar" />
         <h2 class="page-title">{{ currentPageTitle }}</h2>
       </div>
-      
+
       <!-- Desktop Header -->
       <div class="desktop-header" v-else>
         <h2 class="page-title">{{ currentPageTitle }}</h2>
@@ -62,19 +43,15 @@
           </span>
         </div>
       </div>
-      
+
       <!-- Page Content -->
       <div class="content-area">
         <slot />
       </div>
     </div>
-    
+
     <!-- Mobile Overlay -->
-    <div 
-      class="mobile-overlay" 
-      v-if="isMobile && sidebarVisible"
-      @click="closeSidebar"
-    ></div>
+    <div class="mobile-overlay" v-if="isMobile && sidebarVisible" @click="closeSidebar"></div>
   </div>
 </template>
 
@@ -93,48 +70,48 @@ export default defineComponent({
     const route = useRoute()
     const sidebarVisible = ref(false)
     const windowWidth = ref(window.innerWidth)
-    
+
     const menuItems = [
       { name: 'Dashboard', label: 'Dashboard', route: '/dashboard', icon: 'pi pi-home' },
       { name: 'Patients', label: 'Pazienti', route: '/patients', icon: 'pi pi-users' },
       { name: 'Doctors', label: 'Medici', route: '/doctors', icon: 'pi pi-user-plus' },
       { name: 'Calendar', label: 'Calendario', route: '/calendar', icon: 'pi pi-calendar' }
     ]
-    
+
     const isMobile = computed(() => windowWidth.value <= 768)
-    
+
     const currentPageTitle = computed(() => {
       const currentItem = menuItems.find(item => item.name === route.name)
       return currentItem ? currentItem.label : 'GestMed'
     })
-    
+
     const toggleSidebar = () => {
       sidebarVisible.value = !sidebarVisible.value
     }
-    
+
     const closeSidebar = () => {
       sidebarVisible.value = false
     }
-    
+
     const logout = () => {
       router.push('/')
     }
-    
+
     const handleResize = () => {
       windowWidth.value = window.innerWidth
       if (!isMobile.value) {
         sidebarVisible.value = false
       }
     }
-    
+
     onMounted(() => {
       window.addEventListener('resize', handleResize)
     })
-    
+
     onUnmounted(() => {
       window.removeEventListener('resize', handleResize)
     })
-    
+
     return {
       menuItems,
       sidebarVisible,

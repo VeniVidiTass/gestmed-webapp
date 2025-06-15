@@ -4,98 +4,48 @@
       <div class="form-grid">
         <div class="form-field">
           <label for="name" class="field-label">Nome Completo *</label>
-          <InputText 
-            id="name"
-            v-model="formData.name" 
-            :disabled="mode === 'view'"
-            :class="{ 'p-invalid': errors.name }"
-            placeholder="Inserisci nome completo"
-          />
+          <InputText id="name" v-model="formData.name" :disabled="mode === 'view'" :class="{ 'p-invalid': errors.name }"
+            placeholder="Inserisci nome completo" />
           <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
         </div>
 
         <div class="form-field">
           <label for="email" class="field-label">Email *</label>
-          <InputText 
-            id="email"
-            v-model="formData.email" 
-            type="email"
-            :disabled="mode === 'view'"
-            :class="{ 'p-invalid': errors.email }"
-            placeholder="nome@email.com"
-          />
+          <InputText id="email" v-model="formData.email" type="email" :disabled="mode === 'view'"
+            :class="{ 'p-invalid': errors.email }" placeholder="nome@email.com" />
           <small v-if="errors.email" class="p-error">{{ errors.email }}</small>
         </div>
 
         <div class="form-field">
           <label for="phone" class="field-label">Telefono</label>
-          <InputText 
-            id="phone"
-            v-model="formData.phone" 
-            :disabled="mode === 'view'"
-            placeholder="+39 123 456 7890"
-          />
+          <InputText id="phone" v-model="formData.phone" :disabled="mode === 'view'" placeholder="+39 123 456 7890" />
         </div>
 
         <div class="form-field">
           <label for="date_of_birth" class="field-label">Data di Nascita</label>
-          <Calendar
-            id="date_of_birth"
-            v-model="formData.date_of_birth"
-            :disabled="mode === 'view'"
-            dateFormat="dd/mm/yy"
-            :showIcon="true"
-            placeholder="gg/mm/aaaa"
-            :maxDate="new Date()"
-          />
+          <Calendar id="date_of_birth" v-model="formData.date_of_birth" :disabled="mode === 'view'"
+            dateFormat="dd/mm/yy" :showIcon="true" placeholder="gg/mm/aaaa" :maxDate="new Date()" />
         </div>
 
         <div class="form-field form-field-full">
           <label for="address" class="field-label">Indirizzo</label>
-          <Textarea 
-            id="address"
-            v-model="formData.address" 
-            :disabled="mode === 'view'"
-            rows="3"
-            placeholder="Inserisci indirizzo completo"
-          />
+          <Textarea id="address" v-model="formData.address" :disabled="mode === 'view'" rows="3"
+            placeholder="Inserisci indirizzo completo" />
         </div>
 
         <div class="form-field form-field-full">
           <label for="medical_history" class="field-label">Storia Medica</label>
-          <Textarea 
-            id="medical_history"
-            v-model="formData.medical_history" 
-            :disabled="mode === 'view'"
-            rows="4"
-            placeholder="Note mediche, allergie, patologie croniche..."
-          />
+          <Textarea id="medical_history" v-model="formData.medical_history" :disabled="mode === 'view'" rows="4"
+            placeholder="Note mediche, allergie, patologie croniche..." />
         </div>
       </div>
 
       <!-- Action buttons -->
       <div class="form-actions">
-        <Button 
-          label="Annulla" 
-          icon="pi pi-times"
-          class="p-button-text"
-          type="button"
-          @click="$emit('cancel')"
-        />
-        <Button 
-          v-if="mode === 'view'"
-          label="Modifica" 
-          icon="pi pi-pencil"
-          type="button"
-          @click="switchToEditMode"
-        />
-        <Button 
-          v-if="mode !== 'view'"
-          :label="mode === 'create' ? 'Crea Paziente' : 'Salva Modifiche'" 
-          :icon="mode === 'create' ? 'pi pi-plus' : 'pi pi-check'"
-          type="submit"
-          :loading="loading"
-        />
+        <Button label="Annulla" icon="pi pi-times" class="p-button-text" type="button" @click="$emit('cancel')" />
+        <Button v-if="mode === 'view'" label="Modifica" icon="pi pi-pencil" type="button" @click="switchToEditMode" />
+        <Button v-if="mode !== 'view'" :label="mode === 'create' ? 'Crea Paziente' : 'Salva Modifiche'"
+          :icon="mode === 'create' ? 'pi pi-plus' : 'pi pi-check'" type="submit" :loading="loading" />
       </div>
     </form>
   </div>
@@ -131,7 +81,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const loading = ref(false)
     const errors = ref({})
-    
+
     const formData = ref({
       name: '',
       email: '',
@@ -140,7 +90,7 @@ export default defineComponent({
       address: '',
       medical_history: ''
     })
-    
+
     // Watch for patient changes
     watch(() => props.patient, (newPatient) => {
       if (newPatient) {
@@ -165,14 +115,14 @@ export default defineComponent({
       }
       errors.value = {}
     }, { immediate: true })
-    
+
     const validateForm = () => {
       errors.value = {}
-      
+
       if (!formData.value.name.trim()) {
         errors.value.name = 'Il nome è obbligatorio'
       }
-      
+
       if (!formData.value.email.trim()) {
         errors.value.email = 'L\'email è obbligatoria'
       } else {
@@ -181,24 +131,24 @@ export default defineComponent({
           errors.value.email = 'Formato email non valido'
         }
       }
-      
+
       return Object.keys(errors.value).length === 0
     }
-    
+
     const handleSubmit = async () => {
       if (!validateForm()) {
         return
       }
-      
+
       try {
         loading.value = true
-        
+
         const submitData = {
           ...formData.value,
-          date_of_birth: formData.value.date_of_birth ? 
+          date_of_birth: formData.value.date_of_birth ?
             formData.value.date_of_birth.toISOString().split('T')[0] : null
         }
-        
+
         emit('save', submitData)
       } catch (error) {
         console.error('Error in form submission:', error)
@@ -206,13 +156,13 @@ export default defineComponent({
         loading.value = false
       }
     }
-    
+
     const switchToEditMode = () => {
       // This would typically be handled by the parent component
       // For now, we'll just emit a custom event
       emit('switch-mode', 'edit')
     }
-    
+
     return {
       formData,
       errors,
@@ -266,12 +216,12 @@ export default defineComponent({
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .form-actions {
     flex-direction: column-reverse;
     gap: 0.75rem;
   }
-  
+
   .form-actions .p-button {
     width: 100%;
   }

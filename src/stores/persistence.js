@@ -2,7 +2,7 @@
 export function persistencePlugin({ store }) {
   // Lista degli store che devono essere persistiti
   const persistentStores = ['app']
-  
+
   if (persistentStores.includes(store.$id)) {
     // Carica i dati salvati al mount dello store
     const savedState = localStorage.getItem(`gestmed-${store.$id}`)
@@ -19,7 +19,7 @@ export function persistencePlugin({ store }) {
     store.$subscribe((mutation, state) => {
       // Filtra i dati sensibili e temporanei
       const dataToSave = filterSensitiveData(state, store.$id)
-      
+
       try {
         localStorage.setItem(`gestmed-${store.$id}`, JSON.stringify(dataToSave))
       } catch (error) {
@@ -31,16 +31,16 @@ export function persistencePlugin({ store }) {
 
 function filterSensitiveData(state, storeId) {
   const filtered = { ...state }
-  
+
   // Rimuovi dati sensibili e temporanei
   if (storeId === 'app') {
     delete filtered.loading
     delete filtered.error
     delete filtered.notifications
   }
-  
+
   // Per altri store, rimuovi timestamp di cache
   delete filtered.lastFetched
-  
+
   return filtered
 }

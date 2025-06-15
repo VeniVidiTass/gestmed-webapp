@@ -7,7 +7,7 @@ router.get('/', async (req, res) => {
   try {
     // Get today's date
     const today = new Date().toISOString().split('T')[0];
-    
+
     // Get total patients count
     const patientsResult = await pool.query('SELECT COUNT(*) as total FROM patients');
     const totalPatients = parseInt(patientsResult.rows[0].total);
@@ -48,7 +48,7 @@ router.get('/', async (req, res) => {
       FROM appointments 
       WHERE DATE(appointment_date) >= CURRENT_DATE
       GROUP BY status
-    `);    const dashboardData = {
+    `); const dashboardData = {
       totalPatients,
       totalDoctors,
       todayAppointments,

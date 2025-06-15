@@ -33,7 +33,7 @@ export const useDoctorsStore = defineStore('doctors', () => {
     if (!lastFetched.value) return true
     return Date.now() - lastFetched.value > cacheTimeout
   })
-  const availableDoctors = computed(() => 
+  const availableDoctors = computed(() =>
     doctors.value.filter(doctor => doctor.is_available)
   )
   const doctorsBySpecialization = computed(() => {
@@ -52,7 +52,7 @@ export const useDoctorsStore = defineStore('doctors', () => {
 
     if (filters.value.search) {
       const search = filters.value.search.toLowerCase()
-      filtered = filtered.filter(doctor => 
+      filtered = filtered.filter(doctor =>
         doctor.name?.toLowerCase().includes(search) ||
         doctor.email?.toLowerCase().includes(search) ||
         doctor.specialization?.toLowerCase().includes(search) ||
@@ -61,7 +61,7 @@ export const useDoctorsStore = defineStore('doctors', () => {
     }
 
     if (filters.value.specialization) {
-      filtered = filtered.filter(doctor => 
+      filtered = filtered.filter(doctor =>
         doctor.specialization === filters.value.specialization
       )
     }
@@ -103,8 +103,8 @@ export const useDoctorsStore = defineStore('doctors', () => {
 
       if (filters.value.availability !== '') {
         queryParams.availability = filters.value.availability
-      }      const response = await apiService.getDoctors(queryParams)
-      
+      } const response = await apiService.getDoctors(queryParams)
+
       // L'API restituisce direttamente l'array di dottori
       if (Array.isArray(response)) {
         doctors.value = response
@@ -124,9 +124,9 @@ export const useDoctorsStore = defineStore('doctors', () => {
           totalPages: response.totalPages || 0
         }
       }
-      
+
       lastFetched.value = Date.now()
-      
+
       return doctors.value
     } catch (error) {
       appStore.handleApiError(error)
@@ -154,13 +154,13 @@ export const useDoctorsStore = defineStore('doctors', () => {
 
       const doctor = await apiService.getDoctor(id)
       currentDoctor.value = doctor
-      
+
       // Update in doctors array if exists
       const index = doctors.value.findIndex(d => d.id === id)
       if (index !== -1) {
         doctors.value[index] = doctor
       }
-      
+
       return doctor
     } catch (error) {
       appStore.handleApiError(error)
@@ -176,20 +176,20 @@ export const useDoctorsStore = defineStore('doctors', () => {
       appStore.clearError()
 
       const newDoctor = await apiService.createDoctor(doctorData)
-      
+
       // Add to doctors array
       doctors.value.unshift(newDoctor)
       pagination.value.total += 1
-      
+
       // Update dashboard
       dashboardStore.updateDoctorCount(1)
-      
+
       appStore.addNotification({
         severity: 'success',
         summary: 'Successo',
         detail: 'Dottore creato con successo'
       })
-      
+
       return newDoctor
     } catch (error) {
       appStore.handleApiError(error)
@@ -205,24 +205,24 @@ export const useDoctorsStore = defineStore('doctors', () => {
       appStore.clearError()
 
       const updatedDoctor = await apiService.updateDoctor(id, doctorData)
-      
+
       // Update in doctors array
       const index = doctors.value.findIndex(d => d.id === id)
       if (index !== -1) {
         doctors.value[index] = updatedDoctor
       }
-      
+
       // Update current doctor if it's the same
       if (currentDoctor.value?.id === id) {
         currentDoctor.value = updatedDoctor
       }
-      
+
       appStore.addNotification({
         severity: 'success',
         summary: 'Successo',
         detail: 'Dottore aggiornato con successo'
       })
-      
+
       return updatedDoctor
     } catch (error) {
       appStore.handleApiError(error)
@@ -238,28 +238,28 @@ export const useDoctorsStore = defineStore('doctors', () => {
       appStore.clearError()
 
       await apiService.deleteDoctor(id)
-      
+
       // Remove from doctors array
       const index = doctors.value.findIndex(d => d.id === id)
       if (index !== -1) {
         doctors.value.splice(index, 1)
         pagination.value.total -= 1
       }
-      
+
       // Clear current doctor if it's the same
       if (currentDoctor.value?.id === id) {
         currentDoctor.value = null
       }
-      
+
       // Update dashboard
       dashboardStore.updateDoctorCount(-1)
-      
+
       appStore.addNotification({
         severity: 'success',
         summary: 'Successo',
         detail: 'Dottore eliminato con successo'
       })
-      
+
       return true
     } catch (error) {
       appStore.handleApiError(error)
@@ -272,13 +272,13 @@ export const useDoctorsStore = defineStore('doctors', () => {
   async function updateDoctorAvailability(id, isAvailable) {
     try {
       const updatedDoctor = await updateDoctor(id, { is_available: isAvailable })
-      
+
       appStore.addNotification({
         severity: 'info',
         summary: 'Disponibilità aggiornata',
         detail: `Dr. ${updatedDoctor.name} è ora ${isAvailable ? 'disponibile' : 'non disponibile'}`
       })
-      
+
       return updatedDoctor
     } catch (error) {
       throw error
@@ -309,14 +309,14 @@ export const useDoctorsStore = defineStore('doctors', () => {
     pagination,
     filters,
     lastFetched,
-    
+
     // Getters
     allDoctors,
     isDataStale,
     availableDoctors,
     doctorsBySpecialization,
     filteredDoctors,
-    
+
     // Actions
     fetchDoctors,
     fetchDoctor,
