@@ -72,13 +72,11 @@
             </template>
           </Column>
         </DataTable>
-      </div>
-
-      <!-- Doctor Dialog -->
+      </div>      <!-- Doctor Dialog -->
       <Dialog v-model:visible="doctorDialogVisible" :modal="true"
         :header="dialogMode === 'create' ? 'Nuovo Medico' : dialogMode === 'edit' ? 'Modifica Medico' : 'Dettagli Medico'"
         :style="{ width: '700px' }" :maximizable="false" :closable="true">
-        <DoctorForm :doctor="selectedDoctor" :mode="dialogMode" @save="handleSaveDoctor" @cancel="closeDoctorDialog" />
+        <DoctorForm :doctor="selectedDoctor" :mode="dialogMode" @save="handleSaveDoctor" @cancel="closeDoctorDialog" @switch-mode="handleSwitchMode" />
       </Dialog>
 
       <!-- Availability Dialog -->
@@ -129,13 +127,13 @@ export default defineComponent({
     const doctorDialogVisible = ref(false)
     const availabilityDialogVisible = ref(false)
     const selectedDoctor = ref(null)
-    const dialogMode = ref('view') // 'view', 'edit', 'create'
-
-    let searchTimeout = null
+    const dialogMode = ref('view') // 'view', 'edit', 'create'    let searchTimeout = null
 
     // Computed properties - utilizzo stato centralizzato
     const doctors = computed(() => doctorsStore.filteredDoctors)
-    const loading = computed(() => appStore.isLoading)    // Actions - utilizzo store methods
+    const loading = computed(() => appStore.isLoading)
+
+    // Actions - utilizzo store methods
     const loadDoctors = async (search = '') => {
       try {
         // Aggiorna i filtri nello store
@@ -219,6 +217,10 @@ export default defineComponent({
       }
     }
 
+    const handleSwitchMode = (newMode) => {
+      dialogMode.value = newMode
+    }
+
     const closeDoctorDialog = () => {
       doctorDialogVisible.value = false
       selectedDoctor.value = null
@@ -246,10 +248,10 @@ export default defineComponent({
       searchDoctors,
       openNewDoctorDialog,
       viewDoctor,
-      editDoctor,
-      viewAvailability,
+      editDoctor,      viewAvailability,
       confirmDeleteDoctor,
       handleSaveDoctor,
+      handleSwitchMode,
       closeDoctorDialog
     }
   }

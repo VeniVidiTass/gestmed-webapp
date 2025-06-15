@@ -23,7 +23,7 @@
 
         <div class="form-field">
           <label for="date_of_birth" class="field-label">Data di Nascita</label>
-          <Calendar id="date_of_birth" v-model="formData.date_of_birth" :disabled="mode === 'view'"
+          <DatePicker id="date_of_birth" v-model="formData.date_of_birth" :disabled="mode === 'view'"
             dateFormat="dd/mm/yy" :showIcon="true" placeholder="gg/mm/aaaa" :maxDate="new Date()" />
         </div>
 
@@ -42,7 +42,7 @@
 
       <!-- Action buttons -->
       <div class="form-actions">
-        <Button label="Annulla" icon="pi pi-times" class="p-button-text" type="button" @click="$emit('cancel')" />
+        <Button v-if="mode !== 'view'" label="Annulla" icon="pi pi-times" class="p-button-text" type="button" @click="$emit('cancel')" />
         <Button v-if="mode === 'view'" label="Modifica" icon="pi pi-pencil" type="button" @click="switchToEditMode" />
         <Button v-if="mode !== 'view'" :label="mode === 'create' ? 'Crea Paziente' : 'Salva Modifiche'"
           :icon="mode === 'create' ? 'pi pi-plus' : 'pi pi-check'" type="submit" :loading="loading" />
@@ -55,7 +55,7 @@
 import { defineComponent, ref, watch } from 'vue'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
-import Calendar from 'primevue/calendar'
+import DatePicker from 'primevue/datepicker'
 import Button from 'primevue/button'
 
 export default defineComponent({
@@ -63,7 +63,7 @@ export default defineComponent({
   components: {
     InputText,
     Textarea,
-    Calendar,
+    DatePicker,
     Button
   },
   props: {
@@ -77,7 +77,7 @@ export default defineComponent({
       validator: (value) => ['view', 'edit', 'create'].includes(value)
     }
   },
-  emits: ['save', 'cancel'],
+  emits: ['save', 'cancel', 'switch-mode'],
   setup(props, { emit }) {
     const loading = ref(false)
     const errors = ref({})
@@ -158,8 +158,6 @@ export default defineComponent({
     }
 
     const switchToEditMode = () => {
-      // This would typically be handled by the parent component
-      // For now, we'll just emit a custom event
       emit('switch-mode', 'edit')
     }
 

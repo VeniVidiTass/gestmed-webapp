@@ -20,7 +20,7 @@
 
         <div class="form-field">
           <label for="appointment_date" class="field-label">Data *</label>
-          <Calendar id="appointment_date" v-model="formData.appointment_date" :disabled="mode === 'view'"
+          <DatePicker id="appointment_date" v-model="formData.appointment_date" :disabled="mode === 'view'"
             :class="{ 'p-invalid': errors.appointment_date }" dateFormat="dd/mm/yy" :showIcon="true"
             placeholder="Seleziona data" :minDate="new Date()" />
           <small v-if="errors.appointment_date" class="p-error">{{ errors.appointment_date }}</small>
@@ -28,7 +28,7 @@
 
         <div class="form-field">
           <label for="appointment_time" class="field-label">Orario *</label>
-          <Calendar id="appointment_time" v-model="formData.appointment_time" :disabled="mode === 'view'"
+          <DatePicker id="appointment_time" v-model="formData.appointment_time" :disabled="mode === 'view'"
             :class="{ 'p-invalid': errors.appointment_time }" timeOnly hourFormat="24" placeholder="Seleziona orario"
             :showIcon="true" />
           <small v-if="errors.appointment_time" class="p-error">{{ errors.appointment_time }}</small>
@@ -91,17 +91,16 @@
 import { defineComponent, ref, computed, watch } from 'vue'
 import { useConfirm } from 'primevue/useconfirm'
 import Select from 'primevue/select'
-import Calendar from 'primevue/calendar'
+import DatePicker from 'primevue/datepicker'
 import Textarea from 'primevue/textarea'
 import Button from 'primevue/button'
 import Divider from 'primevue/divider'
-import { apiService } from '../services/api.js'
 
 export default defineComponent({
   name: 'AppointmentForm',
   components: {
     Select,
-    Calendar,
+    DatePicker,
     Textarea,
     Button,
     Divider

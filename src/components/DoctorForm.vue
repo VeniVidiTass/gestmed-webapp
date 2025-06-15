@@ -47,12 +47,12 @@
               <div v-if="formData.availability[day.value].enabled" class="time-inputs">
                 <div class="time-input-group">
                   <label class="time-label">Dalle:</label>
-                  <Calendar v-model="formData.availability[day.value].start" :disabled="mode === 'view'" timeOnly
+                  <DatePicker v-model="formData.availability[day.value].start" :disabled="mode === 'view'" timeOnly
                     hourFormat="24" placeholder="09:00" />
                 </div>
                 <div class="time-input-group">
                   <label class="time-label">Alle:</label>
-                  <Calendar v-model="formData.availability[day.value].end" :disabled="mode === 'view'" timeOnly
+                  <DatePicker v-model="formData.availability[day.value].end" :disabled="mode === 'view'" timeOnly
                     hourFormat="24" placeholder="17:00" />
                 </div>
               </div>
@@ -76,7 +76,7 @@
 import { defineComponent, ref, watch } from 'vue'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
-import Calendar from 'primevue/calendar'
+import DatePicker from 'primevue/datepicker'
 import Checkbox from 'primevue/checkbox'
 import Button from 'primevue/button'
 
@@ -84,7 +84,7 @@ export default defineComponent({
   name: 'DoctorForm', components: {
     InputText,
     Select,
-    Calendar,
+    DatePicker,
     Checkbox,
     Button
   },

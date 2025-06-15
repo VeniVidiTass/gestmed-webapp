@@ -11,7 +11,7 @@
           </div>
           <div class="filter-group">
             <label for="date-filter" class="filter-label">Data:</label>
-            <Calendar id="date-filter" v-model="selectedDate" dateFormat="dd/mm/yy" :showIcon="true"
+            <DatePicker id="date-filter" v-model="selectedDate" dateFormat="dd/mm/yy" :showIcon="true"
               placeholder="Seleziona data" @date-select="loadAppointments" :showClear="true" />
           </div>
         </div>
@@ -96,7 +96,7 @@ import { defineComponent, ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../components/DashboardLayout.vue'
 import AppointmentForm from '../components/AppointmentForm.vue'
 import Button from 'primevue/button'
-import Calendar from 'primevue/calendar'
+import DatePicker from 'primevue/datepicker'
 import Select from 'primevue/select'
 import Dialog from 'primevue/dialog'
 import { useAppointmentsStore } from '../stores/appointments.js'
@@ -110,7 +110,7 @@ export default defineComponent({
     DashboardLayout,
     AppointmentForm,
     Button,
-    Calendar,
+    DatePicker,
     Select,
     Dialog
   },

@@ -4,11 +4,9 @@
       <!-- Header with search and add button -->
       <div class="page-header">
         <div class="search-section">
-          <div class="p-inputgroup">
-            <InputText v-model="searchQuery" placeholder="Cerca pazienti per nome, email o telefono..."
-              @input="debouncedSearch" class="search-input" />
-            <Button icon="pi pi-search" class="p-button-primary" @click="searchPatients" />
-          </div>
+          <InputText v-model="searchQuery" placeholder="Cerca pazienti per nome, email o telefono"
+            @input="debouncedSearch" class="search-input" />
+          <Button icon="pi pi-search" class="p-button-primary" @click="searchPatients" />
         </div>
         <Button label="Nuovo Paziente" icon="pi pi-plus" class="p-button-primary" @click="openNewPatientDialog" />
       </div>
@@ -68,7 +66,7 @@
         :header="dialogMode === 'create' ? 'Nuovo Paziente' : dialogMode === 'edit' ? 'Modifica Paziente' : 'Dettagli Paziente'"
         :style="{ width: '600px' }" :maximizable="false" :closable="true">
         <PatientForm :patient="selectedPatient" :mode="dialogMode" @save="handleSavePatient"
-          @cancel="closePatientDialog" />
+          @cancel="closePatientDialog" @switch-mode="handleSwitchMode" />
       </Dialog>
     </div>
   </DashboardLayout>
@@ -205,6 +203,10 @@ export default defineComponent({
       dialogMode.value = 'view'
     }
 
+    const handleSwitchMode = (newMode) => {
+      dialogMode.value = newMode
+    }
+
     // Watch for search query changes
     watch(searchQuery, (newValue) => {
       if (newValue !== filters.value.search) {
@@ -230,11 +232,11 @@ export default defineComponent({
       onPageChange,
       formatDate,
       openNewPatientDialog,
-      viewPatient,
-      editPatient,
+      viewPatient, editPatient,
       confirmDeletePatient,
       handleSavePatient,
-      closePatientDialog
+      closePatientDialog,
+      handleSwitchMode
     }
   }
 })
@@ -256,6 +258,7 @@ export default defineComponent({
 .search-section {
   flex: 1;
   max-width: 400px;
+  display: flex;
 }
 
 .search-input {
