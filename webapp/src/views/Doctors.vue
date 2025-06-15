@@ -72,11 +72,12 @@
             </template>
           </Column>
         </DataTable>
-      </div>      <!-- Doctor Dialog -->
+      </div> <!-- Doctor Dialog -->
       <Dialog v-model:visible="doctorDialogVisible" :modal="true"
         :header="dialogMode === 'create' ? 'Nuovo Medico' : dialogMode === 'edit' ? 'Modifica Medico' : 'Dettagli Medico'"
         :style="{ width: '700px' }" :maximizable="false" :closable="true">
-        <DoctorForm :doctor="selectedDoctor" :mode="dialogMode" @save="handleSaveDoctor" @cancel="closeDoctorDialog" @switch-mode="handleSwitchMode" />
+        <DoctorForm :doctor="selectedDoctor" :mode="dialogMode" @save="handleSaveDoctor" @cancel="closeDoctorDialog"
+          @switch-mode="handleSwitchMode" />
       </Dialog>
 
       <!-- Availability Dialog -->
@@ -248,7 +249,7 @@ export default defineComponent({
       searchDoctors,
       openNewDoctorDialog,
       viewDoctor,
-      editDoctor,      viewAvailability,
+      editDoctor, viewAvailability,
       confirmDeleteDoctor,
       handleSaveDoctor,
       handleSwitchMode,

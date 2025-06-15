@@ -104,12 +104,12 @@
                                     <div class="info-row">
                                         <i class="pi pi-calendar"></i>
                                         <span><strong>Data:</strong> {{ formatDate(appointment.appointment_date)
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <div class="info-row">
                                         <i class="pi pi-clock"></i>
                                         <span><strong>Ora:</strong> {{ formatTime(appointment.appointment_date)
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <div class="info-row" v-if="appointment.notes">
                                         <i class="pi pi-file-edit"></i>
@@ -157,12 +157,12 @@
                                 <div class="info-row">
                                     <i class="pi pi-calendar"></i>
                                     <span><strong>Data:</strong> {{ formatDate(selectedLogAppointment?.appointment_date)
-                                        }}</span>
+                                    }}</span>
                                 </div>
                                 <div class="info-row">
                                     <i class="pi pi-clock"></i>
                                     <span><strong>Ora:</strong> {{ formatTime(selectedLogAppointment?.appointment_date)
-                                        }}</span>
+                                    }}</span>
                                 </div>
                                 <div class="info-row" v-if="selectedLogAppointment?.notes">
                                     <i class="pi pi-file-edit"></i>

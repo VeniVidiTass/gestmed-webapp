@@ -50,6 +50,8 @@ router.post('/', async (req, res) => {
       'INSERT INTO patients (name, email, phone, date_of_birth, address, medical_history) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
       [name, email, phone, date_of_birth, address, medical_history || '']
     );
+    
+    //TODO add sending email notification to patient
 
     res.status(201).json(result.rows[0]);
   } catch (error) {

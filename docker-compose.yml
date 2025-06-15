@@ -28,15 +28,14 @@ services:
     container_name: gestmed-backend
     environment:
       NODE_ENV: development
-      PORT: 3001
+      PORT: 3000
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: gestmed
       DB_USER: gestmed_user
       DB_PASSWORD: gestmed_password
-      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
     ports:
-      - "3001:3001"
+      - "3000:3000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,7 +50,7 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: gestmed-frontend
     environment:
-      VITE_API_BASE_URL: http://gestmed-backend:3001/api
+      VITE_API_BASE_URL: http://gestmed-backend:3000/api
     ports:
       - "5173:5173"
     volumes:

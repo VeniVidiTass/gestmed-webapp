@@ -88,6 +88,8 @@ router.post('/', async (req, res) => {
       [patient_id, doctor_id, appointment_date, notes || '', status || 'scheduled']
     );
 
+    //TODO aggiungere la logica per inviare email e sms di conferma
+
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Error creating appointment:', error);
@@ -110,6 +112,8 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Appointment not found' });
     }
 
+    //TODO aggiungere la logica per inviare email e sms di conferma aggiornamento
+
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error updating appointment:', error);
@@ -126,6 +130,8 @@ router.delete('/:id', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Appointment not found' });
     }
+
+    //TODO aggiungere la logica per inviare email e sms di conferma cancellazione
 
     res.json({ message: 'Appointment deleted successfully' });
   } catch (error) {

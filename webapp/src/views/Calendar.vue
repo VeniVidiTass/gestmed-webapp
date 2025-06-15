@@ -452,7 +452,7 @@ export default defineComponent({
       appointments: appointmentsStore.appointments,
       doctors: doctorsStore.allDoctors,
       patients: patientsStore.allPatients,
-      loading: appStore.isLoading,      // Local reactive data
+      loading: appStore.isLoading,
       selectedDoctor,
       selectedDate,
       currentWeekStart,
