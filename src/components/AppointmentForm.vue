@@ -3,7 +3,7 @@
     <form @submit.prevent="handleSubmit">
       <div class="form-grid">
         <div class="form-field">
-          <label for="patient" class="field-label">Paziente *</label> <Select id="patient" v-model="formData.patient_id"
+          <label class="field-label">Paziente *</label> <Select id="patient" v-model="formData.patient_id"
             :options="patientOptions" optionLabel="label" optionValue="value" :disabled="mode === 'view'"
             :class="{ 'p-invalid': errors.patient_id }" placeholder="Seleziona paziente" :filter="true"
             filterPlaceholder="Cerca paziente..." />
@@ -11,7 +11,7 @@
         </div>
 
         <div class="form-field">
-          <label for="doctor" class="field-label">Medico *</label> <Select id="doctor" v-model="formData.doctor_id"
+          <label class="field-label">Medico *</label> <Select id="doctor" v-model="formData.doctor_id"
             :options="doctorOptions" optionLabel="label" optionValue="value" :disabled="mode === 'view'"
             :class="{ 'p-invalid': errors.doctor_id }" placeholder="Seleziona medico" :filter="true"
             filterPlaceholder="Cerca medico..." />
@@ -19,7 +19,7 @@
         </div>
 
         <div class="form-field">
-          <label for="appointment_date" class="field-label">Data *</label>
+          <label class="field-label">Data *</label>
           <DatePicker id="appointment_date" v-model="formData.appointment_date" :disabled="mode === 'view'"
             :class="{ 'p-invalid': errors.appointment_date }" dateFormat="dd/mm/yy" :showIcon="true"
             placeholder="Seleziona data" :minDate="new Date()" />
@@ -27,7 +27,7 @@
         </div>
 
         <div class="form-field">
-          <label for="appointment_time" class="field-label">Orario *</label>
+          <label class="field-label">Orario *</label>
           <DatePicker id="appointment_time" v-model="formData.appointment_time" :disabled="mode === 'view'"
             :class="{ 'p-invalid': errors.appointment_time }" timeOnly hourFormat="24" placeholder="Seleziona orario"
             :showIcon="true" />
@@ -35,13 +35,13 @@
         </div>
 
         <div class="form-field">
-          <label for="status" class="field-label">Stato</label> <Select id="status" v-model="formData.status"
+          <label class="field-label">Stato</label> <Select id="status" v-model="formData.status"
             :options="statusOptions" optionLabel="label" optionValue="value" :disabled="mode === 'view'"
             placeholder="Seleziona stato" />
         </div>
 
         <div class="form-field form-field-full">
-          <label for="notes" class="field-label">Note</label>
+          <label class="field-label">Note</label>
           <Textarea id="notes" v-model="formData.notes" :disabled="mode === 'view'" rows="4"
             placeholder="Note sull'appuntamento..." />
         </div>
@@ -132,7 +132,7 @@ export default defineComponent({
       default: null
     }
   },
-  emits: ['save', 'cancel', 'delete'],
+  emits: ['save', 'cancel', 'delete', 'switch-mode'],
   setup(props, { emit }) {
     const confirm = useConfirm()
     const loading = ref(false)

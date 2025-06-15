@@ -5,12 +5,12 @@
       <div class="page-header">
         <div class="filters-section">
           <div class="filter-group">
-            <label for="doctor-filter" class="filter-label">Medico:</label>
+            <label class="filter-label">Medico:</label>
             <Select id="doctor-filter" v-model="selectedDoctor" :options="doctorOptions" optionLabel="label"
               optionValue="value" placeholder="Tutti i medici" @change="loadAppointments" :showClear="true" />
           </div>
           <div class="filter-group">
-            <label for="date-filter" class="filter-label">Data:</label>
+            <label class="filter-label">Data:</label>
             <DatePicker id="date-filter" v-model="selectedDate" dateFormat="dd/mm/yy" :showIcon="true"
               placeholder="Seleziona data" @date-select="loadAppointments" :showClear="true" />
           </div>
@@ -78,10 +78,10 @@
       <!-- Appointment Dialog -->
       <Dialog v-model:visible="appointmentDialogVisible" :modal="true"
         :header="dialogMode === 'create' ? 'Nuovo Appuntamento' : dialogMode === 'edit' ? 'Modifica Appuntamento' : 'Dettagli Appuntamento'"
-        :style="{ width: '600px' }" :maximizable="false" :closable="true">
+        :maximizable="false" :closable="true">
         <AppointmentForm :appointment="selectedAppointment" :mode="dialogMode" :doctors="doctors" :patients="patients"
           :preselectedDate="preselectedDate" :preselectedHour="preselectedHour" @save="handleSaveAppointment"
-          @cancel="closeAppointmentDialog" />
+          @cancel="closeAppointmentDialog" @switch-mode="handleSwitchMode" @delete="handleDeleteAppointment" />
       </Dialog>
 
       <!-- Floating Action Button -->
@@ -177,9 +177,7 @@ export default defineComponent({
 
         if (selectedDate.value) {
           params.date = selectedDate.value.toISOString().split('T')[0]
-        }
-
-        await appointmentsStore.fetchAppointments(params, true)
+        } await appointmentsStore.fetchAppointments(params, true)
       } catch (error) {
         console.error('Error loading appointments:', error)
         // Error notifications are handled by the store
@@ -277,6 +275,21 @@ export default defineComponent({
       }
     }
 
+    const handleSwitchMode = (newMode) => {
+      dialogMode.value = newMode
+    }
+
+    const handleDeleteAppointment = async (appointmentId) => {
+      try {
+        await appointmentsStore.deleteAppointment(appointmentId)
+        loadAppointments()
+        closeAppointmentDialog()
+      } catch (error) {
+        console.error('Error deleting appointment:', error)
+        // Error notifications are handled by the store
+      }
+    }
+
     const closeAppointmentDialog = () => {
       appointmentDialogVisible.value = false
       selectedAppointment.value = null
@@ -320,11 +333,12 @@ export default defineComponent({
       formatWeekRange,
       previousWeek,
       nextWeek,
-      goToToday,
-      openNewAppointmentDialog,
+      goToToday, openNewAppointmentDialog,
       openAppointmentDialog,
       viewAppointment,
       handleSaveAppointment,
+      handleSwitchMode,
+      handleDeleteAppointment,
       closeAppointmentDialog
     }
   }
