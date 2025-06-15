@@ -5,14 +5,14 @@
       <div class="page-header">
         <div class="filters-section">
           <div class="filter-group">
-            <label class="filter-label">Medico:</label>
-            <Select id="doctor-filter" v-model="selectedDoctor" :options="doctorOptions" optionLabel="label"
-              optionValue="value" placeholder="Tutti i medici" @change="loadAppointments" :showClear="true" />
+            <label class="filter-label">Medico:</label> <Select id="doctor-filter" v-model="selectedDoctor"
+              :options="doctorOptions" optionLabel="label" optionValue="value" placeholder="Tutti i medici"
+              :showClear="true" />
           </div>
-          <div class="filter-group">
+          <div v-if="viewMode === 'week'" class="filter-group">
             <label class="filter-label">Data:</label>
             <DatePicker id="date-filter" v-model="selectedDate" dateFormat="dd/mm/yy" :showIcon="true"
-              placeholder="Seleziona data" @date-select="loadAppointments" :showClear="true" />
+              placeholder="Seleziona data" :showClear="true" />
           </div>
         </div>
 
@@ -24,19 +24,24 @@
       <div class="calendar-container custom-card">
         <div class="calendar-header">
           <div class="calendar-navigation">
-            <Button icon="pi pi-chevron-left" class="p-button-text p-button-sm" @click="previousWeek" />
+            <Button icon="pi pi-chevron-left" class="p-button-text p-button-sm" @click="previousPeriod" />
             <h3 class="calendar-title">
-              {{ formatWeekRange(currentWeekStart) }}
+              {{ formatPeriodRange() }}
             </h3>
-            <Button icon="pi pi-chevron-right" class="p-button-text p-button-sm" @click="nextWeek" />
+            <Button icon="pi pi-chevron-right" class="p-button-text p-button-sm" @click="nextPeriod" />
           </div>
 
           <div class="view-controls">
+            <div class="view-toggles">
+              <Button label="Settimana" :class="['p-button-text p-button-sm', { 'active-view': viewMode === 'week' }]"
+                @click="setViewMode('week')" />
+              <Button label="Giorno" :class="['p-button-text p-button-sm', { 'active-view': viewMode === 'day' }]"
+                @click="setViewMode('day')" />
+            </div>
             <Button label="Oggi" class="p-button-text p-button-sm" @click="goToToday" />
           </div>
         </div>
-
-        <div class="calendar-grid">
+        <div class="calendar-grid" :class="{ 'day-view': viewMode === 'day' }">
           <!-- Time slots column -->
           <div class="time-column">
             <div class="time-header">Orario</div>
@@ -46,27 +51,34 @@
           </div>
 
           <!-- Days columns -->
-          <div v-for="day in weekDays" :key="day.date" class="day-column">
+          <div v-for="day in displayDays" :key="day.date" class="day-column">
             <div class="day-header">
               <div class="day-name">{{ day.name }}</div>
               <div class="day-date">{{ day.displayDate }}</div>
             </div>
-
             <div class="day-slots">
               <div v-for="hour in timeSlots" :key="`${day.date}-${hour}`" class="hour-slot"
                 @click="openAppointmentDialog(day.date, hour)">
                 <!-- Appointments for this hour -->
-                <div v-for="appointment in getAppointmentsForSlot(day.date, hour)" :key="appointment.id"
-                  class="appointment-card" :class="getAppointmentClass(appointment)"
-                  @click.stop="viewAppointment(appointment)">
-                  <div class="appointment-time">
-                    {{ formatTime(appointment.appointment_date) }}
+                <div class="appointments-container">
+                  <div v-for="(appointment, index) in getAppointmentsForSlot(day.date, hour)" :key="appointment.id"
+                    class="appointment-card"
+                    :class="[getAppointmentClass(appointment), getAppointmentPosition(index, getAppointmentsForSlot(day.date, hour).length)]"
+                    @click.stop="viewAppointment(appointment)">
+                    <div class="appointment-time">
+                      {{ formatTime(appointment.appointment_date) }}
+                    </div>
+                    <div class="appointment-patient">
+                      {{ appointment.patient_name }}
+                    </div>
+                    <div class="appointment-doctor" v-if="getAppointmentsForSlot(day.date, hour).length <= 2">
+                      Dr. {{ appointment.doctor_name }}
+                    </div>
                   </div>
-                  <div class="appointment-patient">
-                    {{ appointment.patient_name }}
-                  </div>
-                  <div class="appointment-doctor">
-                    Dr. {{ appointment.doctor_name }}
+                  <!-- Indicator for more appointments -->
+                  <div v-if="getAppointmentsForSlot(day.date, hour).length > 3" class="more-appointments-indicator"
+                    @click.stop="showMoreAppointments(day.date, hour)">
+                    +{{ getAppointmentsForSlot(day.date, hour).length - 3 }} altri
                   </div>
                 </div>
               </div>
@@ -92,7 +104,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, onMounted } from 'vue'
+import { defineComponent, ref, computed, onMounted, watch } from 'vue'
 import DashboardLayout from '../components/DashboardLayout.vue'
 import AppointmentForm from '../components/AppointmentForm.vue'
 import Button from 'primevue/button'
@@ -119,12 +131,12 @@ export default defineComponent({
     const appointmentsStore = useAppointmentsStore()
     const doctorsStore = useDoctorsStore()
     const patientsStore = usePatientsStore()
-    const appStore = useAppStore()
-
-    // Local reactive data
+    const appStore = useAppStore()    // Local reactive data
     const selectedDoctor = ref(null)
     const selectedDate = ref(null)
     const currentWeekStart = ref(getStartOfWeek(new Date()))
+    const currentDay = ref(new Date())
+    const viewMode = ref('week') // 'week' or 'day'
 
     const appointmentDialogVisible = ref(false)
     const selectedAppointment = ref(null)
@@ -167,6 +179,20 @@ export default defineComponent({
       return days
     })
 
+    const dayView = computed(() => {
+      const date = new Date(currentDay.value)
+      return [{
+        name: date.toLocaleDateString('it-IT', { weekday: 'long' }),
+        date: date.toISOString().split('T')[0],
+        displayDate: date.toLocaleDateString('it-IT'),
+        fullDate: new Date(date)
+      }]
+    })
+
+    const displayDays = computed(() => {
+      return viewMode.value === 'week' ? weekDays.value : dayView.value
+    })
+
     const loadAppointments = async () => {
       try {
         const params = {}
@@ -177,7 +203,20 @@ export default defineComponent({
 
         if (selectedDate.value) {
           params.date = selectedDate.value.toISOString().split('T')[0]
-        } await appointmentsStore.fetchAppointments(params, true)
+        } else {
+          // Se non c'è una data specifica selezionata, carica per il periodo corrente
+          if (viewMode.value === 'week') {
+            const start = new Date(currentWeekStart.value)
+            const end = new Date(start)
+            end.setDate(start.getDate() + 6)
+            params.start_date = start.toISOString().split('T')[0]
+            params.end_date = end.toISOString().split('T')[0]
+          } else {
+            params.date = currentDay.value.toISOString().split('T')[0]
+          }
+        }
+
+        await appointmentsStore.fetchAppointments(params, true)
       } catch (error) {
         console.error('Error loading appointments:', error)
         // Error notifications are handled by the store
@@ -190,7 +229,13 @@ export default defineComponent({
         const appointmentDateStr = appointmentDate.toISOString().split('T')[0]
         const appointmentHour = appointmentDate.getHours()
 
-        return appointmentDateStr === date && appointmentHour === hour
+        // Filtro per data e ora
+        const dateTimeMatch = appointmentDateStr === date && appointmentHour === hour
+
+        // Filtro per medico (se selezionato)
+        const doctorMatch = !selectedDoctor.value || appointment.doctor_id === selectedDoctor.value
+
+        return dateTimeMatch && doctorMatch
       })
     }
 
@@ -202,6 +247,29 @@ export default defineComponent({
         'completed': 'appointment-completed'
       }
       return statusClasses[appointment.status] || 'appointment-scheduled'
+    }
+
+    const getAppointmentPosition = (index, totalCount) => {
+      if (totalCount === 1) return 'single-appointment'
+      if (totalCount === 2) return index === 0 ? 'appointment-left' : 'appointment-right'
+      if (totalCount >= 3) {
+        if (index === 0) return 'appointment-first'
+        if (index === 1) return 'appointment-second'
+        if (index === 2) return 'appointment-third'
+        return 'appointment-hidden' // Gli appuntamenti oltre i primi 3 sono nascosti
+      }
+      return ''
+    }
+
+    const showMoreAppointments = (date, hour) => {
+      const appointments = getAppointmentsForSlot(date, hour)
+      // Qui potresti aprire un dialog o popover per mostrare tutti gli appuntamenti
+      console.log(`Showing ${appointments.length} appointments for ${date} at ${hour}:00`, appointments)
+      // Per ora, mostreremo un alert semplice, ma potresti implementare un dialog più sofisticato
+      const appointmentsList = appointments.map(apt =>
+        `${formatTime(apt.appointment_date)} - ${apt.patient_name} (Dr. ${apt.doctor_name})`
+      ).join('\n')
+      alert(`Appuntamenti per ${date} alle ${hour}:00:\n\n${appointmentsList}`)
     }
 
     const formatTime = (dateString) => {
@@ -219,23 +287,70 @@ export default defineComponent({
       return `${start.toLocaleDateString('it-IT')} - ${end.toLocaleDateString('it-IT')}`
     }
 
+    const formatPeriodRange = () => {
+      if (viewMode.value === 'week') {
+        return formatWeekRange(currentWeekStart.value)
+      } else {
+        return currentDay.value.toLocaleDateString('it-IT', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      }
+    }
+
+    const setViewMode = (mode) => {
+      viewMode.value = mode
+    }
+
+    const previousPeriod = () => {
+      if (viewMode.value === 'week') {
+        previousWeek()
+      } else {
+        previousDay()
+      }
+    }
+
+    const nextPeriod = () => {
+      if (viewMode.value === 'week') {
+        nextWeek()
+      } else {
+        nextDay()
+      }
+    }
+
+    const previousDay = () => {
+      const newDay = new Date(currentDay.value)
+      newDay.setDate(newDay.getDate() - 1)
+      currentDay.value = newDay
+    }
+
+    const nextDay = () => {
+      const newDay = new Date(currentDay.value)
+      newDay.setDate(newDay.getDate() + 1)
+      currentDay.value = newDay
+    }
+
     const previousWeek = () => {
       const newStart = new Date(currentWeekStart.value)
       newStart.setDate(newStart.getDate() - 7)
       currentWeekStart.value = newStart
-      loadAppointments()
     }
 
     const nextWeek = () => {
       const newStart = new Date(currentWeekStart.value)
       newStart.setDate(newStart.getDate() + 7)
       currentWeekStart.value = newStart
-      loadAppointments()
     }
 
     const goToToday = () => {
-      currentWeekStart.value = getStartOfWeek(new Date())
-      loadAppointments()
+      const today = new Date()
+      if (viewMode.value === 'week') {
+        currentWeekStart.value = getStartOfWeek(today)
+      } else {
+        currentDay.value = today
+      }
     }
 
     const openNewAppointmentDialog = () => {
@@ -298,6 +413,31 @@ export default defineComponent({
       preselectedHour.value = null
     }
 
+    // Watchers per reagire ai cambiamenti dei filtri
+    watch(selectedDoctor, () => {
+      loadAppointments()
+    })
+
+    watch(selectedDate, () => {
+      loadAppointments()
+    })
+
+    watch(viewMode, () => {
+      loadAppointments()
+    })
+
+    watch(currentWeekStart, () => {
+      if (viewMode.value === 'week') {
+        loadAppointments()
+      }
+    })
+
+    watch(currentDay, () => {
+      if (viewMode.value === 'day') {
+        loadAppointments()
+      }
+    })
+
     onMounted(async () => {
       // Carica i dati da tutti gli store
       await Promise.all([
@@ -312,12 +452,12 @@ export default defineComponent({
       appointments: appointmentsStore.appointments,
       doctors: doctorsStore.allDoctors,
       patients: patientsStore.allPatients,
-      loading: appStore.isLoading,
-
-      // Local reactive data
+      loading: appStore.isLoading,      // Local reactive data
       selectedDoctor,
       selectedDate,
       currentWeekStart,
+      currentDay,
+      viewMode,
       appointmentDialogVisible,
       selectedAppointment,
       dialogMode,
@@ -326,14 +466,25 @@ export default defineComponent({
       timeSlots,
       doctorOptions,
       weekDays,
+      dayView,
+      displayDays,
       loadAppointments,
       getAppointmentsForSlot,
       getAppointmentClass,
+      getAppointmentPosition,
+      showMoreAppointments,
       formatTime,
       formatWeekRange,
+      formatPeriodRange,
+      setViewMode,
+      previousPeriod,
+      nextPeriod,
       previousWeek,
       nextWeek,
-      goToToday, openNewAppointmentDialog,
+      previousDay,
+      nextDay,
+      goToToday,
+      openNewAppointmentDialog,
       openAppointmentDialog,
       viewAppointment,
       handleSaveAppointment,
@@ -405,10 +556,41 @@ export default defineComponent({
   text-align: center;
 }
 
+.view-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.view-toggles {
+  display: flex;
+  gap: 0.5rem;
+  background-color: var(--surface-100);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.view-toggles .p-button {
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.view-toggles .active-view {
+  background-color: var(--primary-500) !important;
+  color: white !important;
+  border-color: var(--primary-500) !important;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: 80px repeat(7, 1fr);
   min-height: 600px;
+}
+
+.calendar-grid.day-view {
+  grid-template-columns: 80px 1fr;
 }
 
 .time-column {
@@ -479,23 +661,100 @@ export default defineComponent({
   background-color: var(--primary-50);
 }
 
+.appointments-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 .appointment-card {
   position: absolute;
+  padding: 0.25rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease, z-index 0.2s ease;
+  font-size: 0.625rem;
+  overflow: hidden;
+  border: 1px solid;
+}
+
+.appointment-card:hover {
+  transform: scale(1.05);
+  z-index: 20;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Posizionamento per singolo appuntamento */
+.single-appointment {
   left: 2px;
   right: 2px;
   top: 2px;
   bottom: 2px;
-  padding: 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-  font-size: 0.75rem;
-  overflow: hidden;
 }
 
-.appointment-card:hover {
-  transform: scale(1.02);
-  z-index: 10;
+/* Posizionamento per due appuntamenti */
+.appointment-left {
+  left: 2px;
+  right: 50%;
+  top: 2px;
+  bottom: 2px;
+  margin-right: 1px;
+}
+
+.appointment-right {
+  left: 50%;
+  right: 2px;
+  top: 2px;
+  bottom: 2px;
+  margin-left: 1px;
+}
+
+/* Posizionamento per tre o più appuntamenti */
+.appointment-first {
+  left: 2px;
+  right: 2px;
+  top: 2px;
+  height: 18px;
+}
+
+.appointment-second {
+  left: 2px;
+  right: 2px;
+  top: 21px;
+  height: 18px;
+}
+
+.appointment-third {
+  left: 2px;
+  right: 2px;
+  top: 40px;
+  height: 16px;
+}
+
+.appointment-hidden {
+  display: none;
+}
+
+.more-appointments-indicator {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  height: 12px;
+  background-color: var(--primary-200);
+  border: 1px solid var(--primary-400);
+  border-radius: 2px;
+  font-size: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--primary-800);
+  font-weight: 600;
+}
+
+.more-appointments-indicator:hover {
+  background-color: var(--primary-300);
 }
 
 .appointment-scheduled {
@@ -558,8 +817,17 @@ export default defineComponent({
     grid-template-columns: 60px repeat(7, 1fr);
   }
 
+  .calendar-grid.day-view {
+    grid-template-columns: 60px 1fr;
+  }
+
   .time-slot {
     font-size: 0.625rem;
+  }
+
+  .view-controls {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
 
@@ -578,6 +846,20 @@ export default defineComponent({
     min-height: 400px;
   }
 
+  .calendar-grid.day-view {
+    grid-template-columns: 50px 1fr;
+  }
+
+  .view-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .view-toggles {
+    justify-content: center;
+  }
+
   .hour-slot {
     height: 40px;
   }
@@ -588,8 +870,30 @@ export default defineComponent({
   }
 
   .appointment-card {
-    font-size: 0.625rem;
-    padding: 0.25rem;
+    font-size: 0.5rem;
+    padding: 0.125rem;
+  }
+
+  /* Adattamento per appuntamenti multipli su mobile */
+  .appointment-first {
+    height: 12px;
+    top: 2px;
+  }
+
+  .appointment-second {
+    height: 12px;
+    top: 15px;
+  }
+
+  .appointment-third {
+    height: 10px;
+    top: 28px;
+  }
+
+  .more-appointments-indicator {
+    height: 8px;
+    font-size: 0.375rem;
+    bottom: 1px;
   }
 
   .day-name {
@@ -598,6 +902,11 @@ export default defineComponent({
 
   .day-date {
     font-size: 0.75rem;
+  }
+
+  /* Nascondi il nome del dottore su mobile per fare spazio */
+  .appointment-doctor {
+    display: none;
   }
 }
 </style>
