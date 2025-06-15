@@ -45,20 +45,6 @@ services:
       - /usr/src/app/node_modules
     command: npm run dev
 
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: gestmed-frontend
-    environment:
-      VITE_API_BASE_URL: http://gestmed-backend:3001/api
-    ports:
-      - "5173:5173"
-    volumes:
-      - .:/usr/src/app
-      - /usr/src/app/node_modules
-    command: npm run dev -- --host 0.0.0.0
-
   adminer:
     image: adminer:latest
     container_name: gestmed-adminer
