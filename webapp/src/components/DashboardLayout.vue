@@ -4,41 +4,60 @@
     <div class="layout-sidebar" :class="{ 'sidebar-active': sidebarVisible }">
       <div class="sidebar-header">
         <div class="logo">
-          <i class="pi pi-heart text-primary"></i>
+          <i class="pi pi-heart text-primary" />
           <span class="logo-text text-primary">GestMed</span>
         </div>
-        <Button icon="pi pi-times" class="p-button-text sidebar-close-btn" @click="closeSidebar" v-if="isMobile" />
+        <Button
+          v-if="isMobile"
+          icon="pi pi-times"
+          class="p-button-text sidebar-close-btn"
+          @click="closeSidebar"
+        />
       </div>
 
       <div class="sidebar-content">
         <nav class="nav-menu">
-          <router-link v-for="item in menuItems" :key="item.name" :to="item.route" class="nav-item"
-            :class="{ 'nav-item-active': $route.name === item.name }">
-            <i :class="item.icon"></i>
+          <router-link
+            v-for="item in menuItems"
+            :key="item.name"
+            :to="item.route"
+            class="nav-item"
+            :class="{ 'nav-item-active': $route.name === item.name }"
+          >
+            <i :class="item.icon" />
             <span class="nav-label">{{ item.label }}</span>
           </router-link>
         </nav>
       </div>
 
       <div class="sidebar-footer">
-        <Button label="Logout" icon="pi pi-sign-out" class="p-button-text logout-btn" @click="logout" />
+        <Button
+          label="Logout"
+          icon="pi pi-sign-out"
+          class="p-button-text logout-btn"
+          @click="logout"
+        />
       </div>
     </div>
 
     <!-- Main Content -->
     <div class="layout-content">
       <!-- Mobile Header -->
-      <div class="mobile-header" v-if="isMobile">
+      <div v-if="isMobile" class="mobile-header">
         <Button icon="pi pi-bars" class="p-button-text menu-toggle" @click="toggleSidebar" />
-        <h2 class="page-title">{{ currentPageTitle }}</h2>
+        <h2 class="page-title">
+          {{ currentPageTitle }}
+        </h2>
       </div>
 
       <!-- Desktop Header -->
-      <div class="desktop-header" v-else>
-        <h2 class="page-title">{{ currentPageTitle }}</h2>
+      <div v-else class="desktop-header">
+        <h2 class="page-title">
+          {{ currentPageTitle }}
+        </h2>
         <div class="header-actions">
           <span class="user-info">
-            <i class="pi pi-user"></i>
+            <i class="pi pi-user" />
             Admin User
           </span>
         </div>
@@ -51,7 +70,7 @@
     </div>
 
     <!-- Mobile Overlay -->
-    <div class="mobile-overlay" v-if="isMobile && sidebarVisible" @click="closeSidebar"></div>
+    <div v-if="isMobile && sidebarVisible" class="mobile-overlay" @click="closeSidebar" />
   </div>
 </template>
 

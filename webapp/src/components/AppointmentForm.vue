@@ -3,47 +3,88 @@
     <form @submit.prevent="handleSubmit">
       <div class="form-grid">
         <div class="form-field">
-          <label class="field-label">Paziente *</label> <Select id="patient" v-model="formData.patient_id"
-            :options="patientOptions" optionLabel="label" optionValue="value" :disabled="mode === 'view'"
-            :class="{ 'p-invalid': errors.patient_id }" placeholder="Seleziona paziente" :filter="true"
-            filterPlaceholder="Cerca paziente..." />
+          <label class="field-label">Paziente *</label> <Select
+            id="patient"
+            v-model="formData.patient_id"
+            :options="patientOptions"
+            option-label="label"
+            option-value="value"
+            :disabled="mode === 'view'"
+            :class="{ 'p-invalid': errors.patient_id }"
+            placeholder="Seleziona paziente"
+            :filter="true"
+            filter-placeholder="Cerca paziente..."
+          />
           <small v-if="errors.patient_id" class="p-error">{{ errors.patient_id }}</small>
         </div>
 
         <div class="form-field">
-          <label class="field-label">Medico *</label> <Select id="doctor" v-model="formData.doctor_id"
-            :options="doctorOptions" optionLabel="label" optionValue="value" :disabled="mode === 'view'"
-            :class="{ 'p-invalid': errors.doctor_id }" placeholder="Seleziona medico" :filter="true"
-            filterPlaceholder="Cerca medico..." />
+          <label class="field-label">Medico *</label> <Select
+            id="doctor"
+            v-model="formData.doctor_id"
+            :options="doctorOptions"
+            option-label="label"
+            option-value="value"
+            :disabled="mode === 'view'"
+            :class="{ 'p-invalid': errors.doctor_id }"
+            placeholder="Seleziona medico"
+            :filter="true"
+            filter-placeholder="Cerca medico..."
+          />
           <small v-if="errors.doctor_id" class="p-error">{{ errors.doctor_id }}</small>
         </div>
 
         <div class="form-field">
           <label class="field-label">Data *</label>
-          <DatePicker id="appointment_date" v-model="formData.appointment_date" :disabled="mode === 'view'"
-            :class="{ 'p-invalid': errors.appointment_date }" dateFormat="dd/mm/yy" :showIcon="true"
-            placeholder="Seleziona data" :minDate="new Date()" />
+          <DatePicker
+            id="appointment_date"
+            v-model="formData.appointment_date"
+            :disabled="mode === 'view'"
+            :class="{ 'p-invalid': errors.appointment_date }"
+            date-format="dd/mm/yy"
+            :show-icon="true"
+            placeholder="Seleziona data"
+            :min-date="new Date()"
+          />
           <small v-if="errors.appointment_date" class="p-error">{{ errors.appointment_date }}</small>
         </div>
 
         <div class="form-field">
           <label class="field-label">Orario *</label>
-          <DatePicker id="appointment_time" v-model="formData.appointment_time" :disabled="mode === 'view'"
-            :class="{ 'p-invalid': errors.appointment_time }" timeOnly hourFormat="24" placeholder="Seleziona orario"
-            :showIcon="true" />
+          <DatePicker
+            id="appointment_time"
+            v-model="formData.appointment_time"
+            :disabled="mode === 'view'"
+            :class="{ 'p-invalid': errors.appointment_time }"
+            time-only
+            hour-format="24"
+            placeholder="Seleziona orario"
+            :show-icon="true"
+          />
           <small v-if="errors.appointment_time" class="p-error">{{ errors.appointment_time }}</small>
         </div>
 
         <div class="form-field">
-          <label class="field-label">Stato</label> <Select id="status" v-model="formData.status"
-            :options="statusOptions" optionLabel="label" optionValue="value" :disabled="mode === 'view'"
-            placeholder="Seleziona stato" />
+          <label class="field-label">Stato</label> <Select
+            id="status"
+            v-model="formData.status"
+            :options="statusOptions"
+            option-label="label"
+            option-value="value"
+            :disabled="mode === 'view'"
+            placeholder="Seleziona stato"
+          />
         </div>
 
         <div class="form-field form-field-full">
           <label class="field-label">Note</label>
-          <Textarea id="notes" v-model="formData.notes" :disabled="mode === 'view'" rows="4"
-            placeholder="Note sull'appuntamento..." />
+          <Textarea
+            id="notes"
+            v-model="formData.notes"
+            :disabled="mode === 'view'"
+            rows="4"
+            placeholder="Note sull'appuntamento..."
+          />
         </div>
       </div>
 
@@ -60,7 +101,7 @@
             <label>Creato il:</label>
             <span>{{ formatDateTime(appointment.created_at) }}</span>
           </div>
-          <div class="detail-item" v-if="appointment.updated_at !== appointment.created_at">
+          <div v-if="appointment.updated_at !== appointment.created_at" class="detail-item">
             <label>Ultima modifica:</label>
             <span>{{ formatDateTime(appointment.updated_at) }}</span>
           </div>
@@ -73,14 +114,37 @@
 
       <!-- Action buttons -->
       <div class="form-actions">
-        <Button label="Annulla" icon="pi pi-times" class="p-button-text" type="button" @click="$emit('cancel')" />
+        <Button
+          label="Annulla"
+          icon="pi pi-times"
+          class="p-button-text"
+          type="button"
+          @click="$emit('cancel')"
+        />
 
         <div class="action-buttons-right">
-          <Button v-if="mode === 'view'" label="Modifica" icon="pi pi-pencil" type="button" @click="switchToEditMode" />
-          <Button v-if="mode === 'view' && appointment" label="Elimina" icon="pi pi-trash" class="p-button-danger"
-            type="button" @click="confirmDelete" />
-          <Button v-if="mode !== 'view'" :label="mode === 'create' ? 'Crea Appuntamento' : 'Salva Modifiche'"
-            :icon="mode === 'create' ? 'pi pi-plus' : 'pi pi-check'" type="submit" :loading="loading" />
+          <Button
+            v-if="mode === 'view'"
+            label="Modifica"
+            icon="pi pi-pencil"
+            type="button"
+            @click="switchToEditMode"
+          />
+          <Button
+            v-if="mode === 'view' && appointment"
+            label="Elimina"
+            icon="pi pi-trash"
+            class="p-button-danger"
+            type="button"
+            @click="confirmDelete"
+          />
+          <Button
+            v-if="mode !== 'view'"
+            :label="mode === 'create' ? 'Crea Appuntamento' : 'Salva Modifiche'"
+            :icon="mode === 'create' ? 'pi pi-plus' : 'pi pi-check'"
+            type="submit"
+            :loading="loading"
+          />
         </div>
       </div>
     </form>

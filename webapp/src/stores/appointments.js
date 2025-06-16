@@ -319,26 +319,22 @@ export const useAppointmentsStore = defineStore('appointments', () => {
   }
 
   async function updateAppointmentStatus(id, status) {
-    try {
-      const updatedAppointment = await updateAppointment(id, { status })
+    const updatedAppointment = await updateAppointment(id, { status })
 
-      const statusMessages = {
-        'confirmed': 'Appuntamento confermato',
-        'cancelled': 'Appuntamento cancellato',
-        'completed': 'Appuntamento completato',
-        'pending': 'Appuntamento in attesa'
-      }
-
-      appStore.addNotification({
-        severity: status === 'cancelled' ? 'warn' : 'info',
-        summary: 'Status aggiornato',
-        detail: statusMessages[status] || 'Status appuntamento aggiornato'
-      })
-
-      return updatedAppointment
-    } catch (error) {
-      throw error
+    const statusMessages = {
+      'confirmed': 'Appuntamento confermato',
+      'cancelled': 'Appuntamento cancellato',
+      'completed': 'Appuntamento completato',
+      'pending': 'Appuntamento in attesa'
     }
+
+    appStore.addNotification({
+      severity: status === 'cancelled' ? 'warn' : 'info',
+      summary: 'Status aggiornato',
+      detail: statusMessages[status] || 'Status appuntamento aggiornato'
+    })
+
+    return updatedAppointment
   }
 
   function setFilters(newFilters) {

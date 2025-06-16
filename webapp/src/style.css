@@ -143,17 +143,6 @@ body {
   }
 }
 
-/* Loading spinner */
-.loading-spinner {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--surface-300);
-  border-radius: 50%;
-  border-top-color: var(--primary-600);
-  animation: spin 1s ease-in-out infinite;
-}
-
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

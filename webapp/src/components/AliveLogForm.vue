@@ -1,12 +1,13 @@
 <template>
   <Dialog
-    v-model:visible="visible"
+    :visible="visible"
     modal
     :header="`Aggiungi Log - ${appointmentTitle}`"
     :style="{ width: '50vw' }"
     :breakpoints="{ '960px': '75vw', '641px': '90vw' }"
+    @update:visible="$emit('update:visible', $event)"
   >
-    <form @submit.prevent="handleSubmit" class="log-form">
+    <form class="log-form" @submit.prevent="handleSubmit">
       <div class="form-group">
         <label for="title" class="form-label">Titolo *</label>
         <InputText
@@ -38,8 +39,8 @@
           label="Annulla"
           icon="pi pi-times"
           class="p-button-text"
-          @click="handleCancel"
           type="button"
+          @click="handleCancel"
         />
         <Button
           label="Salva Log"

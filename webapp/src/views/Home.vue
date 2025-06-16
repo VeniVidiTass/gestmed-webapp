@@ -3,15 +3,25 @@
     <div class="hero-section">
       <div class="hero-content">
         <div class="logo-section">
-          <i class="pi pi-heart text-primary" style="font-size: 4rem;"></i>
-          <h1 class="hero-title text-primary">GestMed</h1>
-          <p class="hero-subtitle">Sistema di Gestione per Strutture Sanitarie</p>
+          <i class="pi pi-heart text-primary" style="font-size: 4rem;" />
+          <h1 class="hero-title text-primary">
+            GestMed
+          </h1>
+          <p class="hero-subtitle">
+            Sistema di Gestione per Strutture Sanitarie
+          </p>
         </div>
 
         <div class="cta-section">
-          <Button label="Accedi alla Dashboard" icon="pi pi-sign-in" class="p-button-lg cta-button"
-            @click="goToDashboard" />
-          <p class="login-note">Login demo - Clicca per accedere al sistema</p>
+          <Button
+            label="Accedi alla Dashboard"
+            icon="pi pi-sign-in"
+            class="p-button-lg cta-button"
+            @click="goToDashboard"
+          />
+          <p class="login-note">
+            Login demo - Clicca per accedere al sistema
+          </p>
         </div>
 
         <!-- <div class="features-grid">
@@ -45,7 +55,9 @@
     <footer class="home-footer">
       <div class="footer-content">
         <p>&copy; 2025 GestMed - Sistema di Gestione Sanitaria</p>
-        <p class="text-primary">Sviluppato con Vue 3 + PrimeVue</p>
+        <p class="text-primary">
+          Sviluppato con Vue 3 + PrimeVue
+        </p>
       </div>
     </footer>
   </div>

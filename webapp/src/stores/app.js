@@ -1,3 +1,4 @@
+/* global localStorage */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
@@ -37,7 +38,7 @@ export const useAppStore = defineStore('app', () => {
 
     // Auto remove after 5 seconds if not persistent
     if (!notification.persistent) {
-      setTimeout(() => {
+      window.setTimeout(() => {
         removeNotification(id)
       }, 5000)
     }
@@ -51,8 +52,10 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function toggleTheme() {
-    theme.value = theme.value === 'light' ? 'dark' : 'light'
-    localStorage.setItem('gestmed-theme', theme.value)
+    if (typeof localStorage !== 'undefined') {
+      theme.value = theme.value === 'light' ? 'dark' : 'light'
+      localStorage.setItem('gestmed-theme', theme.value)
+    }
   }
 
   function toggleSidebar() {
@@ -60,9 +63,11 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function initializeTheme() {
-    const savedTheme = localStorage.getItem('gestmed-theme')
-    if (savedTheme) {
-      theme.value = savedTheme
+    if (typeof localStorage !== 'undefined') {
+      const savedTheme = localStorage.getItem('gestmed-theme')
+      if (savedTheme) {
+        theme.value = savedTheme
+      }
     }
   }
 

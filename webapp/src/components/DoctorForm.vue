@@ -4,34 +4,61 @@
       <div class="form-grid">
         <div class="form-field">
           <label for="name" class="field-label">Nome Completo *</label>
-          <InputText id="name" v-model="formData.name" :disabled="mode === 'view'" :class="{ 'p-invalid': errors.name }"
-            placeholder="Inserisci nome completo" />
+          <InputText
+            id="name"
+            v-model="formData.name"
+            :disabled="mode === 'view'"
+            :class="{ 'p-invalid': errors.name }"
+            placeholder="Inserisci nome completo"
+          />
           <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
         </div>
 
         <div class="form-field">
           <label for="email" class="field-label">Email *</label>
-          <InputText id="email" v-model="formData.email" type="email" :disabled="mode === 'view'"
-            :class="{ 'p-invalid': errors.email }" placeholder="nome@email.com" />
+          <InputText
+            id="email"
+            v-model="formData.email"
+            type="email"
+            :disabled="mode === 'view'"
+            :class="{ 'p-invalid': errors.email }"
+            placeholder="nome@email.com"
+          />
           <small v-if="errors.email" class="p-error">{{ errors.email }}</small>
         </div>
 
         <div class="form-field">
           <label for="phone" class="field-label">Telefono</label>
-          <InputText id="phone" v-model="formData.phone" :disabled="mode === 'view'" placeholder="+39 123 456 7890" />
+          <InputText
+            id="phone"
+            v-model="formData.phone"
+            :disabled="mode === 'view'"
+            placeholder="+39 123 456 7890"
+          />
         </div>
 
         <div class="form-field">
           <label for="license_number" class="field-label">Numero Licenza *</label>
-          <InputText id="license_number" v-model="formData.license_number" :disabled="mode === 'view'"
-            :class="{ 'p-invalid': errors.license_number }" placeholder="LIC001234" />
+          <InputText
+            id="license_number"
+            v-model="formData.license_number"
+            :disabled="mode === 'view'"
+            :class="{ 'p-invalid': errors.license_number }"
+            placeholder="LIC001234"
+          />
           <small v-if="errors.license_number" class="p-error">{{ errors.license_number }}</small>
         </div>
 
         <div class="form-field form-field-full">
-          <label for="specialization" class="field-label">Specializzazione *</label> <Select id="specialization"
-            v-model="formData.specialization" :options="specializations" :disabled="mode === 'view'"
-            :class="{ 'p-invalid': errors.specialization }" placeholder="Seleziona specializzazione" :editable="true" />
+          <label for="specialization" class="field-label">Specializzazione *</label> <Select
+            id="specialization"
+            v-model="formData.specialization"
+            :options="specializations"
+            :disabled="mode === 'view'"
+            :class="{ 'p-invalid': errors.specialization }"
+            placeholder="Seleziona specializzazione"
+            :editable="true"
+          />
           <small v-if="errors.specialization" class="p-error">{{ errors.specialization }}</small>
         </div>
 
@@ -40,20 +67,34 @@
           <div class="availability-grid">
             <div v-for="day in daysOfWeek" :key="day.value" class="availability-day">
               <div class="day-header">
-                <Checkbox :id="`${day.value}_enabled`" v-model="formData.availability[day.value].enabled"
-                  :disabled="mode === 'view'" :binary="true" />
+                <Checkbox
+                  :id="`${day.value}_enabled`"
+                  v-model="formData.availability[day.value].enabled"
+                  :disabled="mode === 'view'"
+                  :binary="true"
+                />
                 <label :for="`${day.value}_enabled`" class="day-label">{{ day.label }}</label>
               </div>
               <div v-if="formData.availability[day.value].enabled" class="time-inputs">
                 <div class="time-input-group">
                   <label class="time-label">Dalle:</label>
-                  <DatePicker v-model="formData.availability[day.value].start" :disabled="mode === 'view'" timeOnly
-                    hourFormat="24" placeholder="09:00" />
+                  <DatePicker
+                    v-model="formData.availability[day.value].start"
+                    :disabled="mode === 'view'"
+                    time-only
+                    hour-format="24"
+                    placeholder="09:00"
+                  />
                 </div>
                 <div class="time-input-group">
                   <label class="time-label">Alle:</label>
-                  <DatePicker v-model="formData.availability[day.value].end" :disabled="mode === 'view'" timeOnly
-                    hourFormat="24" placeholder="17:00" />
+                  <DatePicker
+                    v-model="formData.availability[day.value].end"
+                    :disabled="mode === 'view'"
+                    time-only
+                    hour-format="24"
+                    placeholder="17:00"
+                  />
                 </div>
               </div>
             </div>
@@ -63,10 +104,27 @@
 
       <!-- Action buttons -->
       <div class="form-actions">
-        <Button label="Annulla" icon="pi pi-times" class="p-button-text" type="button" @click="$emit('cancel')" />
-        <Button v-if="mode === 'view'" label="Modifica" icon="pi pi-pencil" type="button" @click="switchToEditMode" />
-        <Button v-if="mode !== 'view'" :label="mode === 'create' ? 'Crea Medico' : 'Salva Modifiche'"
-          :icon="mode === 'create' ? 'pi pi-plus' : 'pi pi-check'" type="submit" :loading="loading" />
+        <Button
+          label="Annulla"
+          icon="pi pi-times"
+          class="p-button-text"
+          type="button"
+          @click="$emit('cancel')"
+        />
+        <Button
+          v-if="mode === 'view'"
+          label="Modifica"
+          icon="pi pi-pencil"
+          type="button"
+          @click="switchToEditMode"
+        />
+        <Button
+          v-if="mode !== 'view'"
+          :label="mode === 'create' ? 'Crea Medico' : 'Salva Modifiche'"
+          :icon="mode === 'create' ? 'pi pi-plus' : 'pi pi-check'"
+          type="submit"
+          :loading="loading"
+        />
       </div>
     </form>
   </div>

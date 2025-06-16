@@ -270,19 +270,15 @@ export const useDoctorsStore = defineStore('doctors', () => {
   }
 
   async function updateDoctorAvailability(id, isAvailable) {
-    try {
-      const updatedDoctor = await updateDoctor(id, { is_available: isAvailable })
+    const updatedDoctor = await updateDoctor(id, { is_available: isAvailable })
 
-      appStore.addNotification({
-        severity: 'info',
-        summary: 'Disponibilità aggiornata',
-        detail: `Dr. ${updatedDoctor.name} è ora ${isAvailable ? 'disponibile' : 'non disponibile'}`
-      })
+    appStore.addNotification({
+      severity: 'info',
+      summary: 'Disponibilità aggiornata',
+      detail: `Dr. ${updatedDoctor.name} è ora ${isAvailable ? 'disponibile' : 'non disponibile'}`
+    })
 
-      return updatedDoctor
-    } catch (error) {
-      throw error
-    }
+    return updatedDoctor
   }
 
   function setFilters(newFilters) {

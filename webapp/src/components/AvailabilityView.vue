@@ -2,22 +2,28 @@
   <div class="availability-view">
     <div v-if="doctor" class="doctor-info">
       <h4>Dr. {{ doctor.name }}</h4>
-      <p class="specialization">{{ doctor.specialization }}</p>
+      <p class="specialization">
+        {{ doctor.specialization }}
+      </p>
     </div>
 
     <div class="availability-schedule">
-      <div v-for="day in daysOfWeek" :key="day.value" class="schedule-day"
-        :class="{ 'day-available': isDayAvailable(day.value), 'day-unavailable': !isDayAvailable(day.value) }">
+      <div
+        v-for="day in daysOfWeek"
+        :key="day.value"
+        class="schedule-day"
+        :class="{ 'day-available': isDayAvailable(day.value), 'day-unavailable': !isDayAvailable(day.value) }"
+      >
         <div class="day-name">
           {{ day.label }}
         </div>
         <div class="day-hours">
           <template v-if="isDayAvailable(day.value)">
-            <i class="pi pi-check-circle availability-icon available"></i>
+            <i class="pi pi-check-circle availability-icon available" />
             <span class="hours-text">{{ getDayHours(day.value) }}</span>
           </template>
           <template v-else>
-            <i class="pi pi-times-circle availability-icon unavailable"></i>
+            <i class="pi pi-times-circle availability-icon unavailable" />
             <span class="hours-text">Non disponibile</span>
           </template>
         </div>
@@ -26,11 +32,11 @@
 
     <div class="availability-summary">
       <div class="summary-item">
-        <i class="pi pi-calendar"></i>
+        <i class="pi pi-calendar" />
         <span>Giorni disponibili: {{ availableDaysCount }}/7</span>
       </div>
       <div class="summary-item">
-        <i class="pi pi-clock"></i>
+        <i class="pi pi-clock" />
         <span>Ore settimanali: {{ totalWeeklyHours }}h</span>
       </div>
     </div>
@@ -108,6 +114,7 @@ export default defineComponent({
 
         return (endTotalMin - startTotalMin) / 60
       } catch (error) {
+        console.error('Error calculating hours:', error)
         return 0
       }
     }

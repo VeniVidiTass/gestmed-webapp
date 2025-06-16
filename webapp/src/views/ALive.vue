@@ -1,207 +1,255 @@
 <template>
-    <DashboardLayout>
-        <div class="alive-container">
-            <!-- Status Cards -->
-            <div class="status-cards">
-                <Card class="status-card in-progress">
-                    <template #content>
-                        <div class="status-card-content">
-                            <div class="status-icon">
-                                <i class="pi pi-play-circle"></i>
-                            </div>
-                            <div class="status-info">
-                                <h3>{{ inProgressAppointments.length }}</h3>
-                                <p>In Corso</p>
-                            </div>
-                        </div>
-                    </template>
-                </Card>
-
-                <Card class="status-card scheduled">
-                    <template #content>
-                        <div class="status-card-content">
-                            <div class="status-icon">
-                                <i class="pi pi-clock"></i>
-                            </div>
-                            <div class="status-info">
-                                <h3>{{ scheduledAppointments.length }}</h3>
-                                <p>Programmati</p>
-                            </div>
-                        </div>
-                    </template>
-                </Card>
-
-                <Card class="status-card total">
-                    <template #content>
-                        <div class="status-card-content">
-                            <div class="status-icon">
-                                <i class="pi pi-list"></i>
-                            </div>
-                            <div class="status-info">
-                                <h3>{{ appointments.length }}</h3>
-                                <p>Totale Attivi</p>
-                            </div>
-                        </div>
-                    </template>
-                </Card>
+  <DashboardLayout>
+    <div class="alive-container">
+      <!-- Status Cards -->
+      <div class="status-cards">
+        <Card class="status-card in-progress">
+          <template #content>
+            <div class="status-card-content">
+              <div class="status-icon">
+                <i class="pi pi-play-circle" />
+              </div>
+              <div class="status-info">
+                <h3>{{ inProgressAppointments.length }}</h3>
+                <p>In Corso</p>
+              </div>
             </div>
+          </template>
+        </Card>
 
-            <Button label="Aggiorna" icon="pi pi-refresh" @click="refreshData" :loading="loading"
-                class="p-button-outlined" />
+        <Card class="status-card scheduled">
+          <template #content>
+            <div class="status-card-content">
+              <div class="status-icon">
+                <i class="pi pi-clock" />
+              </div>
+              <div class="status-info">
+                <h3>{{ scheduledAppointments.length }}</h3>
+                <p>Programmati</p>
+              </div>
+            </div>
+          </template>
+        </Card>
 
-            <!-- Error Message -->
-            <Message v-if="error" severity="error" @close="clearError">
-                {{ error }}
-            </Message>
+        <Card class="status-card total">
+          <template #content>
+            <div class="status-card-content">
+              <div class="status-icon">
+                <i class="pi pi-list" />
+              </div>
+              <div class="status-info">
+                <h3>{{ appointments.length }}</h3>
+                <p>Totale Attivi</p>
+              </div>
+            </div>
+          </template>
+        </Card>
+      </div>
 
-            <!-- Appointments List -->
-            <div class="appointments-section">
-                <Card v-if="appointments.length === 0 && !loading" class="empty-state">
-                    <template #content>
-                        <div class="empty-content">
-                            <i class="pi pi-calendar-times"></i>
-                            <h3>Nessun appuntamento attivo</h3>
-                            <p>Non ci sono appuntamenti programmati o in corso al momento.</p>
-                        </div>
-                    </template>
-                </Card>
+      <Button
+        label="Aggiorna"
+        icon="pi pi-refresh"
+        :loading="loading"
+        class="p-button-outlined"
+        @click="refreshData"
+      />
 
-                <div v-else class="appointments-grid">
-                    <Card v-for="appointment in appointments" :key="appointment.id" class="appointment-card" :class="{
-                        'status-in-progress': appointment.status === 'in_progress',
-                        'status-scheduled': appointment.status === 'scheduled'
-                    }">
-                        <template #header>
-                            <div class="appointment-header">
-                                <div class="appointment-status">
-                                    <Tag :value="getStatusLabel(appointment.status)"
-                                        :severity="getStatusSeverity(appointment.status)"
-                                        :icon="getStatusIcon(appointment.status)" />
-                                </div>
-                                <div class="appointment-actions">
-                                    <Button icon="pi pi-plus" class="p-button-rounded p-button-text p-button-sm"
-                                        @click="openLogForm(appointment)" v-tooltip.top="'Aggiungi Log'" />
-                                    <Button icon="pi pi-list" class="p-button-rounded p-button-text p-button-sm"
-                                        @click="toggleLogs(appointment.id)" v-tooltip.top="'Visualizza Log'" />
-                                    <Select v-model="appointment.status" :options="statusOptions" option-label="label"
-                                        option-value="value" @change="updateStatus(appointment.id, $event.value)"
-                                        class="status-dropdown" />
-                                </div>
-                            </div>
-                        </template>
+      <!-- Error Message -->
+      <Message v-if="error" severity="error" @close="clearError">
+        {{ error }}
+      </Message>
 
-                        <template #content>
-                            <div class="appointment-content">
-                                <div class="appointment-info">
-                                    <div class="info-row">
-                                        <i class="pi pi-user"></i>
-                                        <span><strong>Paziente:</strong> {{ appointment.patient_name }}</span>
-                                    </div>
-                                    <div class="info-row">
-                                        <i class="pi pi-user-plus"></i>
-                                        <span><strong>Medico:</strong> Dr. {{ appointment.doctor_name }}</span>
-                                    </div>
-                                    <div class="info-row">
-                                        <i class="pi pi-calendar"></i>
-                                        <span><strong>Data:</strong> {{ formatDate(appointment.appointment_date)
-                                        }}</span>
-                                    </div>
-                                    <div class="info-row">
-                                        <i class="pi pi-clock"></i>
-                                        <span><strong>Ora:</strong> {{ formatTime(appointment.appointment_date)
-                                        }}</span>
-                                    </div>
-                                    <div class="info-row" v-if="appointment.notes">
-                                        <i class="pi pi-file-edit"></i>
-                                        <span><strong>Note:</strong> {{ appointment.notes }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-                    </Card>
+      <!-- Appointments List -->
+      <div class="appointments-section">
+        <Card v-if="appointments.length === 0 && !loading" class="empty-state">
+          <template #content>
+            <div class="empty-content">
+              <i class="pi pi-calendar-times" />
+              <h3>Nessun appuntamento attivo</h3>
+              <p>Non ci sono appuntamenti programmati o in corso al momento.</p>
+            </div>
+          </template>
+        </Card>
+
+        <div v-else class="appointments-grid">
+          <Card
+            v-for="appointment in appointments"
+            :key="appointment.id"
+            class="appointment-card"
+            :class="{
+              'status-in-progress': appointment.status === 'in_progress',
+              'status-scheduled': appointment.status === 'scheduled'
+            }"
+          >
+            <template #header>
+              <div class="appointment-header">
+                <div class="appointment-status">
+                  <Tag
+                    :value="getStatusLabel(appointment.status)"
+                    :severity="getStatusSeverity(appointment.status)"
+                    :icon="getStatusIcon(appointment.status)"
+                  />
                 </div>
-            </div>
-        </div> <!-- Add Log Dialog -->
-        <AliveLogForm v-model:visible="showLogForm" :appointment-id="selectedAppointment?.id"
-            :appointment-title="`${selectedAppointment?.patient_name} - Dr. ${selectedAppointment?.doctor_name}`"
-            :loading="logLoading" @submit="handleLogSubmit" @cancel="closeLogForm" />
-
-        <!-- Logs View Dialog -->
-        <Dialog v-model:visible="showLogsDialog" modal
-            :header="`Log Attività - ${selectedLogAppointment?.patient_name} - Dr. ${selectedLogAppointment?.doctor_name}`"
-            :style="{ width: '60vw' }" :breakpoints="{ '960px': '75vw', '641px': '90vw' }">
-
-            <div class="logs-dialog-content">
-                <!-- Appointment Info Card -->
-                <Card class="appointment-info-card" :class="{
-                    'status-in-progress': selectedLogAppointment?.status === 'in_progress',
-                    'status-scheduled': selectedLogAppointment?.status === 'scheduled'
-                }">
-                    <template #content>
-                        <div class="appointment-content">
-                            <div class="appointment-header-info">
-                                <Tag :value="getStatusLabel(selectedLogAppointment?.status)"
-                                    :severity="getStatusSeverity(selectedLogAppointment?.status)"
-                                    :icon="getStatusIcon(selectedLogAppointment?.status)" />
-                            </div>
-
-                            <div class="appointment-info">
-                                <div class="info-row">
-                                    <i class="pi pi-user"></i>
-                                    <span><strong>Paziente:</strong> {{ selectedLogAppointment?.patient_name }}</span>
-                                </div>
-                                <div class="info-row">
-                                    <i class="pi pi-user-plus"></i>
-                                    <span><strong>Medico:</strong> Dr. {{ selectedLogAppointment?.doctor_name }}</span>
-                                </div>
-                                <div class="info-row">
-                                    <i class="pi pi-calendar"></i>
-                                    <span><strong>Data:</strong> {{ formatDate(selectedLogAppointment?.appointment_date)
-                                    }}</span>
-                                </div>
-                                <div class="info-row">
-                                    <i class="pi pi-clock"></i>
-                                    <span><strong>Ora:</strong> {{ formatTime(selectedLogAppointment?.appointment_date)
-                                    }}</span>
-                                </div>
-                                <div class="info-row" v-if="selectedLogAppointment?.notes">
-                                    <i class="pi pi-file-edit"></i>
-                                    <span><strong>Note:</strong> {{ selectedLogAppointment?.notes }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-                </Card>
-
-                <!-- Logs Section -->
-                <div class="logs-section">
-                    <div class="logs-header">
-                        <h4>
-                            <i class="pi pi-history"></i>
-                            Log Attività
-                        </h4>
-                        <Button label="Aggiungi Log" icon="pi pi-plus" class="p-button-sm"
-                            @click="openLogFormFromDialog" />
-                    </div>
-
-                    <div class="logs-list">
-                        <div v-if="getAppointmentLogs(selectedLogAppointment?.id).length === 0" class="no-logs">
-                            <p>Nessun log presente per questo appuntamento.</p>
-                        </div>
-                        <div v-else v-for="log in getAppointmentLogs(selectedLogAppointment?.id)" :key="log.id"
-                            class="log-item">
-                            <div class="log-header">
-                                <h5>{{ log.title }}</h5>
-                                <span class="log-time">{{ formatDateTime(log.created_at) }}</span>
-                            </div>
-                            <p class="log-description">{{ log.description }}</p>
-                            <small class="log-author">Creato da: {{ log.created_by }}</small>
-                        </div>
-                    </div>
+                <div class="appointment-actions">
+                  <Button
+                    v-tooltip.top="'Aggiungi Log'"
+                    icon="pi pi-plus"
+                    class="p-button-rounded p-button-text p-button-sm"
+                    @click="openLogForm(appointment)"
+                  />
+                  <Button
+                    v-tooltip.top="'Visualizza Log'"
+                    icon="pi pi-list"
+                    class="p-button-rounded p-button-text p-button-sm"
+                    @click="toggleLogs(appointment.id)"
+                  />
+                  <Select
+                    v-model="appointment.status"
+                    :options="statusOptions"
+                    option-label="label"
+                    option-value="value"
+                    class="status-dropdown"
+                    @change="updateStatus(appointment.id, $event.value)"
+                  />
                 </div>
+              </div>
+            </template>
+
+            <template #content>
+              <div class="appointment-content">
+                <div class="appointment-info">
+                  <div class="info-row">
+                    <i class="pi pi-user" />
+                    <span><strong>Paziente:</strong> {{ appointment.patient_name }}</span>
+                  </div>
+                  <div class="info-row">
+                    <i class="pi pi-user-plus" />
+                    <span><strong>Medico:</strong> Dr. {{ appointment.doctor_name }}</span>
+                  </div>
+                  <div class="info-row">
+                    <i class="pi pi-calendar" />
+                    <span><strong>Data:</strong> {{ formatDate(appointment.appointment_date)
+                    }}</span>
+                  </div>
+                  <div class="info-row">
+                    <i class="pi pi-clock" />
+                    <span><strong>Ora:</strong> {{ formatTime(appointment.appointment_date)
+                    }}</span>
+                  </div>
+                  <div v-if="appointment.notes" class="info-row">
+                    <i class="pi pi-file-edit" />
+                    <span><strong>Note:</strong> {{ appointment.notes }}</span>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </Card>
+        </div>
+      </div>
+    </div> <!-- Add Log Dialog -->
+    <AliveLogForm
+      v-model:visible="showLogForm"
+      :appointment-id="selectedAppointment?.id"
+      :appointment-title="`${selectedAppointment?.patient_name} - Dr. ${selectedAppointment?.doctor_name}`"
+      :loading="logLoading"
+      @submit="handleLogSubmit"
+      @cancel="closeLogForm"
+    />
+
+    <!-- Logs View Dialog -->
+    <Dialog
+      v-model:visible="showLogsDialog"
+      modal
+      :header="`Log Attività - ${selectedLogAppointment?.patient_name} - Dr. ${selectedLogAppointment?.doctor_name}`"
+      :style="{ width: '60vw' }"
+      :breakpoints="{ '960px': '75vw', '641px': '90vw' }"
+    >
+      <div class="logs-dialog-content">
+        <!-- Appointment Info Card -->
+        <Card
+          class="appointment-info-card"
+          :class="{
+            'status-in-progress': selectedLogAppointment?.status === 'in_progress',
+            'status-scheduled': selectedLogAppointment?.status === 'scheduled'
+          }"
+        >
+          <template #content>
+            <div class="appointment-content">
+              <div class="appointment-header-info">
+                <Tag
+                  :value="getStatusLabel(selectedLogAppointment?.status)"
+                  :severity="getStatusSeverity(selectedLogAppointment?.status)"
+                  :icon="getStatusIcon(selectedLogAppointment?.status)"
+                />
+              </div>
+
+              <div class="appointment-info">
+                <div class="info-row">
+                  <i class="pi pi-user" />
+                  <span><strong>Paziente:</strong> {{ selectedLogAppointment?.patient_name }}</span>
+                </div>
+                <div class="info-row">
+                  <i class="pi pi-user-plus" />
+                  <span><strong>Medico:</strong> Dr. {{ selectedLogAppointment?.doctor_name }}</span>
+                </div>
+                <div class="info-row">
+                  <i class="pi pi-calendar" />
+                  <span><strong>Data:</strong> {{ formatDate(selectedLogAppointment?.appointment_date)
+                  }}</span>
+                </div>
+                <div class="info-row">
+                  <i class="pi pi-clock" />
+                  <span><strong>Ora:</strong> {{ formatTime(selectedLogAppointment?.appointment_date)
+                  }}</span>
+                </div>
+                <div v-if="selectedLogAppointment?.notes" class="info-row">
+                  <i class="pi pi-file-edit" />
+                  <span><strong>Note:</strong> {{ selectedLogAppointment?.notes }}</span>
+                </div>
+              </div>
             </div>
-        </Dialog>
-    </DashboardLayout>
+          </template>
+        </Card>
+
+        <!-- Logs Section -->
+        <div class="logs-section">
+          <div class="logs-header">
+            <h4>
+              <i class="pi pi-history" />
+              Log Attività
+            </h4>
+            <Button
+              label="Aggiungi Log"
+              icon="pi pi-plus"
+              class="p-button-sm"
+              @click="openLogFormFromDialog"
+            />
+          </div>
+
+          <div class="logs-list">
+            <div v-if="getAppointmentLogs(selectedLogAppointment?.id).length === 0" class="no-logs">
+              <p>Nessun log presente per questo appuntamento.</p>
+            </div>
+            <div
+              v-for="log in getAppointmentLogs(selectedLogAppointment?.id)"
+              v-else
+              :key="log.id"
+              class="log-item"
+            >
+              <div class="log-header">
+                <h5>{{ log.title }}</h5>
+                <span class="log-time">{{ formatDateTime(log.created_at) }}</span>
+              </div>
+              <p class="log-description">
+                {{ log.description }}
+              </p>
+              <small class="log-author">Creato da: {{ log.created_by }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Dialog>
+  </DashboardLayout>
 </template>
 
 <script>
@@ -214,7 +262,6 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Message from 'primevue/message'
-import Divider from 'primevue/divider'
 import Select from 'primevue/select'
 import Dialog from 'primevue/dialog'
 
@@ -226,7 +273,6 @@ export default defineComponent({
         Button,
         Tag,
         Message,
-        Divider,
         Select,
         Dialog
     },
@@ -359,7 +405,7 @@ export default defineComponent({
                 showSuccess('Log aggiunto con successo')
                 closeLogForm()
             } catch (error) {
-                showError('Errore nell\'aggiunta del log')
+                showError('Errore nell\'aggiunta del log', error.message)
             } finally {
                 logLoading.value = false
             }
@@ -375,7 +421,7 @@ export default defineComponent({
                     await refreshData()
                 }
             } catch (error) {
-                showError('Errore nell\'aggiornamento dello status')
+                showError('Errore nell\'aggiornamento dello status' , error.message)
                 // Refresh to get the correct status
                 await refreshData()
             }

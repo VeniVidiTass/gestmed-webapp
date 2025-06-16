@@ -5,22 +5,39 @@
       <div class="page-header">
         <div class="search-section">
           <div class="p-inputgroup">
-            <InputText v-model="searchQuery" placeholder="Cerca medici per nome, specializzazione o email..."
-              @input="debouncedSearch" class="search-input" />
+            <InputText
+              v-model="searchQuery"
+              placeholder="Cerca medici per nome, specializzazione o email..."
+              class="search-input"
+              @input="debouncedSearch"
+            />
             <Button icon="pi pi-search" class="p-button-primary" @click="searchDoctors" />
           </div>
         </div>
-        <Button label="Nuovo Medico" icon="pi pi-plus" class="p-button-primary" @click="openNewDoctorDialog" />
+        <Button
+          label="Nuovo Medico"
+          icon="pi pi-plus"
+          class="p-button-primary"
+          @click="openNewDoctorDialog"
+        />
       </div>
 
       <!-- Doctors Table -->
       <div class="table-container custom-card">
-        <DataTable :value="doctors" :loading="loading" paginator :rows="10" :rowsPerPageOptions="[10, 25, 50]"
-          responsiveLayout="scroll" emptyMessage="Nessun medico trovato" class="doctors-table">
+        <DataTable
+          :value="doctors"
+          :loading="isLoading"
+          paginator
+          :rows="10"
+          :rows-per-page-options="[10, 25, 50]"
+          responsive-layout="scroll"
+          empty-message="Nessun medico trovato"
+          class="doctors-table"
+        >
           <Column field="name" header="Nome" sortable>
             <template #body="{ data }">
               <div class="doctor-name">
-                <i class="pi pi-user-plus"></i>
+                <i class="pi pi-user-plus" />
                 Dr. {{ data.name }}
               </div>
             </template>
@@ -54,35 +71,67 @@
 
           <Column header="Disponibilità" style="min-width: 120px;">
             <template #body="{ data }">
-              <Button icon="pi pi-calendar" class="p-button-rounded p-button-text p-button-sm"
-                @click="viewAvailability(data)" v-tooltip.top="'Visualizza Disponibilità'" />
+              <Button
+                v-tooltip.top="'Visualizza Disponibilità'"
+                icon="pi pi-calendar"
+                class="p-button-rounded p-button-text p-button-sm"
+                @click="viewAvailability(data)"
+              />
             </template>
           </Column>
 
           <Column header="Azioni" :exportable="false" style="min-width: 150px;">
             <template #body="{ data }">
               <div class="action-buttons">
-                <Button icon="pi pi-eye" class="p-button-rounded p-button-text p-button-sm" @click="viewDoctor(data)"
-                  v-tooltip.top="'Visualizza'" />
-                <Button icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-sm" @click="editDoctor(data)"
-                  v-tooltip.top="'Modifica'" />
-                <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-sm p-button-danger"
-                  @click="confirmDeleteDoctor(data)" v-tooltip.top="'Elimina'" />
+                <Button
+                  v-tooltip.top="'Visualizza'"
+                  icon="pi pi-eye"
+                  class="p-button-rounded p-button-text p-button-sm"
+                  @click="viewDoctor(data)"
+                />
+                <Button
+                  v-tooltip.top="'Modifica'"
+                  icon="pi pi-pencil"
+                  class="p-button-rounded p-button-text p-button-sm"
+                  @click="editDoctor(data)"
+                />
+                <Button
+                  v-tooltip.top="'Elimina'"
+                  icon="pi pi-trash"
+                  class="p-button-rounded p-button-text p-button-sm p-button-danger"
+                  @click="confirmDeleteDoctor(data)"
+                />
               </div>
             </template>
           </Column>
         </DataTable>
       </div> <!-- Doctor Dialog -->
-      <Dialog v-model:visible="doctorDialogVisible" :modal="true"
+      <Dialog
+        v-model:visible="doctorDialogVisible"
+        :modal="true"
         :header="dialogMode === 'create' ? 'Nuovo Medico' : dialogMode === 'edit' ? 'Modifica Medico' : 'Dettagli Medico'"
-        :style="{ width: '700px' }" :maximizable="false" :closable="true">
-        <DoctorForm :doctor="selectedDoctor" :mode="dialogMode" @save="handleSaveDoctor" @cancel="closeDoctorDialog"
-          @switch-mode="handleSwitchMode" />
+        :style="{ width: '700px' }"
+        :maximizable="false"
+        :closable="true"
+      >
+        <DoctorForm
+          :doctor="selectedDoctor"
+          :mode="dialogMode"
+          @save="handleSaveDoctor"
+          @cancel="closeDoctorDialog"
+          @switch-mode="handleSwitchMode"
+        />
       </Dialog>
 
       <!-- Availability Dialog -->
-      <Dialog v-model:visible="availabilityDialogVisible" :modal="true" header="Disponibilità Medico"
-        :style="{ width: '500px' }" :maximizable="false" :closable="true">
+      <Dialog
+        v-model:visible="availabilityDialogVisible"
+        :modal="true"
+        header="Disponibilità Medico"
+        :style="{ width: '500px' }"
+        :maximizable="false"
+        :closable="true"
+      >
         <AvailabilityView :doctor="selectedDoctor" />
       </Dialog>
     </div>
@@ -128,11 +177,12 @@ export default defineComponent({
     const doctorDialogVisible = ref(false)
     const availabilityDialogVisible = ref(false)
     const selectedDoctor = ref(null)
-    const dialogMode = ref('view') // 'view', 'edit', 'create'    let searchTimeout = null
+    const dialogMode = ref('view') // 'view', 'edit', 'create'
+    let searchTimeout = null
 
     // Computed properties - utilizzo stato centralizzato
     const doctors = computed(() => doctorsStore.filteredDoctors)
-    const loading = computed(() => appStore.isLoading)
+    const isLoading = computed(() => appStore.isLoading)
 
     // Actions - utilizzo store methods
     const loadDoctors = async (search = '') => {
@@ -148,8 +198,8 @@ export default defineComponent({
     }
 
     const debouncedSearch = () => {
-      clearTimeout(searchTimeout)
-      searchTimeout = setTimeout(() => {
+      window.clearTimeout(searchTimeout)
+      searchTimeout = window.setTimeout(() => {
         loadDoctors(searchQuery.value)
       }, 300)
     }
@@ -236,7 +286,7 @@ export default defineComponent({
     return {
       // Stato reattivo centralizzato
       doctors,
-      loading,
+      isLoading,
       // Stato locale per UI
       searchQuery,
       doctorDialogVisible,
@@ -274,7 +324,12 @@ export default defineComponent({
 
 .search-section {
   flex: 1;
-  max-width: 400px;
+  max-width: 500px;
+}
+
+.p-inputgroup {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .search-input {

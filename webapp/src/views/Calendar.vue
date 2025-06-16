@@ -5,19 +5,28 @@
       <div class="page-header">
         <div class="filters-section">
           <div class="filter-group">
-            <label class="filter-label">Medico:</label> <Select id="doctor-filter" v-model="selectedDoctor"
-              :options="doctorOptions" optionLabel="label" optionValue="value" placeholder="Tutti i medici"
-              :showClear="true" />
-          </div>
-          <div v-if="viewMode === 'week'" class="filter-group">
-            <label class="filter-label">Data:</label>
-            <DatePicker id="date-filter" v-model="selectedDate" dateFormat="dd/mm/yy" :showIcon="true"
-              placeholder="Seleziona data" :showClear="true" />
+            <label class="filter-label">Medico:</label>
+            <Select
+              id="doctor-filter"
+              v-model="selectedDoctor"
+              :options="doctorOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Tutti i medici"
+              :filter="true"
+              filter-placeholder="Cerca medico..."
+              :show-clear="true"
+              :virtual-scroller-options="{ itemSize: 44 }"
+            />
           </div>
         </div>
 
-        <Button label="Nuovo Appuntamento" icon="pi pi-plus" class="p-button-primary add-appointment-btn"
-          @click="openNewAppointmentDialog" />
+        <Button
+          label="Nuovo Appuntamento"
+          icon="pi pi-plus"
+          class="p-button-primary add-appointment-btn"
+          @click="openNewAppointmentDialog"
+        />
       </div>
 
       <!-- Calendar View -->
@@ -33,10 +42,16 @@
 
           <div class="view-controls">
             <div class="view-toggles">
-              <Button label="Settimana" :class="['p-button-text p-button-sm', { 'active-view': viewMode === 'week' }]"
-                @click="setViewMode('week')" />
-              <Button label="Giorno" :class="['p-button-text p-button-sm', { 'active-view': viewMode === 'day' }]"
-                @click="setViewMode('day')" />
+              <Button
+                label="Settimana"
+                :class="['p-button-text p-button-sm', { 'active-view': viewMode === 'week' }]"
+                @click="setViewMode('week')"
+              />
+              <Button
+                label="Giorno"
+                :class="['p-button-text p-button-sm', { 'active-view': viewMode === 'day' }]"
+                @click="setViewMode('day')"
+              />
             </div>
             <Button label="Oggi" class="p-button-text p-button-sm" @click="goToToday" />
           </div>
@@ -44,7 +59,9 @@
         <div class="calendar-grid" :class="{ 'day-view': viewMode === 'day' }">
           <!-- Time slots column -->
           <div class="time-column">
-            <div class="time-header">Orario</div>
+            <div class="time-header">
+              Orario
+            </div>
             <div v-for="hour in timeSlots" :key="hour" class="time-slot">
               {{ hour }}:00
             </div>
@@ -53,31 +70,45 @@
           <!-- Days columns -->
           <div v-for="day in displayDays" :key="day.date" class="day-column">
             <div class="day-header">
-              <div class="day-name">{{ day.name }}</div>
-              <div class="day-date">{{ day.displayDate }}</div>
+              <div class="day-name">
+                {{ day.name }}
+              </div>
+              <div class="day-date">
+                {{ day.displayDate }}
+              </div>
             </div>
             <div class="day-slots">
-              <div v-for="hour in timeSlots" :key="`${day.date}-${hour}`" class="hour-slot"
-                @click="openAppointmentDialog(day.date, hour)">
+              <div
+                v-for="hour in timeSlots"
+                :key="`${day.date}-${hour}`"
+                class="hour-slot"
+                @click="openAppointmentDialog(day.date, hour)"
+              >
                 <!-- Appointments for this hour -->
                 <div class="appointments-container">
-                  <div v-for="(appointment, index) in getAppointmentsForSlot(day.date, hour)" :key="appointment.id"
+                  <div
+                    v-for="(appointment, index) in getAppointmentsForSlot(day.date, hour)"
+                    :key="appointment.id"
                     class="appointment-card"
                     :class="[getAppointmentClass(appointment), getAppointmentPosition(index, getAppointmentsForSlot(day.date, hour).length)]"
-                    @click.stop="viewAppointment(appointment)">
+                    @click.stop="viewAppointment(appointment)"
+                  >
                     <div class="appointment-time">
                       {{ formatTime(appointment.appointment_date) }}
                     </div>
                     <div class="appointment-patient">
                       {{ appointment.patient_name }}
                     </div>
-                    <div class="appointment-doctor" v-if="getAppointmentsForSlot(day.date, hour).length <= 2">
+                    <div v-if="getAppointmentsForSlot(day.date, hour).length <= 2" class="appointment-doctor">
                       Dr. {{ appointment.doctor_name }}
                     </div>
                   </div>
                   <!-- Indicator for more appointments -->
-                  <div v-if="getAppointmentsForSlot(day.date, hour).length > 3" class="more-appointments-indicator"
-                    @click.stop="showMoreAppointments(day.date, hour)">
+                  <div
+                    v-if="getAppointmentsForSlot(day.date, hour).length > 3"
+                    class="more-appointments-indicator"
+                    @click.stop="showMoreAppointments(day.date, hour)"
+                  >
                     +{{ getAppointmentsForSlot(day.date, hour).length - 3 }} altri
                   </div>
                 </div>
@@ -88,17 +119,34 @@
       </div>
 
       <!-- Appointment Dialog -->
-      <Dialog v-model:visible="appointmentDialogVisible" :modal="true"
+      <Dialog
+        v-model:visible="appointmentDialogVisible"
+        :modal="true"
         :header="dialogMode === 'create' ? 'Nuovo Appuntamento' : dialogMode === 'edit' ? 'Modifica Appuntamento' : 'Dettagli Appuntamento'"
-        :maximizable="false" :closable="true">
-        <AppointmentForm :appointment="selectedAppointment" :mode="dialogMode" :doctors="doctors" :patients="patients"
-          :preselectedDate="preselectedDate" :preselectedHour="preselectedHour" @save="handleSaveAppointment"
-          @cancel="closeAppointmentDialog" @switch-mode="handleSwitchMode" @delete="handleDeleteAppointment" />
+        :maximizable="false"
+        :closable="true"
+      >
+        <AppointmentForm
+          :appointment="selectedAppointment"
+          :mode="dialogMode"
+          :doctors="doctors"
+          :patients="patients"
+          :preselected-date="preselectedDate"
+          :preselected-hour="preselectedHour"
+          @save="handleSaveAppointment"
+          @cancel="closeAppointmentDialog"
+          @switch-mode="handleSwitchMode"
+          @delete="handleDeleteAppointment"
+        />
       </Dialog>
 
       <!-- Floating Action Button -->
-      <Button icon="pi pi-plus" class="p-button-rounded p-button-primary floating-button"
-        @click="openNewAppointmentDialog" v-tooltip.left="'Nuovo Appuntamento'" />
+      <Button
+        v-tooltip.left="'Nuovo Appuntamento'"
+        icon="pi pi-plus"
+        class="p-button-rounded p-button-primary floating-button"
+        @click="openNewAppointmentDialog"
+      />
     </div>
   </DashboardLayout>
 </template>
@@ -108,7 +156,6 @@ import { defineComponent, ref, computed, onMounted, watch } from 'vue'
 import DashboardLayout from '../components/DashboardLayout.vue'
 import AppointmentForm from '../components/AppointmentForm.vue'
 import Button from 'primevue/button'
-import DatePicker from 'primevue/datepicker'
 import Select from 'primevue/select'
 import Dialog from 'primevue/dialog'
 import { useAppointmentsStore } from '../stores/appointments.js'
@@ -117,12 +164,10 @@ import { usePatientsStore } from '../stores/patients.js'
 import { useAppStore } from '../stores/app.js'
 
 export default defineComponent({
-  name: 'CalendarView',
-  components: {
+  name: 'CalendarView',  components: {
     DashboardLayout,
     AppointmentForm,
     Button,
-    DatePicker,
     Select,
     Dialog
   },
@@ -133,7 +178,6 @@ export default defineComponent({
     const patientsStore = usePatientsStore()
     const appStore = useAppStore()    // Local reactive data
     const selectedDoctor = ref(null)
-    const selectedDate = ref(null)
     const currentWeekStart = ref(getStartOfWeek(new Date()))
     const currentDay = ref(new Date())
     const viewMode = ref('week') // 'week' or 'day'
@@ -181,8 +225,7 @@ export default defineComponent({
 
     const dayView = computed(() => {
       const date = new Date(currentDay.value)
-      return [{
-        name: date.toLocaleDateString('it-IT', { weekday: 'long' }),
+      return [{        name: date.toLocaleDateString('it-IT', { weekday: 'long' }),
         date: date.toISOString().split('T')[0],
         displayDate: date.toLocaleDateString('it-IT'),
         fullDate: new Date(date)
@@ -199,21 +242,15 @@ export default defineComponent({
 
         if (selectedDoctor.value) {
           params.doctor_id = selectedDoctor.value
-        }
-
-        if (selectedDate.value) {
-          params.date = selectedDate.value.toISOString().split('T')[0]
+        }        // Carica per il periodo corrente
+        if (viewMode.value === 'week') {
+          const start = new Date(currentWeekStart.value)
+          const end = new Date(start)
+          end.setDate(start.getDate() + 6)
+          params.start_date = start.toISOString().split('T')[0]
+          params.end_date = end.toISOString().split('T')[0]
         } else {
-          // Se non c'è una data specifica selezionata, carica per il periodo corrente
-          if (viewMode.value === 'week') {
-            const start = new Date(currentWeekStart.value)
-            const end = new Date(start)
-            end.setDate(start.getDate() + 6)
-            params.start_date = start.toISOString().split('T')[0]
-            params.end_date = end.toISOString().split('T')[0]
-          } else {
-            params.date = currentDay.value.toISOString().split('T')[0]
-          }
+          params.date = currentDay.value.toISOString().split('T')[0]
         }
 
         await appointmentsStore.fetchAppointments(params, true)
@@ -266,10 +303,10 @@ export default defineComponent({
       // Qui potresti aprire un dialog o popover per mostrare tutti gli appuntamenti
       console.log(`Showing ${appointments.length} appointments for ${date} at ${hour}:00`, appointments)
       // Per ora, mostreremo un alert semplice, ma potresti implementare un dialog più sofisticato
-      const appointmentsList = appointments.map(apt =>
+      /* const appointmentsList = appointments.map(apt =>
         `${formatTime(apt.appointment_date)} - ${apt.patient_name} (Dr. ${apt.doctor_name})`
       ).join('\n')
-      alert(`Appuntamenti per ${date} alle ${hour}:00:\n\n${appointmentsList}`)
+      alert(`Appuntamenti per ${date} alle ${hour}:00:\n\n${appointmentsList}`) */
     }
 
     const formatTime = (dateString) => {
@@ -410,15 +447,10 @@ export default defineComponent({
       selectedAppointment.value = null
       dialogMode.value = 'view'
       preselectedDate.value = null
-      preselectedHour.value = null
-    }
+      preselectedHour.value = null    }
 
     // Watchers per reagire ai cambiamenti dei filtri
     watch(selectedDoctor, () => {
-      loadAppointments()
-    })
-
-    watch(selectedDate, () => {
       loadAppointments()
     })
 
@@ -447,14 +479,12 @@ export default defineComponent({
       ])
     })
 
-    return {
-      // Store data
+    return {      // Store data
       appointments: appointmentsStore.appointments,
       doctors: doctorsStore.allDoctors,
       patients: patientsStore.allPatients,
       loading: appStore.isLoading,
       selectedDoctor,
-      selectedDate,
       currentWeekStart,
       currentDay,
       viewMode,
@@ -520,6 +550,7 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  width: 400px;
 }
 
 .filter-label {

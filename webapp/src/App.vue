@@ -31,15 +31,15 @@ export default defineComponent({
       setupCacheWarming()
 
       // Check if this is the first load of the session
-      const isFirstLoad = !sessionStorage.getItem('gestmed-session-started')
+      /* const isFirstLoad = !sessionStorage.getItem('gestmed-session-started')
       if (isFirstLoad) {
         sessionStorage.setItem('gestmed-session-started', 'true')
-      }
+      } */
 
       // Initial data preload
       const preloadSuccess = await preloadAppData()
 
-      if (preloadSuccess && isFirstLoad) {
+      if (preloadSuccess /* && isFirstLoad */) {
         appStore.addNotification({
           severity: 'success',
           summary: 'GestMed Pronto',

@@ -33,7 +33,7 @@ export async function preloadAppData() {
     await Promise.race([
       Promise.allSettled(preloadPromises),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Preload timeout')), 5000)
+        globalThis.setTimeout(() => reject(new Error('Preload timeout')), 5000)
       )
     ])
 
@@ -50,7 +50,7 @@ export function setupDataPreloading() {
   // Preload data when the app becomes visible
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-      setTimeout(() => {
+      globalThis.setTimeout(() => {
         preloadAppData()
       }, 1000) // Small delay to avoid competing with user interactions
     }
@@ -58,7 +58,7 @@ export function setupDataPreloading() {
 
   // Preload data on focus (when user returns to tab)
   window.addEventListener('focus', () => {
-    setTimeout(() => {
+    globalThis.setTimeout(() => {
       preloadAppData()
     }, 500)
   })
@@ -72,7 +72,7 @@ export function setupCacheWarming() {
   const startWarming = () => {
     if (warmingInterval) return
 
-    warmingInterval = setInterval(() => {
+    warmingInterval = globalThis.setInterval(() => {
       if (!document.hidden) {
         preloadAppData()
       }
@@ -81,7 +81,7 @@ export function setupCacheWarming() {
 
   const stopWarming = () => {
     if (warmingInterval) {
-      clearInterval(warmingInterval)
+      window.clearInterval(warmingInterval)
       warmingInterval = null
     }
   }

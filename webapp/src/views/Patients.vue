@@ -4,23 +4,42 @@
       <!-- Header with search and add button -->
       <div class="page-header">
         <div class="search-section">
-          <InputText v-model="searchQuery" placeholder="Cerca pazienti per nome, email o telefono"
-            @input="debouncedSearch" class="search-input" />
+          <InputText
+            v-model="searchQuery"
+            placeholder="Cerca pazienti per nome, email o telefono"
+            class="search-input"
+            @input="debouncedSearch"
+          />
           <Button icon="pi pi-search" class="p-button-primary" @click="searchPatients" />
         </div>
-        <Button label="Nuovo Paziente" icon="pi pi-plus" class="p-button-primary" @click="openNewPatientDialog" />
+        <Button
+          label="Nuovo Paziente"
+          icon="pi pi-plus"
+          class="p-button-primary"
+          @click="openNewPatientDialog"
+        />
       </div>
 
       <!-- Patients Table -->
       <div class="table-container custom-card">
-        <DataTable :value="allPatients" :loading="isLoading" paginator :rows="pagination.limit"
-          :totalRecords="pagination.total" :rowsPerPageOptions="[10, 25, 50]" lazy @page="onPageChange"
-          responsiveLayout="scroll" :globalFilterFields="['name', 'email', 'phone']"
-          emptyMessage="Nessun paziente trovato" class="patients-table">
+        <DataTable
+          :value="allPatients"
+          :loading="isLoading"
+          paginator
+          :rows="pagination.limit"
+          :total-records="pagination.total"
+          :rows-per-page-options="[10, 25, 50]"
+          lazy
+          responsive-layout="scroll"
+          :global-filter-fields="['name', 'email', 'phone']"
+          empty-message="Nessun paziente trovato"
+          class="patients-table"
+          @page="onPageChange"
+        >
           <Column field="name" header="Nome" sortable>
             <template #body="{ data }">
               <div class="patient-name">
-                <i class="pi pi-user"></i>
+                <i class="pi pi-user" />
                 {{ data.name }}
               </div>
             </template>
@@ -49,12 +68,24 @@
           <Column header="Azioni" :exportable="false" style="min-width: 150px;">
             <template #body="{ data }">
               <div class="action-buttons">
-                <Button icon="pi pi-eye" class="p-button-rounded p-button-text p-button-sm" @click="viewPatient(data)"
-                  v-tooltip.top="'Visualizza'" />
-                <Button icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-sm"
-                  @click="editPatient(data)" v-tooltip.top="'Modifica'" />
-                <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-sm p-button-danger"
-                  @click="confirmDeletePatient(data)" v-tooltip.top="'Elimina'" />
+                <Button
+                  v-tooltip.top="'Visualizza'"
+                  icon="pi pi-eye"
+                  class="p-button-rounded p-button-text p-button-sm"
+                  @click="viewPatient(data)"
+                />
+                <Button
+                  v-tooltip.top="'Modifica'"
+                  icon="pi pi-pencil"
+                  class="p-button-rounded p-button-text p-button-sm"
+                  @click="editPatient(data)"
+                />
+                <Button
+                  v-tooltip.top="'Elimina'"
+                  icon="pi pi-trash"
+                  class="p-button-rounded p-button-text p-button-sm p-button-danger"
+                  @click="confirmDeletePatient(data)"
+                />
               </div>
             </template>
           </Column>
@@ -62,11 +93,21 @@
       </div>
 
       <!-- Patient Dialog -->
-      <Dialog v-model:visible="patientDialogVisible" :modal="true"
+      <Dialog
+        v-model:visible="patientDialogVisible"
+        :modal="true"
         :header="dialogMode === 'create' ? 'Nuovo Paziente' : dialogMode === 'edit' ? 'Modifica Paziente' : 'Dettagli Paziente'"
-        :style="{ width: '600px' }" :maximizable="false" :closable="true">
-        <PatientForm :patient="selectedPatient" :mode="dialogMode" @save="handleSavePatient"
-          @cancel="closePatientDialog" @switch-mode="handleSwitchMode" />
+        :style="{ width: '600px' }"
+        :maximizable="false"
+        :closable="true"
+      >
+        <PatientForm
+          :patient="selectedPatient"
+          :mode="dialogMode"
+          @save="handleSavePatient"
+          @cancel="closePatientDialog"
+          @switch-mode="handleSwitchMode"
+        />
       </Dialog>
     </div>
   </DashboardLayout>
@@ -121,8 +162,10 @@ export default defineComponent({
     }
 
     const debouncedSearch = () => {
-      clearTimeout(searchTimeout)
-      searchTimeout = setTimeout(() => {
+      if (searchTimeout) {
+        window.clearTimeout(searchTimeout)
+      }
+      searchTimeout = window.setTimeout(() => {
         patientsStore.setFilters({ search: searchQuery.value })
         loadPatients()
       }, 300)

@@ -1,44 +1,61 @@
 <template>
   <DashboardLayout>
-    <div class="dashboard-page"> <!-- Stats Cards -->
+    <div class="dashboard-page">
+      <!-- Stats Cards -->
       <div class="stats-grid">
         <div class="stat-card custom-card">
           <div class="stat-content">
             <div class="stat-info">
-              <h3 class="stat-number">{{ dashboardData.totalPatients || 0 }}</h3>
-              <p class="stat-label">Pazienti Totali</p>
+              <h3 class="stat-number">
+                {{ dashboardData.totalPatients || 0 }}
+              </h3>
+              <p class="stat-label">
+                Pazienti Totali
+              </p>
             </div>
-            <i class="pi pi-users stat-icon"></i>
+            <i class="pi pi-users stat-icon" />
           </div>
         </div>
 
         <div class="stat-card custom-card">
           <div class="stat-content">
             <div class="stat-info">
-              <h3 class="stat-number">{{ dashboardData.totalDoctors || 0 }}</h3>
-              <p class="stat-label">Medici</p>
+              <h3 class="stat-number">
+                {{ dashboardData.totalDoctors || 0 }}
+              </h3>
+              <p class="stat-label">
+                Medici
+              </p>
             </div>
-            <i class="pi pi-user-plus stat-icon"></i>
+            <i class="pi pi-user-plus stat-icon" />
           </div>
         </div>
 
         <div class="stat-card custom-card">
           <div class="stat-content">
             <div class="stat-info">
-              <h3 class="stat-number">{{ dashboardData.todayAppointments || 0 }}</h3>
-              <p class="stat-label">Appuntamenti Oggi</p>
+              <h3 class="stat-number">
+                {{ dashboardData.todayAppointments || 0 }}
+              </h3>
+              <p class="stat-label">
+                Appuntamenti Oggi
+              </p>
             </div>
-            <i class="pi pi-calendar stat-icon"></i>
+            <i class="pi pi-calendar stat-icon" />
           </div>
         </div>
 
         <div class="stat-card custom-card">
           <div class="stat-content">
             <div class="stat-info">
-              <h3 class="stat-number">{{ dashboardData.pendingAppointments || 0 }}</h3>
-              <p class="stat-label">Appuntamenti Pendenti</p>
+              <h3 class="stat-number">
+                {{ dashboardData.pendingAppointments || 0 }}
+              </h3>
+              <p class="stat-label">
+                Appuntamenti Pianificati
+              </p>
             </div>
-            <i class="pi pi-chart-line stat-icon"></i>
+            <i class="pi pi-chart-line stat-icon" />
           </div>
         </div>
       </div>
@@ -48,16 +65,23 @@
         <div class="section-card custom-card">
           <div class="section-header">
             <h3>Prossimi Appuntamenti</h3>
-            <Button label="Vedi Tutti" icon="pi pi-calendar" class="p-button-text p-button-sm" @click="goToCalendar" />
+            <Button
+              label="Vedi Tutti"
+              icon="pi pi-calendar"
+              class="p-button-text p-button-sm"
+              @click="goToCalendar"
+            />
           </div>
-          <div class="appointments-list" v-if="dashboardData.recentAppointments?.length">
+          <div v-if="dashboardData.recentAppointments?.length" class="appointments-list">
             <div v-for="appointment in dashboardData.recentAppointments" :key="appointment.id" class="appointment-item">
               <div class="appointment-time">
-                <i class="pi pi-clock"></i>
+                <i class="pi pi-clock" />
                 {{ formatDateTime(appointment.appointment_date) }}
               </div>
               <div class="appointment-details">
-                <div class="patient-name">{{ appointment.patient_name }}</div>
+                <div class="patient-name">
+                  {{ appointment.patient_name }}
+                </div>
                 <div class="doctor-info">
                   Dr. {{ appointment.doctor_name }} - {{ appointment.doctor_specialization || 'Medico Generico' }}
                 </div>
@@ -67,7 +91,7 @@
           </div>
 
           <div v-else class="empty-state">
-            <i class="pi pi-calendar"></i>
+            <i class="pi pi-calendar" />
             <p>Nessun appuntamento programmato</p>
           </div>
         </div>
@@ -79,20 +103,30 @@
           </div>
 
           <div class="quick-actions">
-            <Button label="Nuovo Paziente" icon="pi pi-user-plus" class="p-button-outlined quick-action-btn"
-              @click="goToPatients" />
-            <Button label="Nuovo Medico" icon="pi pi-plus" class="p-button-outlined quick-action-btn"
-              @click="goToDoctors" />
-            <Button label="Nuovo Appuntamento" icon="pi pi-calendar-plus" class="quick-action-btn"
-              @click="goToCalendar" />
+            <Button
+              label="Nuovo Paziente"
+              icon="pi pi-user-plus"
+              class="p-button-outlined quick-action-btn"
+              @click="goToPatients"
+            />
+            <Button
+              label="Nuovo Medico"
+              icon="pi pi-plus"
+              class="p-button-outlined quick-action-btn"
+              @click="goToDoctors"
+            />
+            <Button
+              label="Nuovo Appuntamento"
+              icon="pi pi-calendar-plus"
+              class="quick-action-btn"
+              @click="goToCalendar"
+            />
           </div>
         </div>
       </div>
       <!-- Loading overlay -->
       <div v-if="isLoading" class="loading-overlay">
-        <div class="loading-spinner">
-          <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
-        </div>
+        <ProgressSpinner style="width: 100px; height: 100px" stroke-width="4" />
         <p>Caricamento dati...</p>
       </div>
     </div>
@@ -100,20 +134,21 @@
 </template>
 
 <script>
-import { defineComponent, computed, onMounted } from 'vue'
+import { defineComponent, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import DashboardLayout from '../components/DashboardLayout.vue'
 import Button from 'primevue/button'
 import Badge from 'primevue/badge'
+import ProgressSpinner from 'primevue/progressspinner'
 import { useDashboardStore, useAppStore } from '../stores'
 
 export default defineComponent({
-  name: 'Dashboard',
   components: {
     DashboardLayout,
     Button,
-    Badge
+    Badge,
+    ProgressSpinner
   },
   setup() {
     const router = useRouter()

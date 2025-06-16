@@ -1,3 +1,4 @@
+/* global localStorage */
 import axios from 'axios'
 
 // Cache per le richieste
@@ -17,9 +18,11 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Add auth token if available
-    const token = localStorage.getItem('auth_token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    if (typeof localStorage !== 'undefined') {
+      const token = localStorage.getItem('auth_token')
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
     }
 
     // Add request ID for tracking
@@ -79,7 +82,9 @@ api.interceptors.response.use(
     // Handle different error types
     if (error.response?.status === 401) {
       // Handle unauthorized access
-      localStorage.removeItem('auth_token')
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('auth_token')
+      }
       window.location.href = '/'
       return Promise.reject(error)
     }
@@ -89,7 +94,7 @@ api.interceptors.response.use(
       originalRequest._retry = true
 
       // Wait 1 second before retry
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise(resolve => globalThis.setTimeout(resolve, 1000))
 
       return api(originalRequest)
     }
@@ -220,13 +225,13 @@ export const apiService = {
   healthCheck: () => api.get('/health'),
 
   // A-Live Appointments API
-  getAliveLogs: () => api.get('/alive-appointments'),
-  
-  getAppointmentLogs: (appointmentId) => api.get(`/alive-appointments/${appointmentId}/logs`),
-  
-  addAppointmentLog: (appointmentId, data) => api.post(`/alive-appointments/${appointmentId}/logs`, data),
-  
-  updateAppointmentStatus: (appointmentId, status) => api.put(`/alive-appointments/${appointmentId}/status`, { status })
+  getAliveLogs: () => api.get('/alive'),
+
+  getAppointmentLogs: (appointmentId) => api.get(`/alive/${appointmentId}/logs`),
+
+  addAppointmentLog: (appointmentId, data) => api.post(`/alive/${appointmentId}/logs`, data),
+
+  updateAppointmentStatus: (appointmentId, status) => api.put(`/alive/${appointmentId}/status`, { status })
 }
 
 export default api
