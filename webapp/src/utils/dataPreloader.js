@@ -1,23 +1,23 @@
-import { useDashboardStore, useDoctorsStore, useAppointmentsStore } from '../stores'
+import { useDoctorsStore, useAppointmentsStore, usePatientsStore } from '../stores'
 
 export async function preloadAppData() {
   try {
     console.log('🚀 Preloading application data...')
 
-    const dashboardStore = useDashboardStore()
     const doctorsStore = useDoctorsStore()
     const appointmentsStore = useAppointmentsStore()
+    const patientsStore = usePatientsStore()
 
     // Preload critical data in parallel with timeout
     const preloadPromises = [
-      // Dashboard data (lightweight)
-      dashboardStore.fetchDashboardData().catch(error => {
-        console.warn('Failed to preload dashboard data:', error)
-      }),
-
       // Doctors list (frequently accessed)
       doctorsStore.fetchDoctors({ limit: 20 }).catch(error => {
         console.warn('Failed to preload doctors:', error)
+      }),
+
+      // Patients data (for dashboard statistics)
+      patientsStore.fetchPatients({ limit: 50 }).catch(error => {
+        console.warn('Failed to preload patients:', error)
       }),
 
       // Today's appointments

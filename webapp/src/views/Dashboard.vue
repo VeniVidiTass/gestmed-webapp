@@ -194,11 +194,8 @@ export default defineComponent({
     }
 
     onMounted(async () => {
-      try {
-        await dashboardStore.fetchDashboardData()
-      } catch (error) {
-        console.error('Error loading dashboard:', error)
-      }
+      // I dati del dashboard vengono ora calcolati automaticamente
+      // dai dati degli altri store quando necessario
     })
 
     return {

@@ -2,11 +2,9 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiService } from '../services/api'
 import { useAppStore } from './app'
-import { useDashboardStore } from './dashboard'
 
 export const useAppointmentsStore = defineStore('appointments', () => {
   const appStore = useAppStore()
-  const dashboardStore = useDashboardStore()
 
   // State
   const appointments = ref([])
@@ -215,19 +213,9 @@ export const useAppointmentsStore = defineStore('appointments', () => {
       appStore.setLoading(true)
       appStore.clearError()
 
-      const newAppointment = await apiService.createAppointment(appointmentData)
-
-      // Add to appointments array
+      const newAppointment = await apiService.createAppointment(appointmentData)      // Add to appointments array
       appointments.value.unshift(newAppointment)
       pagination.value.total += 1
-
-      // Update dashboard if it's for today
-      const today = new Date().toISOString().split('T')[0]
-      if (newAppointment.appointment_date?.startsWith(today)) {
-        dashboardStore.updateTodayAppointments(1)
-      }
-
-      dashboardStore.addRecentAppointment(newAppointment)
 
       appStore.addNotification({
         severity: 'success',
@@ -286,16 +274,9 @@ export const useAppointmentsStore = defineStore('appointments', () => {
 
       // Remove from appointments array
       const index = appointments.value.findIndex(a => a.id === id)
-      if (index !== -1) {
-        const deletedAppointment = appointments.value[index]
+      if (index !== -1) {        // Remove from appointments array
         appointments.value.splice(index, 1)
         pagination.value.total -= 1
-
-        // Update dashboard if it was for today
-        const today = new Date().toISOString().split('T')[0]
-        if (deletedAppointment.appointment_date?.startsWith(today)) {
-          dashboardStore.updateTodayAppointments(-1)
-        }
       }
 
       // Clear current appointment if it's the same

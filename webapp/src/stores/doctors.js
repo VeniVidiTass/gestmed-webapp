@@ -2,11 +2,9 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiService } from '../services/api'
 import { useAppStore } from './app'
-import { useDashboardStore } from './dashboard'
 
 export const useDoctorsStore = defineStore('doctors', () => {
   const appStore = useAppStore()
-  const dashboardStore = useDashboardStore()
 
   // State
   const doctors = ref([])
@@ -175,14 +173,9 @@ export const useDoctorsStore = defineStore('doctors', () => {
       appStore.setLoading(true)
       appStore.clearError()
 
-      const newDoctor = await apiService.createDoctor(doctorData)
-
-      // Add to doctors array
+      const newDoctor = await apiService.createDoctor(doctorData)      // Add to doctors array
       doctors.value.unshift(newDoctor)
       pagination.value.total += 1
-
-      // Update dashboard
-      dashboardStore.updateDoctorCount(1)
 
       appStore.addNotification({
         severity: 'success',
@@ -250,9 +243,6 @@ export const useDoctorsStore = defineStore('doctors', () => {
       if (currentDoctor.value?.id === id) {
         currentDoctor.value = null
       }
-
-      // Update dashboard
-      dashboardStore.updateDoctorCount(-1)
 
       appStore.addNotification({
         severity: 'success',
