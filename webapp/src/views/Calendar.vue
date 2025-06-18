@@ -97,10 +97,10 @@
                       {{ formatTime(appointment.appointment_date) }}
                     </div>
                     <div class="appointment-patient">
-                      {{ appointment.patient_name }}
+                      {{ appointment.patient_name || appointment.patient?.name || 'Paziente sconosciuto' }}
                     </div>
                     <div v-if="getAppointmentsForSlot(day.date, hour).length <= 2" class="appointment-doctor">
-                      Dr. {{ appointment.doctor_name }}
+                      Dr. {{ appointment.doctor_name || appointment.doctor?.name || 'Dottore sconosciuto' }}
                     </div>
                   </div>
                   <!-- Indicator for more appointments -->
@@ -261,18 +261,31 @@ export default defineComponent({
     }
 
     const getAppointmentsForSlot = (date, hour) => {
+      if (!appointmentsStore.appointments || !Array.isArray(appointmentsStore.appointments)) {
+        return []
+      }
+      
       return appointmentsStore.appointments.filter(appointment => {
-        const appointmentDate = new Date(appointment.appointment_date)
-        const appointmentDateStr = appointmentDate.toISOString().split('T')[0]
-        const appointmentHour = appointmentDate.getHours()
+        if (!appointment || !appointment.appointment_date) {
+          return false
+        }
+        
+        try {
+          const appointmentDate = new Date(appointment.appointment_date)
+          const appointmentDateStr = appointmentDate.toISOString().split('T')[0]
+          const appointmentHour = appointmentDate.getHours()
 
-        // Filtro per data e ora
-        const dateTimeMatch = appointmentDateStr === date && appointmentHour === hour
+          // Filtro per data e ora
+          const dateTimeMatch = appointmentDateStr === date && appointmentHour === hour
 
-        // Filtro per medico (se selezionato)
-        const doctorMatch = !selectedDoctor.value || appointment.doctor_id === selectedDoctor.value
+          // Filtro per medico (se selezionato)
+          const doctorMatch = !selectedDoctor.value || appointment.doctor_id === selectedDoctor.value
 
-        return dateTimeMatch && doctorMatch
+          return dateTimeMatch && doctorMatch
+        } catch (error) {
+          console.error('Error parsing appointment date:', appointment.appointment_date, error)
+          return false
+        }
       })
     }
 
@@ -457,13 +470,7 @@ export default defineComponent({
     watch(viewMode, () => {
       loadAppointments()
     })
-
-    watch(currentWeekStart, () => {
-      if (viewMode.value === 'week') {
-        loadAppointments()
-      }
-    })
-
+    
     watch(currentDay, () => {
       if (viewMode.value === 'day') {
         loadAppointments()
@@ -471,12 +478,20 @@ export default defineComponent({
     })
 
     onMounted(async () => {
-      // Carica i dati da tutti gli store
-      await Promise.all([
-        doctorsStore.fetchDoctors(),
-        patientsStore.fetchPatients(),
-        loadAppointments()
-      ])
+      try {
+        // Carica i dati da tutti gli store
+        await Promise.all([
+          doctorsStore.fetchDoctors(),
+          patientsStore.fetchPatients()
+        ])
+        
+        // Carica gli appuntamenti dopo aver caricato medici e pazienti
+        await loadAppointments()
+        
+        console.log('Appointments loaded:', appointmentsStore.appointments)
+      } catch (error) {
+        console.error('Error loading initial data:', error)
+      }
     })
 
     return {      // Store data
@@ -820,6 +835,16 @@ export default defineComponent({
 .appointment-patient {
   font-weight: 500;
   margin-bottom: 0.125rem;
+}
+
+.appointment-code {
+  font-size: 0.5rem;
+  background: rgba(255, 255, 255, 0.3);
+  padding: 0.0625rem 0.25rem;
+  border-radius: 2px;
+  margin-bottom: 0.125rem;
+  font-family: monospace;
+  font-weight: 600;
 }
 
 .appointment-doctor {

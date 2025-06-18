@@ -19,6 +19,25 @@
 			"options": {
 				"cwd": "${workspaceFolder}"
 			}
+		},
+		{
+			"label": "GestMed: Avvia setup sviluppo 2",
+			"type": "shell",
+			"command": "docker-compose -f docker-compose-microservices.yml up -d",
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": [],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		}
 	]
 }

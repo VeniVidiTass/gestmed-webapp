@@ -2,9 +2,13 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiService } from '../services/api'
 import { useAppStore } from './app'
+import { usePatientsStore } from './patients'
+import { useDoctorsStore } from './doctors'
 
 export const useAppointmentsStore = defineStore('appointments', () => {
   const appStore = useAppStore()
+  const patientsStore = usePatientsStore()
+  const doctorsStore = useDoctorsStore()
 
   // State
   const appointments = ref([])
@@ -27,36 +31,33 @@ export const useAppointmentsStore = defineStore('appointments', () => {
   })
   const lastFetched = ref(null)
   const cacheTimeout = 1 * 60 * 1000 // 1 minuto (gli appuntamenti cambiano spesso)
-
   // Getters
-  const allAppointments = computed(() => appointments.value)
+  const allAppointments = computed(() => enrichedAppointments.value)
   const isDataStale = computed(() => {
     if (!lastFetched.value) return true
     return Date.now() - lastFetched.value > cacheTimeout
   })
-
   const todayAppointments = computed(() => {
     const today = new Date().toISOString().split('T')[0]
-    return appointments.value.filter(apt =>
+    return enrichedAppointments.value.filter(apt =>
       apt.appointment_date?.startsWith(today)
     )
   })
 
   const upcomingAppointments = computed(() => {
     const now = new Date()
-    return appointments.value.filter(apt => {
+    return enrichedAppointments.value.filter(apt => {
       const aptDate = new Date(apt.appointment_date)
       return aptDate > now && apt.status !== 'cancelled'
     }).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date))
   })
-
   const pendingAppointments = computed(() =>
-    appointments.value.filter(apt => apt.status === 'pending')
+    enrichedAppointments.value.filter(apt => apt.status === 'pending')
   )
 
   const appointmentsByStatus = computed(() => {
     const grouped = {}
-    appointments.value.forEach(apt => {
+    enrichedAppointments.value.forEach(apt => {
       const status = apt.status || 'pending'
       if (!grouped[status]) {
         grouped[status] = []
@@ -68,7 +69,7 @@ export const useAppointmentsStore = defineStore('appointments', () => {
 
   const appointmentsByDoctor = computed(() => {
     const grouped = {}
-    appointments.value.forEach(apt => {
+    enrichedAppointments.value.forEach(apt => {
       const doctorId = apt.doctor_id || 'unknown'
       if (!grouped[doctorId]) {
         grouped[doctorId] = []
@@ -77,9 +78,8 @@ export const useAppointmentsStore = defineStore('appointments', () => {
     })
     return grouped
   })
-
   const filteredAppointments = computed(() => {
-    let filtered = appointments.value
+    let filtered = enrichedAppointments.value
 
     if (filters.value.search) {
       const search = filters.value.search.toLowerCase()
@@ -116,17 +116,58 @@ export const useAppointmentsStore = defineStore('appointments', () => {
 
     return filtered
   })
+  // Computed per appuntamenti arricchiti con dati paziente e dottore
+  const enrichedAppointments = computed(() => {
+    return appointments.value.map(appointment => {
+      const patient = patientsStore.patients.find(p => p.id === appointment.patient_id)
+      const doctor = doctorsStore.doctors.find(d => d.id === appointment.doctor_id)
+      
+      return {
+        ...appointment,
+        patient_name: patient?.name || 'Paziente non trovato',
+        patient_email: patient?.email || '',
+        patient_phone: patient?.phone || '',
+        doctor_name: doctor?.name || 'Dottore non trovato',
+        doctor_specialization: doctor?.specialization || '',
+        doctor_email: doctor?.email || ''
+      }
+    })
+  })
 
+  // Helper function per ottenere un appuntamento arricchito per ID
+  function getEnrichedAppointment(appointmentId) {
+    return enrichedAppointments.value.find(apt => apt.id === appointmentId)
+  }
+
+  // Helper function per assicurarsi che i dati correlati siano caricati
+  async function ensureRelatedDataLoaded() {
+    const promises = []
+    
+    // Carica pazienti se non sono aggiornati
+    if (patientsStore.isDataStale) {
+      promises.push(patientsStore.fetchPatients())
+    }
+    
+    // Carica dottori se non sono aggiornati
+    if (doctorsStore.isDataStale) {
+      promises.push(doctorsStore.fetchDoctors())
+    }
+    
+    await Promise.all(promises)
+  }
   // Actions
   async function fetchAppointments(params = {}, force = false) {
     // Skip if data is fresh and not forced
     if (!force && !isDataStale.value && appointments.value.length > 0) {
-      return appointments.value
+      return enrichedAppointments.value
     }
 
     try {
       appStore.setLoading(true)
       appStore.clearError()
+
+      // Assicuriamoci che i dati correlati siano caricati
+      await ensureRelatedDataLoaded()
 
       const queryParams = {
         page: pagination.value.page,
@@ -161,11 +202,9 @@ export const useAppointmentsStore = defineStore('appointments', () => {
           total: response.total || 0,
           totalPages: response.totalPages || 0
         }
-      }
+      }      lastFetched.value = Date.now()
 
-      lastFetched.value = Date.now()
-
-      return appointments.value
+      return enrichedAppointments.value
     } catch (error) {
       appStore.handleApiError(error)
       throw error
@@ -213,7 +252,7 @@ export const useAppointmentsStore = defineStore('appointments', () => {
       appStore.setLoading(true)
       appStore.clearError()
 
-      const newAppointment = await apiService.createAppointment(appointmentData)      // Add to appointments array
+      const newAppointment = await apiService.createAppointment(appointmentData)
       appointments.value.unshift(newAppointment)
       pagination.value.total += 1
 
@@ -334,10 +373,9 @@ export const useAppointmentsStore = defineStore('appointments', () => {
   function clearCurrentAppointment() {
     currentAppointment.value = null
   }
-
   // Utility function to get appointments for a specific date range
   function getAppointmentsByDateRange(startDate, endDate) {
-    return appointments.value.filter(apt => {
+    return enrichedAppointments.value.filter(apt => {
       const aptDate = new Date(apt.appointment_date)
       return aptDate >= startDate && aptDate <= endDate
     })
@@ -349,9 +387,7 @@ export const useAppointmentsStore = defineStore('appointments', () => {
     currentAppointment,
     pagination,
     filters,
-    lastFetched,
-
-    // Getters
+    lastFetched,    // Getters
     allAppointments,
     isDataStale,
     todayAppointments,
@@ -360,6 +396,7 @@ export const useAppointmentsStore = defineStore('appointments', () => {
     appointmentsByStatus,
     appointmentsByDoctor,
     filteredAppointments,
+    enrichedAppointments,
 
     // Actions
     fetchAppointments,
@@ -372,6 +409,8 @@ export const useAppointmentsStore = defineStore('appointments', () => {
     setPagination,
     clearCache,
     clearCurrentAppointment,
-    getAppointmentsByDateRange
+    getAppointmentsByDateRange,
+    getEnrichedAppointment,
+    ensureRelatedDataLoaded
   }
 })

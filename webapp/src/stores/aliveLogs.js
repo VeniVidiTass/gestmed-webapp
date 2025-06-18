@@ -4,43 +4,14 @@ import { apiService } from '../services/api.js'
 
 export const useAliveLogsStore = defineStore('AliveLogs', () => {
   // State
-  const appointments = ref([])
   const appointmentLogs = ref({})
   const loading = ref(false)
   const error = ref(null)
 
   // Getters
-  const getAppointmentsByStatus = computed(() => (status) => {
-    return appointments.value.filter(apt => apt.status === status)
-  })
-
   const getAppointmentLogs = computed(() => (appointmentId) => {
     return appointmentLogs.value[appointmentId] || []
-  })
-
-  const scheduledAppointments = computed(() => 
-    appointments.value.filter(apt => apt.status === 'scheduled')
-  )
-
-  const inProgressAppointments = computed(() => 
-    appointments.value.filter(apt => apt.status === 'in_progress')
-  )
-
-  // Actions
-  const fetchAliveLogs = async () => {
-    loading.value = true
-    error.value = null
-    try {
-      const response = await apiService.getAliveLogs()
-      appointments.value = response
-    } catch (err) {
-      error.value = err.response?.data?.error || 'Errore nel caricamento degli appuntamenti'
-      console.error('Error fetching alive appointments:', err)
-    } finally {
-      loading.value = false
-    }
-  }
-
+  })  // Actions
   const fetchAppointmentLogs = async (appointmentId) => {
     try {
       const response = await apiService.getAppointmentLogs(appointmentId)
@@ -72,13 +43,6 @@ export const useAliveLogsStore = defineStore('AliveLogs', () => {
   const updateAppointmentStatus = async (appointmentId, status) => {
     try {
       const response = await apiService.updateAppointmentStatus(appointmentId, status)
-      
-      // Update local appointment
-      const appointmentIndex = appointments.value.findIndex(apt => apt.id === appointmentId)
-      if (appointmentIndex !== -1) {
-        appointments.value[appointmentIndex] = { ...appointments.value[appointmentIndex], status }
-      }
-      
       return response
     } catch (err) {
       error.value = err.response?.data?.error || 'Errore nell\'aggiornamento dello status'
@@ -86,13 +50,11 @@ export const useAliveLogsStore = defineStore('AliveLogs', () => {
       throw err
     }
   }
-
   const clearError = () => {
     error.value = null
   }
 
   const resetStore = () => {
-    appointments.value = []
     appointmentLogs.value = {}
     loading.value = false
     error.value = null
@@ -100,17 +62,12 @@ export const useAliveLogsStore = defineStore('AliveLogs', () => {
 
   return {
     // State
-    appointments,
     appointmentLogs,
     loading,
     error,
     // Getters
-    getAppointmentsByStatus,
     getAppointmentLogs,
-    scheduledAppointments,
-    inProgressAppointments,
     // Actions
-    fetchAliveLogs,
     fetchAppointmentLogs,
     addAppointmentLog,
     updateAppointmentStatus,

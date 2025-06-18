@@ -2,7 +2,7 @@
   <Dialog
     :visible="visible"
     modal
-    :header="`Aggiungi Log - ${appointmentTitle}`"
+    :header="`Aggiungi Log - ${appointmentTitle}${appointmentCode ? ' (' + appointmentCode + ')' : ''}`"
     :style="{ width: '50vw' }"
     :breakpoints="{ '960px': '75vw', '641px': '90vw' }"
     @update:visible="$emit('update:visible', $event)"
@@ -79,6 +79,10 @@ export default defineComponent({
       default: null
     },
     appointmentTitle: {
+      type: String,
+      default: ''
+    },
+    appointmentCode: {
       type: String,
       default: ''
     },

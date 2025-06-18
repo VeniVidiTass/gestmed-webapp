@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
 
-// GET /api/patients - Get all patients
+// GET /patients - Get all patients
 router.get('/', async (req, res) => {
   try {
     const { search } = req.query;
@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/patients/:id - Get a specific patient
+// GET /patients/:id - Get a specific patient
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -41,7 +41,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/patients - Create a new patient
+// POST /patients - Create a new patient
 router.post('/', async (req, res) => {
   try {
     const { name, email, phone, date_of_birth, address, medical_history } = req.body;
@@ -50,7 +50,7 @@ router.post('/', async (req, res) => {
       'INSERT INTO patients (name, email, phone, date_of_birth, address, medical_history) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
       [name, email, phone, date_of_birth, address, medical_history || '']
     );
-    
+
     //TODO add sending email notification to patient
 
     res.status(201).json(result.rows[0]);
@@ -60,7 +60,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/patients/:id - Update a patient
+// PUT /patients/:id - Update a patient
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -82,7 +82,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/patients/:id - Delete a patient
+// DELETE /patients/:id - Delete a patient
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;

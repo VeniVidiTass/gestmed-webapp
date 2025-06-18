@@ -2,11 +2,14 @@ FROM node:24-alpine
 
 WORKDIR /usr/src/app
 
+# Copy package files first for better Docker layer caching
 COPY package*.json ./
 RUN npm install
 
+# Copy the rest of the application
 COPY . .
 
 EXPOSE 5173
 
+# Use development command with hot reload
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

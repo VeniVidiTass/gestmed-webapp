@@ -95,7 +95,7 @@ export default defineComponent({
       { name: 'Patients', label: 'Pazienti', route: '/patients', icon: 'pi pi-users' },
       { name: 'Doctors', label: 'Medici', route: '/doctors', icon: 'pi pi-user-plus' },
       { name: 'Calendar', label: 'Calendario', route: '/calendar', icon: 'pi pi-calendar' },
-      { name: 'ALive', label: 'A-Live', route: '/a-live', icon: 'pi pi-circle text-success' }
+      { name: 'ALive', label: 'A-Live', route: '/alive', icon: 'pi pi-circle text-success' }
     ]
 
     const isMobile = computed(() => windowWidth.value <= 768)

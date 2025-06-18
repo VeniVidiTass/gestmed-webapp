@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
 
-// GET /api/doctors - Get all doctors
+// GET /doctors - Get all doctors
 router.get('/', async (req, res) => {
   try {
     const { search } = req.query;
@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/doctors/:id - Get a specific doctor
+// GET /doctors/:id - Get a specific doctor
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -41,7 +41,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/doctors - Create a new doctor
+// POST /doctors - Create a new doctor
 router.post('/', async (req, res) => {
   try {
     const { name, email, phone, specialization, availability, license_number } = req.body;
@@ -58,7 +58,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/doctors/:id - Update a doctor
+// PUT /doctors/:id - Update a doctor
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -80,7 +80,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/doctors/:id - Delete a doctor
+// DELETE /doctors/:id - Delete a doctor
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;

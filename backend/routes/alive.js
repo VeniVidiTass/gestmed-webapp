@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
 
-// GET /api/alive - Get all active appointments (scheduled or in_progress)
+// GET /alive - Get all active appointments (scheduled or in_progress)
 router.get('/', async (req, res) => {
   try {
     const query = `
@@ -27,13 +27,13 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/alive/:id/logs - Get logs for a specific appointment
+// GET /alive/:id/logs - Get logs for a specific appointment by ID
 router.get('/:id/logs', async (req, res) => {
   try {
     const appointmentId = req.params.id;
-    
+
     const query = `
-      SELECT * FROM appointment_logs 
+      SELECT * FROM alive_logs 
       WHERE appointment_id = $1 
       ORDER BY created_at DESC
     `;
@@ -46,62 +46,52 @@ router.get('/:id/logs', async (req, res) => {
   }
 });
 
-// POST /api/alive/:id/logs - Add a new log to an appointment
-router.post('/:id/logs', async (req, res) => {
+// GET /alive/code/:code/logs - Get logs for a specific appointment by code
+router.get('/code/:code/logs', async (req, res) => {
   try {
-    const appointmentId = req.params.id;
-    const { title, description } = req.body;
-
-    if (!title || !description) {
-      return res.status(400).json({ error: 'Title and description are required' });
-    }
+    const appointmentCode = req.params.code;
 
     const query = `
-      INSERT INTO appointment_logs (appointment_id, title, description, created_at)
-      VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
-      RETURNING *
+      SELECT * FROM alive_logs 
+      WHERE code = $1 
+      ORDER BY created_at DESC
     `;
 
-    const result = await pool.query(query, [appointmentId, title, description]);
-    res.status(201).json(result.rows[0]);
+    const result = await pool.query(query, [appointmentCode]);
+    res.json(result.rows);
   } catch (error) {
-    console.error('Error creating appointment log:', error);
+    console.error('Error fetching appointment logs by code:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// PUT /api/alive/:id/status - Update appointment status
-router.put('/:id/status', async (req, res) => {
+// POST /alive/:id/logs - Add a new log to an appointment
+router.post('/:id/logs', async (req, res) => {
   try {
     const appointmentId = req.params.id;
-    const { status } = req.body;
+    const { title, description, code } = req.body;
 
-    if (!status) {
-      return res.status(400).json({ error: 'Status is required' });
-    }
+    console.log('Received log request:', { appointmentId, title, description });
 
-    const allowedStatuses = ['scheduled', 'in_progress', 'completed', 'cancelled'];
-    if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
+    if (!title || !description) {
+      console.log('Validation failed: missing title or description');
+      return res.status(400).json({ error: 'Title and description are required' });
     }
 
     const query = `
-      UPDATE appointments 
-      SET status = $1, updated_at = CURRENT_TIMESTAMP 
-      WHERE id = $2 
+      INSERT INTO alive_logs (appointment_id, code, title, description, created_at)
+      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
       RETURNING *
     `;
 
-    const result = await pool.query(query, [status, appointmentId]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Appointment not found' });
-    }
+    console.log('Executing query with params:', [appointmentId, code, title, description]);
+    const result = await pool.query(query, [appointmentId, code, title, description]);
 
-    res.json(result.rows[0]);
+    console.log('Log created successfully:', result.rows[0]);
+    res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error('Error updating appointment status:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error creating appointment log:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
 

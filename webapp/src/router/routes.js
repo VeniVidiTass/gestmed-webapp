@@ -32,7 +32,7 @@ export default [
     component: Calendar
   },
   {
-    path: '/a-live',
+    path: '/alive',
     name: 'ALive',
     component: ALive
   }

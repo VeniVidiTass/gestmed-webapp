@@ -7,7 +7,7 @@ const CACHE_DURATION = 5 * 60 * 1000 // 5 minuti
 
 // Create axios instance with optimizations
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://api-gateway:3000/api',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
@@ -76,7 +76,8 @@ api.interceptors.response.use(
       url: originalRequest?.url,
       method: originalRequest?.method,
       status: error.response?.status,
-      message: error.message
+      message: error.message,
+      data: error.response?.data
     })
 
     // Handle different error types
@@ -224,14 +225,11 @@ export const apiService = {
   // Health check
   healthCheck: () => api.get('/health'),
 
-  // A-Live Appointments API
-  getAliveLogs: () => api.get('/alive'),
-
   getAppointmentLogs: (appointmentId) => api.get(`/alive/${appointmentId}/logs`),
 
   addAppointmentLog: (appointmentId, data) => api.post(`/alive/${appointmentId}/logs`, data),
 
-  updateAppointmentStatus: (appointmentId, status) => api.put(`/alive/${appointmentId}/status`, { status })
+  updateAppointmentStatus: (appointmentId, status) => api.put(`/appointments/${appointmentId}/status`, { status })
 }
 
 export default api

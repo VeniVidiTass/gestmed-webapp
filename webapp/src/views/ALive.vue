@@ -136,6 +136,10 @@
                     <span><strong>Ora:</strong> {{ formatTime(appointment.appointment_date)
                     }}</span>
                   </div>
+                  <div v-if="appointment.code" class="info-row">
+                    <i class="pi pi-hashtag" />
+                    <span><strong>Codice:</strong> {{ appointment.code }}</span>
+                  </div>
                   <div v-if="appointment.notes" class="info-row">
                     <i class="pi pi-file-edit" />
                     <span><strong>Note:</strong> {{ appointment.notes }}</span>
@@ -146,11 +150,11 @@
           </Card>
         </div>
       </div>
-    </div> <!-- Add Log Dialog -->
-    <AliveLogForm
+    </div> <!-- Add Log Dialog -->    <AliveLogForm
       v-model:visible="showLogForm"
       :appointment-id="selectedAppointment?.id"
       :appointment-title="`${selectedAppointment?.patient_name} - Dr. ${selectedAppointment?.doctor_name}`"
+      :appointment-code="selectedAppointment?.code"
       :loading="logLoading"
       @submit="handleLogSubmit"
       @cancel="closeLogForm"
@@ -197,6 +201,10 @@
                   <span><strong>Data:</strong> {{ formatDate(selectedLogAppointment?.appointment_date)
                   }}</span>
                 </div>
+                <div v-if="selectedLogAppointment?.code" class="info-row">
+                  <i class="pi pi-hashtag" />
+                  <span><strong>Codice:</strong> {{ selectedLogAppointment.code }}</span>
+                </div>
                 <div class="info-row">
                   <i class="pi pi-clock" />
                   <span><strong>Ora:</strong> {{ formatTime(selectedLogAppointment?.appointment_date)
@@ -229,8 +237,7 @@
           <div class="logs-list">
             <div v-if="getAppointmentLogs(selectedLogAppointment?.id).length === 0" class="no-logs">
               <p>Nessun log presente per questo appuntamento.</p>
-            </div>
-            <div
+            </div>            <div
               v-for="log in getAppointmentLogs(selectedLogAppointment?.id)"
               v-else
               :key="log.id"
@@ -238,7 +245,10 @@
             >
               <div class="log-header">
                 <h5>{{ log.title }}</h5>
-                <span class="log-time">{{ formatDateTime(log.created_at) }}</span>
+                <div class="log-meta">
+                  <span v-if="log.code" class="log-code">{{ log.code }}</span>
+                  <span class="log-time">{{ formatDateTime(log.created_at) }}</span>
+                </div>
               </div>
               <p class="log-description">
                 {{ log.description }}
@@ -257,6 +267,7 @@ import { defineComponent, ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../components/DashboardLayout.vue'
 import AliveLogForm from '../components/AliveLogForm.vue'
 import { useAliveLogsStore } from '../stores/aliveLogs'
+import { useAppointmentsStore } from '../stores/appointments'
 import { useNotifications } from '../composables/useNotifications'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
@@ -266,18 +277,20 @@ import Select from 'primevue/select'
 import Dialog from 'primevue/dialog'
 
 export default defineComponent({
-    name: 'ALive', components: {
-        DashboardLayout,
-        AliveLogForm,
-        Card,
-        Button,
-        Tag,
-        Message,
-        Select,
-        Dialog
+    name: 'ALive',
+    components: {
+      DashboardLayout,
+      AliveLogForm,
+      Card,
+      Button,
+      Tag,
+      Message,
+      Select,
+      Dialog
     },
     setup() {
-        const store = useAliveLogsStore()
+        const aliveLogsStore = useAliveLogsStore()
+        const appointmentsStore = useAppointmentsStore()
         const { showSuccess, showError } = useNotifications() // State
         const showLogs = ref({})
         const showLogForm = ref(false)
@@ -293,23 +306,32 @@ export default defineComponent({
             { label: 'Completato', value: 'completed' },
             { label: 'Annullato', value: 'cancelled' }
         ]
-
         // Computed
-        const appointments = computed(() => store.appointments)
-        const loading = computed(() => store.loading)
-        const error = computed(() => store.error)
-        const scheduledAppointments = computed(() => store.scheduledAppointments)
-        const inProgressAppointments = computed(() => store.inProgressAppointments)
-
+        const appointments = computed(() => {
+            // Filtra solo gli appuntamenti attivi (scheduled e in_progress)
+            return appointmentsStore.allAppointments.filter(apt => 
+                ['scheduled', 'in_progress'].includes(apt.status)
+            )
+        })
+        const loading = computed(() => appointmentsStore.loading)
+        const error = computed(() => appointmentsStore.error || aliveLogsStore.error)
+        const scheduledAppointments = computed(() => 
+            appointmentsStore.appointmentsByStatus['scheduled'] || []
+        )
+        const inProgressAppointments = computed(() => 
+            appointmentsStore.appointmentsByStatus['in_progress'] || []
+        )
+        
         // Methods
-        const getAppointmentLogs = (appointmentId) => store.getAppointmentLogs(appointmentId)
+        const getAppointmentLogs = (appointmentId) => aliveLogsStore.getAppointmentLogs(appointmentId)
 
         const refreshData = async () => {
-            await store.fetchAliveLogs()
+            await appointmentsStore.fetchAppointments()
         }
 
         const clearError = () => {
-            store.clearError()
+            appointmentsStore.clearError()
+            aliveLogsStore.clearError()
         }
 
         const formatDate = (dateString) => {
@@ -358,13 +380,13 @@ export default defineComponent({
         }
 
         const getStatusIcon = (status) => {
-            const iconMap = {
-                scheduled: 'pi pi-clock',
-                in_progress: 'pi pi-play-circle',
-                completed: 'pi pi-check-circle',
-                cancelled: 'pi pi-times-circle'
-            }
-            return iconMap[status] || 'pi pi-circle'
+          const iconMap = {
+            scheduled: 'pi pi-clock',
+            in_progress: 'pi pi-play-circle',
+            completed: 'pi pi-check-circle',
+            cancelled: 'pi pi-times-circle'
+          }
+          return iconMap[status] || 'pi pi-circle'
         }
 
         const toggleLogs = async (appointmentId) => {
@@ -374,8 +396,8 @@ export default defineComponent({
                 showLogsDialog.value = true
 
                 // Load logs if not already loaded
-                if (!store.appointmentLogs[appointmentId]) {
-                    await store.fetchAppointmentLogs(appointmentId)
+                if (!aliveLogsStore.appointmentLogs[appointmentId]) {
+                    await aliveLogsStore.fetchAppointmentLogs(appointmentId)
                 }
             }
         }
@@ -398,9 +420,10 @@ export default defineComponent({
         const handleLogSubmit = async (logData) => {
             logLoading.value = true
             try {
-                await store.addAppointmentLog(logData.appointmentId, {
+                await aliveLogsStore.addAppointmentLog(logData.appointmentId, {
                     title: logData.title,
-                    description: logData.description
+                    description: logData.description,
+                    code: selectedAppointment.value?.code
                 })
                 showSuccess('Log aggiunto con successo')
                 closeLogForm()
@@ -413,7 +436,9 @@ export default defineComponent({
 
         const updateStatus = async (appointmentId, newStatus) => {
             try {
-                await store.updateAppointmentStatus(appointmentId, newStatus)
+                await aliveLogsStore.updateAppointmentStatus(appointmentId, newStatus)
+                // Aggiorna anche lo store degli appuntamenti
+                await appointmentsStore.updateAppointment(appointmentId, { status: newStatus })
                 showSuccess('Status aggiornato con successo')
 
                 // If status is no longer active, refresh the list
@@ -704,6 +729,23 @@ export default defineComponent({
     color: var(--text-color);
     font-size: 0.875rem;
     font-weight: 600;
+}
+
+.log-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+}
+
+.log-code {
+    background: var(--primary-100);
+    color: var(--primary-700);
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: monospace;
 }
 
 .log-time {

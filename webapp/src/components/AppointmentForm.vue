@@ -86,6 +86,17 @@
             placeholder="Note sull'appuntamento..."
           />
         </div>
+
+        <!-- Codice appuntamento (solo in visualizzazione) -->
+        <div v-if="mode === 'view' && appointment?.code" class="form-field">
+          <label class="field-label">Codice Appuntamento</label>
+          <InputText
+            id="appointment_code"
+            :value="appointment.code"
+            disabled
+            class="code-field"
+          />
+        </div>
       </div>
 
       <!-- Appointment Details (if viewing) -->
@@ -157,6 +168,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
 import Textarea from 'primevue/textarea'
+import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import Divider from 'primevue/divider'
 
@@ -166,6 +178,7 @@ export default defineComponent({
     Select,
     DatePicker,
     Textarea,
+    InputText,
     Button,
     Divider
   },
@@ -436,6 +449,25 @@ export default defineComponent({
 .detail-item span {
   color: var(--text-color);
   font-weight: 500;
+}
+
+.appointment-code {
+  background: var(--primary-100) !important;
+  color: var(--primary-700) !important;
+  font-family: monospace;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.code-field {
+  background: var(--primary-50) !important;
+  color: var(--primary-700) !important;
+  font-family: monospace;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 1px;
+  border: 2px solid var(--primary-200) !important;
 }
 
 .form-actions {

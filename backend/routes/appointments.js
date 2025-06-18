@@ -2,20 +2,13 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
 
-// GET /api/appointments - Get all appointments
+// GET /appointments - Get all appointments
 router.get('/', async (req, res) => {
   try {
     const { date, doctor_id, patient_id } = req.query;
     let query = `
-      SELECT 
-        a.*,
-        p.name as patient_name,
-        p.phone as patient_phone,
-        d.name as doctor_name,
-        d.specialization as doctor_specialization
+      SELECT a.*
       FROM appointments a
-      LEFT JOIN patients p ON a.patient_id = p.id
-      LEFT JOIN doctors d ON a.doctor_id = d.id
       WHERE 1=1
     `;
     let params = [];
@@ -49,21 +42,13 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/appointments/:id - Get a specific appointment
+// GET /appointments/:id - Get a specific appointment
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(`
-      SELECT 
-        a.*,
-        p.name as patient_name,
-        p.phone as patient_phone,
-        p.email as patient_email,
-        d.name as doctor_name,
-        d.specialization as doctor_specialization
+      SELECT a.*
       FROM appointments a
-      LEFT JOIN patients p ON a.patient_id = p.id
-      LEFT JOIN doctors d ON a.doctor_id = d.id
       WHERE a.id = $1
     `, [id]);
 
@@ -78,26 +63,36 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/appointments - Create a new appointment
+// POST /appointments - Create a new appointment
 router.post('/', async (req, res) => {
   try {
     const { patient_id, doctor_id, appointment_date, notes, status } = req.body;
 
+    console.log('Received appointment creation request:', { patient_id, doctor_id, appointment_date, notes, status });
+
+    if (!patient_id || !doctor_id || !appointment_date) {
+      console.log('Validation failed: missing required fields');
+      return res.status(400).json({ error: 'Patient ID, Doctor ID and appointment date are required' });
+    }
+
+    // Il codice viene generato automaticamente dal trigger del database
     const result = await pool.query(
       'INSERT INTO appointments (patient_id, doctor_id, appointment_date, notes, status) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [patient_id, doctor_id, appointment_date, notes || '', status || 'scheduled']
     );
+
+    console.log('Appointment created successfully:', result.rows[0]);
 
     //TODO aggiungere la logica per inviare email e sms di conferma
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Error creating appointment:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
 
-// PUT /api/appointments/:id - Update an appointment
+// PUT /appointments/:id - Update an appointment
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -121,7 +116,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/appointments/:id - Delete an appointment
+// DELETE /appointments/:id - Delete an appointment
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -136,6 +131,41 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: 'Appointment deleted successfully' });
   } catch (error) {
     console.error('Error deleting appointment:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /appointments/:id/status - Update appointment status
+router.put('/:id/status', async (req, res) => {
+  try {
+    const appointmentId = req.params.id;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ error: 'Status is required' });
+    }
+
+    const allowedStatuses = ['scheduled', 'in_progress', 'completed', 'cancelled'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    const query = `
+      UPDATE appointments 
+      SET status = $1, updated_at = CURRENT_TIMESTAMP 
+      WHERE id = $2 
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, [status, appointmentId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating appointment status:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
