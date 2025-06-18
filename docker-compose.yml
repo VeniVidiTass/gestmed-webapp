@@ -50,7 +50,7 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: gestmed-frontend
     environment:
-      VITE_API_BASE_URL: http://gestmed-backend:3000/api
+      API_BASE_URL: http://gestmed-backend:3000/api
     ports:
       - "5173:5173"
     volumes:
