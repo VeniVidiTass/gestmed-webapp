@@ -116,11 +116,12 @@ export const useAppointmentsStore = defineStore('appointments', () => {
 
     return filtered
   })
+
   // Computed per appuntamenti arricchiti con dati paziente e dottore
   const enrichedAppointments = computed(() => {
     return appointments.value.map(appointment => {
-      const patient = patientsStore.patients.find(p => p.id === appointment.patient_id)
-      const doctor = doctorsStore.doctors.find(d => d.id === appointment.doctor_id)
+      const patient = patientsStore.allPatients.find(p => p.id === appointment.patient_id)
+      const doctor = doctorsStore.allDoctors.find(d => d.id === appointment.doctor_id)
       
       return {
         ...appointment,
@@ -380,14 +381,15 @@ export const useAppointmentsStore = defineStore('appointments', () => {
       return aptDate >= startDate && aptDate <= endDate
     })
   }
-
   return {
     // State
     appointments,
     currentAppointment,
     pagination,
     filters,
-    lastFetched,    // Getters
+    lastFetched,
+
+    // Getters
     allAppointments,
     isDataStale,
     todayAppointments,

@@ -164,7 +164,7 @@ import { usePatientsStore } from '../stores/patients.js'
 import { useAppStore } from '../stores/app.js'
 
 export default defineComponent({
-  name: 'CalendarView',  components: {
+  name: 'CalendarView', components: {
     DashboardLayout,
     AppointmentForm,
     Button,
@@ -225,7 +225,8 @@ export default defineComponent({
 
     const dayView = computed(() => {
       const date = new Date(currentDay.value)
-      return [{        name: date.toLocaleDateString('it-IT', { weekday: 'long' }),
+      return [{
+        name: date.toLocaleDateString('it-IT', { weekday: 'long' }),
         date: date.toISOString().split('T')[0],
         displayDate: date.toLocaleDateString('it-IT'),
         fullDate: new Date(date)
@@ -251,9 +252,7 @@ export default defineComponent({
           params.end_date = end.toISOString().split('T')[0]
         } else {
           params.date = currentDay.value.toISOString().split('T')[0]
-        }
-
-        await appointmentsStore.fetchAppointments(params, true)
+        } await appointmentsStore.fetchAppointments(params, true)
       } catch (error) {
         console.error('Error loading appointments:', error)
         // Error notifications are handled by the store
@@ -261,15 +260,15 @@ export default defineComponent({
     }
 
     const getAppointmentsForSlot = (date, hour) => {
-      if (!appointmentsStore.appointments || !Array.isArray(appointmentsStore.appointments)) {
+      if (!appointmentsStore.allAppointments || !Array.isArray(appointmentsStore.allAppointments)) {
         return []
       }
-      
-      return appointmentsStore.appointments.filter(appointment => {
+
+      return appointmentsStore.allAppointments.filter(appointment => {
         if (!appointment || !appointment.appointment_date) {
           return false
         }
-        
+
         try {
           const appointmentDate = new Date(appointment.appointment_date)
           const appointmentDateStr = appointmentDate.toISOString().split('T')[0]
@@ -460,7 +459,8 @@ export default defineComponent({
       selectedAppointment.value = null
       dialogMode.value = 'view'
       preselectedDate.value = null
-      preselectedHour.value = null    }
+      preselectedHour.value = null
+    }
 
     // Watchers per reagire ai cambiamenti dei filtri
     watch(selectedDoctor, () => {
@@ -470,7 +470,7 @@ export default defineComponent({
     watch(viewMode, () => {
       loadAppointments()
     })
-    
+
     watch(currentDay, () => {
       if (viewMode.value === 'day') {
         loadAppointments()
@@ -484,18 +484,18 @@ export default defineComponent({
           doctorsStore.fetchDoctors(),
           patientsStore.fetchPatients()
         ])
-        
+
         // Carica gli appuntamenti dopo aver caricato medici e pazienti
         await loadAppointments()
-        
-        console.log('Appointments loaded:', appointmentsStore.appointments)
+        console.log('Appointments loaded:', appointmentsStore.allAppointments)
       } catch (error) {
         console.error('Error loading initial data:', error)
       }
     })
 
-    return {      // Store data
-      appointments: appointmentsStore.appointments,
+    return {
+      // Store data
+      appointments: appointmentsStore.allAppointments,
       doctors: doctorsStore.allDoctors,
       patients: patientsStore.allPatients,
       loading: appStore.isLoading,
