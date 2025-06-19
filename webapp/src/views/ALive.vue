@@ -558,7 +558,6 @@ export default defineComponent({
 
 <style scoped>
 .alive-container {
-  padding: 1.5rem;
   min-height: 100vh;
 }
 
@@ -722,7 +721,6 @@ export default defineComponent({
 
 .appointment-card {
   transition: all 0.2s;
-  border-left: 4px solid var(--surface-200);
 }
 
 .appointment-card:hover {
@@ -878,7 +876,7 @@ export default defineComponent({
   gap: 1.5rem;
 }
 
-.appointment-info-card {
+/* .appointment-info-card {
   border-left: 4px solid var(--surface-200);
 }
 
@@ -888,7 +886,7 @@ export default defineComponent({
 
 .appointment-info-card.status-scheduled {
   border-left-color: var(--blue-500);
-}
+} */
 
 .appointment-header-info {
   display: flex;

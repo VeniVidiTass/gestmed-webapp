@@ -1,7 +1,5 @@
-- gestire i log alive su un'altro db sql a posta per i websocket
 - gestire autenticazione tramite header nginx e oauth2-proxy
 - aggiungere supporto a email degli appuntamenti
 
 - prenotazione dinamica
-- separare api e db postgres
 - branch con api appointsment che butta su mongodb

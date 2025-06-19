@@ -5,7 +5,6 @@
       <div class="page-header">
         <div class="filters-section">
           <div class="filter-group">
-            <label class="filter-label">Medico:</label>
             <Select
               id="doctor-filter"
               v-model="selectedDoctor"
