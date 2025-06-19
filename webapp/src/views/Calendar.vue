@@ -98,6 +98,9 @@
                     <div class="appointment-patient">
                       {{ appointment.patient_name || appointment.patient?.name || 'Paziente sconosciuto' }}
                     </div>
+                    <div class="appointment-service" :title="appointment.service_description">
+                      {{ appointment.service_name || 'Prestazione non specificata' }}
+                    </div>
                     <div v-if="getAppointmentsForSlot(day.date, hour).length <= 2" class="appointment-doctor">
                       Dr. {{ appointment.doctor_name || appointment.doctor?.name || 'Dottore sconosciuto' }}
                     </div>
@@ -486,7 +489,6 @@ export default defineComponent({
 
         // Carica gli appuntamenti dopo aver caricato medici e pazienti
         await loadAppointments()
-        console.log('Appointments loaded:', appointmentsStore.allAppointments)
       } catch (error) {
         console.error('Error loading initial data:', error)
       }
@@ -844,6 +846,16 @@ export default defineComponent({
   margin-bottom: 0.125rem;
   font-family: monospace;
   font-weight: 600;
+}
+
+.appointment-service {
+  font-size: 0.625rem;
+  color: var(--primary-600);
+  margin-bottom: 0.125rem;
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .appointment-doctor {

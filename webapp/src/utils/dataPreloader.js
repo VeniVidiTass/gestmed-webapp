@@ -1,12 +1,11 @@
-import { useDoctorsStore, useAppointmentsStore, usePatientsStore } from '../stores'
+import { useDoctorsStore, useAppointmentsStore, usePatientsStore, useServicesStore } from '../stores'
 
 export async function preloadAppData() {
   try {
-    console.log('🚀 Preloading application data...')
-
     const doctorsStore = useDoctorsStore()
     const appointmentsStore = useAppointmentsStore()
     const patientsStore = usePatientsStore()
+    const servicesStore = useServicesStore()
 
     // Preload critical data in parallel with timeout
     const preloadPromises = [
@@ -19,13 +18,18 @@ export async function preloadAppData() {
       patientsStore.fetchPatients({ limit: 50 }).catch(error => {
         console.warn('Failed to preload patients:', error)
       }),
-
+      
       // Today's appointments
       appointmentsStore.fetchAppointments({
         limit: 20,
         dateFrom: new Date().toISOString().split('T')[0]
       }).catch(error => {
         console.warn('Failed to preload appointments:', error)
+      }),
+
+      // Services data
+      servicesStore.fetchServices().catch(error => {
+        console.warn('Failed to preload services:', error)
       })
     ]
 

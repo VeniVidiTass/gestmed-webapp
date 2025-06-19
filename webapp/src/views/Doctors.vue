@@ -324,12 +324,13 @@ export default defineComponent({
 
 .search-section {
   flex: 1;
-  max-width: 500px;
+  max-width: 450px;
+  gap: 1rem;
 }
 
 .p-inputgroup {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .search-input {

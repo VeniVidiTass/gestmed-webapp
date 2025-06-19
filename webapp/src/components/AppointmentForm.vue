@@ -33,6 +33,23 @@
           />
           <small v-if="errors.doctor_id" class="p-error">{{ errors.doctor_id }}</small>
         </div>
+        <div class="form-field">
+          <label class="field-label">Prestazione *</label>
+          <Select
+            id="service"
+            v-model="formData.service_id"
+            :options="serviceOptions"
+            option-label="label"
+            option-value="value"
+            :disabled="mode === 'view' || !formData.doctor_id"
+            :class="{ 'p-invalid': errors.service_id }"
+            placeholder="Seleziona prestazione"
+            :filter="true"
+            filter-placeholder="Cerca prestazione..."
+          />
+          <small v-if="errors.service_id" class="p-error">{{ errors.service_id }}</small>
+          <small v-if="!formData.doctor_id" class="field-help">Seleziona prima un medico</small>
+        </div>
 
         <div class="form-field">
           <label class="field-label">Data *</label>
@@ -85,6 +102,17 @@
             rows="4"
             placeholder="Note sull'appuntamento..."
           />
+        </div>
+
+        <!-- Prestazione (solo in visualizzazione) -->
+        <div v-if="mode === 'view' && appointment?.service_name" class="form-field">
+          <label class="field-label">Prestazione</label>
+          <InputText
+            id="service_name"
+            :value="`${appointment.service_name} - ${appointment.duration_minutes || 30}min - €${appointment.price || '0.00'}`"
+            disabled
+          />
+          <small v-if="appointment.service_description" class="field-help">{{ appointment.service_description }}</small>
         </div>
 
         <!-- Codice appuntamento (solo in visualizzazione) -->
@@ -171,6 +199,7 @@ import Textarea from 'primevue/textarea'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import Divider from 'primevue/divider'
+import { useServicesStore } from '../stores/services'
 
 export default defineComponent({
   name: 'AppointmentForm',
@@ -212,6 +241,7 @@ export default defineComponent({
   emits: ['save', 'cancel', 'delete', 'switch-mode'],
   setup(props, { emit }) {
     const confirm = useConfirm()
+    const servicesStore = useServicesStore()
     const loading = ref(false)
     const errors = ref({})
 
@@ -225,18 +255,54 @@ export default defineComponent({
     const formData = ref({
       patient_id: null,
       doctor_id: null,
+      service_id: null,
       appointment_date: null,
       appointment_time: null,
       status: 'scheduled',
       notes: ''
     })
 
-    const patientOptions = computed(() =>
-      props.patients.map(patient => ({
+    const patientOptions = computed(() =>      props.patients.map(patient => ({
         label: `${patient.name} - ${patient.email}`,
         value: patient.id
       }))
     )
+
+    const services = ref([])
+    const loadingServices = ref(false)
+
+    const serviceOptions = computed(() =>
+      services.value.map(service => ({
+        label: `${service.name} - ${service.duration_minutes}min - €${service.price}`,
+        value: service.id
+      }))
+    )
+
+    // Load services when doctor changes
+    const loadServices = async (doctorId) => {
+      if (!doctorId) {
+        services.value = []
+        formData.value.service_id = null
+        return
+      }      
+      loadingServices.value = true
+      try {
+        console.log('Loading services for doctor:', doctorId)
+        const doctorServices = await servicesStore.fetchServicesByDoctor(doctorId)
+        console.log('Loaded services:', doctorServices)
+        services.value = doctorServices || []
+      } catch (error) {
+        console.error('Error loading services:', error)
+        services.value = []
+      } finally {
+        loadingServices.value = false
+      }
+    }
+
+    // Watch doctor changes
+    watch(() => formData.value.doctor_id, (newDoctorId) => {
+      loadServices(newDoctorId)
+    })
 
     const doctorOptions = computed(() =>
       props.doctors.map(doctor => ({
@@ -253,10 +319,15 @@ export default defineComponent({
         formData.value = {
           patient_id: newAppointment.patient_id,
           doctor_id: newAppointment.doctor_id,
+          service_id: newAppointment.service_id,
           appointment_date: appointmentDate,
           appointment_time: appointmentDate,
           status: newAppointment.status || 'scheduled',
           notes: newAppointment.notes || ''
+        }
+        // Load services for the doctor
+        if (newAppointment.doctor_id) {
+          loadServices(newAppointment.doctor_id)
         }
       } else {
         // Reset form for new appointment
@@ -276,11 +347,10 @@ export default defineComponent({
           if (props.preselectedDate) {
             appointmentDate.setHours(props.preselectedHour, 0, 0, 0)
           }
-        }
-
-        formData.value = {
+        } formData.value = {
           patient_id: null,
           doctor_id: null,
+          service_id: null,
           appointment_date: appointmentDate,
           appointment_time: appointmentTime,
           status: 'scheduled',
@@ -296,9 +366,13 @@ export default defineComponent({
       if (!formData.value.patient_id) {
         errors.value.patient_id = 'Il paziente è obbligatorio'
       }
-
+      
       if (!formData.value.doctor_id) {
         errors.value.doctor_id = 'Il medico è obbligatorio'
+      }
+
+      if (!formData.value.service_id) {
+        errors.value.service_id = 'La prestazione è obbligatoria'
       }
 
       if (!formData.value.appointment_date) {
@@ -315,11 +389,9 @@ export default defineComponent({
     const handleSubmit = async () => {
       if (!validateForm()) {
         return
-      }
-
-      try {
+      }      try {
         loading.value = true
-
+        
         // Combine date and time
         const appointmentDateTime = new Date(formData.value.appointment_date)
         const timeComponent = new Date(formData.value.appointment_time)
@@ -334,6 +406,7 @@ export default defineComponent({
         const submitData = {
           patient_id: formData.value.patient_id,
           doctor_id: formData.value.doctor_id,
+          service_id: formData.value.service_id,
           appointment_date: appointmentDateTime.toISOString(),
           status: formData.value.status,
           notes: formData.value.notes
@@ -381,6 +454,9 @@ export default defineComponent({
       statusOptions,
       patientOptions,
       doctorOptions,
+      serviceOptions,
+      services,
+      loadingServices,
       handleSubmit,
       switchToEditMode,
       confirmDelete,
@@ -468,6 +544,12 @@ export default defineComponent({
   text-align: center;
   letter-spacing: 1px;
   border: 2px solid var(--primary-200) !important;
+}
+
+.field-help {
+  font-size: 0.75rem;
+  color: var(--text-color-secondary);
+  font-style: italic;
 }
 
 .form-actions {

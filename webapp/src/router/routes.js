@@ -2,6 +2,7 @@ import Home from '../views/Home.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Patients from '../views/Patients.vue'
 import Doctors from '../views/Doctors.vue'
+import Services from '../views/Services.vue'
 import Calendar from '../views/Calendar.vue'
 import ALive from '../views/ALive.vue'
 
@@ -25,6 +26,11 @@ export default [
     path: '/doctors',
     name: 'Doctors',
     component: Doctors
+  },
+  {
+    path: '/services',
+    name: 'Services',
+    component: Services
   },
   {
     path: '/calendar',

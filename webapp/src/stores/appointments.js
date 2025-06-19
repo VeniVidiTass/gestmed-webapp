@@ -25,12 +25,12 @@ export const useAppointmentsStore = defineStore('appointments', () => {
     doctorId: '',
     patientId: '',
     dateFrom: '',
-    dateTo: '',
-    sortBy: 'appointment_date',
+    dateTo: '',    sortBy: 'appointment_date',
     sortOrder: 'asc'
   })
   const lastFetched = ref(null)
   const cacheTimeout = 1 * 60 * 1000 // 1 minuto (gli appuntamenti cambiano spesso)
+
   // Getters
   const allAppointments = computed(() => enrichedAppointments.value)
   const isDataStale = computed(() => {
@@ -122,7 +122,7 @@ export const useAppointmentsStore = defineStore('appointments', () => {
     return appointments.value.map(appointment => {
       const patient = patientsStore.allPatients.find(p => p.id === appointment.patient_id)
       const doctor = doctorsStore.allDoctors.find(d => d.id === appointment.doctor_id)
-      
+
       return {
         ...appointment,
         patient_name: patient?.name || 'Paziente non trovato',
@@ -143,17 +143,17 @@ export const useAppointmentsStore = defineStore('appointments', () => {
   // Helper function per assicurarsi che i dati correlati siano caricati
   async function ensureRelatedDataLoaded() {
     const promises = []
-    
+
     // Carica pazienti se non sono aggiornati
     if (patientsStore.isDataStale) {
       promises.push(patientsStore.fetchPatients())
     }
-    
+
     // Carica dottori se non sono aggiornati
     if (doctorsStore.isDataStale) {
       promises.push(doctorsStore.fetchDoctors())
     }
-    
+
     await Promise.all(promises)
   }
   // Actions
@@ -203,7 +203,7 @@ export const useAppointmentsStore = defineStore('appointments', () => {
           total: response.total || 0,
           totalPages: response.totalPages || 0
         }
-      }      lastFetched.value = Date.now()
+      } lastFetched.value = Date.now()
 
       return enrichedAppointments.value
     } catch (error) {
@@ -378,9 +378,9 @@ export const useAppointmentsStore = defineStore('appointments', () => {
   function getAppointmentsByDateRange(startDate, endDate) {
     return enrichedAppointments.value.filter(apt => {
       const aptDate = new Date(apt.appointment_date)
-      return aptDate >= startDate && aptDate <= endDate
-    })
+      return aptDate >= startDate && aptDate <= endDate    })
   }
+
   return {
     // State
     appointments,

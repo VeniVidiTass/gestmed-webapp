@@ -184,11 +184,44 @@ export const apiService = {
     clearCacheByPattern(`/doctors/${id}`)
     return api.put(`/doctors/${id}`, data)
   },
-
   deleteDoctor: (id) => {
     clearCacheByPattern('/doctors')
     clearCacheByPattern(`/doctors/${id}`)
     return api.delete(`/doctors/${id}`)
+  },
+
+  // Services
+  getServices: (params = {}) => {
+    const optimizedParams = {
+      doctor_id: params.doctor_id,
+      is_active: params.is_active,
+      ...params
+    }
+    return api.get('/appointments/services', { params: optimizedParams })
+  },
+
+  getServicesByDoctor: (doctorId, isActive = true) => {
+    const params = { is_active: isActive }
+    return api.get(`/appointments/services/doctor/${doctorId}`, { params })
+  },
+
+  getService: (id) => api.get(`/appointments/services/${id}`),
+
+  createService: (data) => {
+    clearCacheByPattern('/appointments/services')
+    return api.post('/appointments/services', data)
+  },
+
+  updateService: (id, data) => {
+    clearCacheByPattern('/appointments/services')
+    clearCacheByPattern(`/appointments/services/${id}`)
+    return api.put(`/appointments/services/${id}`, data)
+  },
+
+  deleteService: (id) => {
+    clearCacheByPattern('/appointments/services')
+    clearCacheByPattern(`/appointments/services/${id}`)
+    return api.delete(`/appointments/services/${id}`)
   },
 
   // Appointments with optimized queries
