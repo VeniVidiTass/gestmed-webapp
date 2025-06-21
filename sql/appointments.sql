@@ -107,34 +107,34 @@ CREATE TRIGGER appointment_code_trigger
 -- Insert sample services data
 INSERT INTO services (name, description, duration_minutes, price, doctor_id, is_external_bookable) VALUES
 -- Cardiologo (doctor_id = 1)
-('Visita Cardiologica', 'Controllo cardiologico completo con ECG', 45, 120.00, 1, true),
+('Visita Cardiologica', 'Controllo cardiologico completo con ECG', 60, 120.00, 1, true),
 ('Ecocardiogramma', 'Ecografia del cuore per valutazione funzionale', 30, 80.00, 1, false),
-('Controllo Pressione', 'Monitoraggio pressione arteriosa e terapia', 20, 40.00, 1, true),
+('Controllo Pressione', 'Monitoraggio pressione arteriosa e terapia', 30, 40.00, 1, true),
 ('Follow-up Cardiologico', 'Controllo di routine per pazienti in terapia', 30, 60.00, 1, false),
 
 -- Pediatra (doctor_id = 2)
 ('Visita Pediatrica', 'Controllo generale dello sviluppo del bambino', 30, 80.00, 2, true),
-('Controllo Crescita', 'Valutazione peso, altezza e sviluppo', 20, 50.00, 2, true),
-('Vaccinazioni', 'Somministrazione vaccini pediatrici', 15, 30.00, 2, false),
-('Consulto Pediatrico', 'Consulenza per problemi specifici', 25, 70.00, 2, true),
+('Controllo Crescita', 'Valutazione peso, altezza e sviluppo', 30, 50.00, 2, true),
+('Vaccinazioni', 'Somministrazione vaccini pediatrici', 30, 30.00, 2, false),
+('Consulto Pediatrico', 'Consulenza per problemi specifici', 30, 70.00, 2, true),
 
 -- Ortopedico (doctor_id = 3)
-('Visita Ortopedica', 'Valutazione problemi muscolo-scheletrici', 40, 100.00, 3, true),
-('Infiltrazione', 'Iniezione terapeutica articolare', 20, 150.00, 3, false),
+('Visita Ortopedica', 'Valutazione problemi muscolo-scheletrici', 60, 100.00, 3, true),
+('Infiltrazione', 'Iniezione terapeutica articolare', 30, 150.00, 3, false),
 ('Controllo Post-Operatorio', 'Follow-up dopo intervento chirurgico', 30, 80.00, 3, false),
-('Consulto Traumatologico', 'Valutazione traumi e lesioni', 35, 90.00, 3, true),
+('Consulto Traumatologico', 'Valutazione traumi e lesioni', 60, 90.00, 3, true),
 
 -- Dermatologo (doctor_id = 4)
 ('Visita Dermatologica', 'Controllo della pelle e nei', 30, 90.00, 4, true),
-('Mappatura Nei', 'Controllo dermatoscopico completo', 45, 120.00, 4, true),
-('Biopsia Cutanea', 'Prelievo tissutale per diagnosi', 25, 180.00, 4, false),
-('Crioterapia', 'Trattamento con azoto liquido', 15, 60.00, 4, false),
+('Mappatura Nei', 'Controllo dermatoscopico completo', 60, 120.00, 4, true),
+('Biopsia Cutanea', 'Prelievo tissutale per diagnosi', 30, 180.00, 4, false),
+('Crioterapia', 'Trattamento con azoto liquido', 30, 60.00, 4, false),
 
 -- Medico Generale (doctor_id = 5)
 ('Visita Generale', 'Controllo medico di routine', 30, 60.00, 5, true),
-('Controllo Diabete', 'Monitoraggio glicemia e terapia', 25, 50.00, 5, false),
-('Certificato Medico', 'Rilascio certificazioni mediche', 15, 25.00, 5, false),
-('Prescrizione Farmaci', 'Rinnovo prescrizioni croniche', 10, 20.00, 5, false);
+('Controllo Diabete', 'Monitoraggio glicemia e terapia', 30, 50.00, 5, false),
+('Certificato Medico', 'Rilascio certificazioni mediche', 30, 25.00, 5, false),
+('Prescrizione Farmaci', 'Rinnovo prescrizioni croniche', 30, 20.00, 5, false);
 
 -- Insert sample data (i codici verranno generati automaticamente)
 INSERT INTO appointments (patient_id, doctor_id, service_id, appointment_date, status, notes, code) VALUES

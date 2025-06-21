@@ -1,142 +1,90 @@
 <template>
-  <Dialog
-    :visible="visible"
-    :header="isEdit ? 'Modifica Servizio' : 'Nuovo Servizio'"
-    modal
-    :style="{ width: '600px' }"
-    class="service-form-dialog"
-    @update:visible="emit('update:visible', $event)"
-    @hide="onDialogHide"
-  >
-    <form class="service-form" @submit.prevent="handleSubmit">
-      <!-- Nome del servizio -->
-      <div class="form-group">
-        <label for="service-name" class="required">Nome Servizio</label>
-        <InputText
-          id="service-name"
-          v-model="formData.name"
-          :class="{ 'p-invalid': errors.name }"
-          placeholder="Inserisci il nome del servizio"
-          maxlength="255"
-          required
-        />
-        <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
-      </div>
-
-      <!-- Descrizione -->
-      <div class="form-group">
-        <label for="service-description">Descrizione</label>
-        <Textarea
-          id="service-description"
-          v-model="formData.description"
-          :class="{ 'p-invalid': errors.description }"
-          placeholder="Descrizione del servizio"
-          rows="3"
-          maxlength="500"
-        />
-        <small v-if="errors.description" class="p-error">{{ errors.description }}</small>
-      </div>
-
-      <!-- Durata e Prezzo -->
-      <div class="form-row">
-        <div class="form-group">
-          <label for="service-duration" class="required">Durata (minuti)</label>
-          <InputNumber
-            id="service-duration"
-            v-model="formData.duration_minutes"
-            :class="{ 'p-invalid': errors.duration_minutes }"
-            :min="5"
-            :max="480"
-            placeholder="30"
-            suffix=" min"
-            :step="5"
-            required
-          />
-          <small v-if="errors.duration_minutes" class="p-error">{{ errors.duration_minutes }}</small>
-        </div>
-
-        <div class="form-group">
-          <label for="service-price" class="required">Prezzo (€)</label>
-          <InputNumber
-            id="service-price"
-            v-model="formData.price"
-            :class="{ 'p-invalid': errors.price }"
-            :min="0"
-            :max="9999.99"
-            :min-fraction-digits="2"
-            :max-fraction-digits="2"
-            placeholder="0.00"
-            prefix="€ "
-            required
-          />
-          <small v-if="errors.price" class="p-error">{{ errors.price }}</small>
-        </div>
-      </div> <!-- Medico -->
-      <div class="form-group">
-        <label for="service-doctor" class="required">Medico</label>
-        <Select
-          id="service-doctor"
-          v-model="formData.doctor_id"
-          :options="doctors"
-          option-label="name"
-          option-value="id"
-          :class="{ 'p-invalid': errors.doctor_id }"
-          placeholder="Seleziona un medico"
-          :loading="doctorsLoading"
-          required
-        >
-          <template #option="{ option }">
-            <div class="doctor-option">
-              <i class="pi pi-user-plus" />
-              <span>Dr. {{ option.name }}</span>
-              <small class="specialization">{{ option.specialization }}</small>
+    <Dialog :visible="visible" :header="isEdit ? 'Modifica Servizio' : 'Nuovo Servizio'" modal
+        :style="{ width: '600px' }" class="service-form-dialog" @update:visible="emit('update:visible', $event)"
+        @hide="onDialogHide">
+        <form class="service-form" @submit.prevent="handleSubmit">
+            <!-- Nome del servizio -->
+            <div class="form-group">
+                <label for="service-name" class="required">Nome Servizio</label>
+                <InputText id="service-name" v-model="formData.name" :class="{ 'p-invalid': errors.name }"
+                    placeholder="Inserisci il nome del servizio" maxlength="255" required />
+                <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
             </div>
-          </template>
-        </Select>
-        <small v-if="errors.doctor_id" class="p-error">{{ errors.doctor_id }}</small>
-      </div>      <!-- Stato attivo -->
-      <div v-if="isEdit" class="form-group">
-        <div class="form-check">
-          <Checkbox id="service-active" v-model="formData.is_active" binary />
-          <label for="service-active" class="checkbox-label">Servizio attivo</label>
-        </div>
-        <small class="help-text">
-          I servizi disattivati non saranno disponibili per nuovi appuntamenti
-        </small>
-      </div>
 
-      <!-- Prenotabilità esterna -->
-      <div class="form-group">
-        <div class="form-check">
-          <Checkbox id="service-external-bookable" v-model="formData.is_external_bookable" binary />
-          <label for="service-external-bookable" class="checkbox-label">Prenotabile da utenti esterni</label>
-        </div>
-        <small class="help-text">
-          Se attivato, il servizio sarà disponibile per la prenotazione autonoma da parte di utenti esterni alla struttura
-        </small>
-      </div>
-    </form>
+            <!-- Descrizione -->
+            <div class="form-group">
+                <label for="service-description">Descrizione</label>
+                <Textarea id="service-description" v-model="formData.description"
+                    :class="{ 'p-invalid': errors.description }" placeholder="Descrizione del servizio" rows="3"
+                    maxlength="500" />
+                <small v-if="errors.description" class="p-error">{{ errors.description }}</small>
+            </div>
 
-    <template #footer>
-      <div class="dialog-footer">
-        <Button
-          label="Annulla"
-          icon="pi pi-times"
-          class="p-button-text"
-          :disabled="isLoading"
-          @click="onCancel"
-        />
-        <Button
-          :label="isEdit ? 'Aggiorna' : 'Crea'"
-          :icon="isEdit ? 'pi pi-check' : 'pi pi-plus'"
-          class="p-button-primary"
-          :loading="isLoading"
-          :disabled="!isFormValid"
-          @click="handleSubmit"
-        />
-      </div>
-    </template>
-  </Dialog>
+            <!-- Durata e Prezzo -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="service-duration" class="required">Durata (minuti)</label>
+                    <InputNumber id="service-duration" v-model="formData.duration_minutes"
+                        :class="{ 'p-invalid': errors.duration_minutes }" :min="5" :max="480" placeholder="30"
+                        suffix=" min" :step="5" required />
+                    <small v-if="errors.duration_minutes" class="p-error">{{ errors.duration_minutes }}</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="service-price" class="required">Prezzo (€)</label>
+                    <InputNumber id="service-price" v-model="formData.price" :class="{ 'p-invalid': errors.price }"
+                        :min="0" :max="9999.99" :min-fraction-digits="2" :max-fraction-digits="2" placeholder="0.00"
+                        prefix="€ " required />
+                    <small v-if="errors.price" class="p-error">{{ errors.price }}</small>
+                </div>
+            </div> <!-- Medico -->
+            <div class="form-group">
+                <label for="service-doctor" class="required">Medico</label>
+                <Select id="service-doctor" v-model="formData.doctor_id" :options="doctors" option-label="name"
+                    option-value="id" :class="{ 'p-invalid': errors.doctor_id }" placeholder="Seleziona un medico"
+                    :loading="doctorsLoading" required>
+                    <template #option="{ option }">
+                        <div class="doctor-option">
+                            <i class="pi pi-user-plus" />
+                            <span>Dr. {{ option.name }}</span>
+                            <small class="specialization">{{ option.specialization }}</small>
+                        </div>
+                    </template>
+                </Select>
+                <small v-if="errors.doctor_id" class="p-error">{{ errors.doctor_id }}</small>
+            </div> <!-- Stato attivo -->
+            <div v-if="isEdit" class="form-group">
+                <div class="form-check">
+                    <Checkbox id="service-active" v-model="formData.is_active" binary />
+                    <label for="service-active" class="checkbox-label">Servizio attivo</label>
+                </div>
+                <small class="help-text">
+                    I servizi disattivati non saranno disponibili per nuovi appuntamenti
+                </small>
+            </div>
+
+            <!-- Prenotabilità esterna -->
+            <div class="form-group">
+                <div class="form-check">
+                    <Checkbox id="service-external-bookable" v-model="formData.is_external_bookable" binary />
+                    <label for="service-external-bookable" class="checkbox-label">Prenotabile da utenti esterni</label>
+                </div>
+                <small class="help-text">
+                    Se attivato, il servizio sarà disponibile per la prenotazione autonoma da parte di utenti esterni
+                    alla struttura
+                </small>
+            </div>
+        </form>
+
+        <template #footer>
+            <div class="dialog-footer">
+                <Button label="Annulla" icon="pi pi-times" class="p-button-text" :disabled="isLoading"
+                    @click="onCancel" />
+                <Button :label="isEdit ? 'Aggiorna' : 'Crea'" :icon="isEdit ? 'pi pi-check' : 'pi pi-plus'"
+                    class="p-button-primary" :loading="isLoading" :disabled="!isFormValid" @click="handleSubmit" />
+            </div>
+        </template>
+    </Dialog>
 </template>
 
 <script setup>
@@ -262,9 +210,9 @@ function validateForm() {
 async function handleSubmit() {
     if (!validateForm()) {
         return
-    }    try {
+    } try {
         setLoading(true);
-        
+
         const serviceData = {
             name: formData.value.name.trim(),
             description: formData.value.description?.trim() || '',

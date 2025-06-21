@@ -362,7 +362,8 @@ router.put('/:id/status', async (req, res) => {
 router.get('/doctor/:doctor_id/busy-slots', async (req, res) => {
   try {
     const { doctor_id } = req.params;
-    const { date, start_date, end_date } = req.query; let query = `
+    const { date, start_date, end_date } = req.query; 
+    let query = `
       SELECT 
         a.appointment_date,
         a.appointment_date + INTERVAL '1 minute' * 30 AS end_time

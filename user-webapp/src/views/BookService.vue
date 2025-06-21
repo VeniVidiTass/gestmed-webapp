@@ -66,7 +66,8 @@
               <div class="booking-header-card">
                 <h2>Prenota il tuo appuntamento</h2>
               </div>
-            </template>            <template #content>
+            </template>
+            <template #content>
               <form class="form-content" @submit.prevent="submitBooking">
                 <!-- User Info (Read-only) -->
                 <div class="form-section">
@@ -78,14 +79,14 @@
                         {{ userStore.user?.name || 'Non specificato' }}
                       </div>
                     </div>
-                    
+
                     <div class="readonly-field">
                       <label>Email</label>
                       <div class="readonly-value">
                         {{ userStore.user?.email || 'Non specificato' }}
                       </div>
                     </div>
-                    
+
                     <div class="readonly-field">
                       <label>Telefono</label>
                       <div class="readonly-value">
@@ -115,12 +116,12 @@
                     </div>
 
                     <!-- Doctor Availability Display -->
-                    <div v-if="doctorAvailability" class="doctor-availability">
+                    <div v-if="orderedDoctorAvailability" class="doctor-availability">
                       <h6>Disponibilità Settimanale</h6>
                       <div class="availability-grid">
-                        <div v-for="(schedule, day) in doctorAvailability" :key="day" class="availability-day">
-                          <strong>{{ getDayLabel(day) }}:</strong>
-                          <span v-if="schedule" class="schedule-time">{{ schedule }}</span>
+                        <div v-for="day in orderedDoctorAvailability" :key="day.key" class="availability-day">
+                          <strong>{{ day.label }}:</strong>
+                          <span v-if="day.schedule" class="schedule-time">{{ day.schedule }}</span>
                           <span v-else class="not-available">Non disponibile</span>
                         </div>
                       </div>
@@ -132,40 +133,35 @@
                 <div class="form-section">
                   <h4>Data e Ora</h4>
                   <div class="form-row">
-                    <FloatLabel>
-                      <DatePicker
-                        id="appointmentDate"
-                        v-model="bookingForm.appointmentDate"
-                        class="w-full"
-                        :min-date="minDate"
-                        :max-date="maxDate"
-                        :class="{ 'p-invalid': formErrors.appointmentDate }"
-                        date-format="dd/mm/yy"
-                        :disabled-dates="disabledDates"
-                        :disabled-days="[0]"
-                      />
-                      <label for="appointmentDate">Data Appuntamento *</label>
-                    </FloatLabel>
+                    <DatePicker
+                      id="appointmentDate"
+                      v-model="bookingForm.appointmentDate"
+                      class="w-full"
+                      :min-date="minDate"
+                      :max-date="maxDate"
+                      :class="{ 'p-invalid': formErrors.appointmentDate }"
+                      date-format="dd/mm/yy"
+                      placeholder="Data Appuntamento *"
+                      :disabled-dates="disabledDates"
+                      :disabled-days="[0]"
+                    />
                     <small v-if="formErrors.appointmentDate" class="p-error">
                       {{ formErrors.appointmentDate }}
                     </small>
                   </div>
                   <div class="form-row">
-                    <FloatLabel>
-                      <Select
-                        id="appointmentTime"
-                        v-model="bookingForm.appointmentTime"
-                        :options="availableTimeSlots"
-                        option-label="label"
-                        option-value="value"
-                        class="w-full"
-                        :class="{ 'p-invalid': formErrors.appointmentTime }"
-                        :disabled="!bookingForm.appointmentDate || loadingSlots"
-                        :loading="loadingSlots"
-                        placeholder="Seleziona prima una data"
-                      />
-                      <label for="appointmentTime">Orario *</label>
-                    </FloatLabel>
+                    <Select
+                      id="appointmentTime"
+                      v-model="bookingForm.appointmentTime"
+                      :options="availableTimeSlots"
+                      option-label="label"
+                      option-value="value"
+                      class="w-full"
+                      :class="{ 'p-invalid': formErrors.appointmentTime }"
+                      :disabled="!bookingForm.appointmentDate || loadingSlots"
+                      :loading="loadingSlots"
+                      :placeholder="!bookingForm.appointmentDate ? 'Seleziona prima una data' : 'Orario *'"
+                    />
                     <small v-if="formErrors.appointmentTime" class="p-error">
                       {{ formErrors.appointmentTime }}
                     </small>
@@ -176,23 +172,20 @@
                       Nessun slot disponibile per questa data
                     </small>
                   </div>
-                </div>
-
-                <!-- Notes -->
+                </div> <!-- Notes -->
                 <div class="form-section">
                   <h4>Note Aggiuntive</h4>
                   <div class="form-row">
-                    <FloatLabel>
-                      <Textarea
-                        id="notes"
-                        v-model="bookingForm.notes"
-                        rows="3"
-                        class="w-full"
-                      />
-                      <label for="notes">Note o richieste particolari</label>
-                    </FloatLabel>
+                    <Textarea
+                      id="notes"
+                      v-model="bookingForm.notes"
+                      rows="4"
+                      class="w-full"
+                      auto-resize
+                    />
                   </div>
-                </div> <!-- Submit Button -->
+                </div>
+                <!-- Submit Button -->
                 <div class="form-actions">
                   <Button
                     type="submit"
@@ -277,7 +270,6 @@ import ProgressSpinner from 'primevue/progressspinner'
 import DatePicker from 'primevue/datepicker'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
-import FloatLabel from 'primevue/floatlabel'
 import Dialog from 'primevue/dialog'
 
 const router = useRouter()
@@ -334,6 +326,20 @@ const disabledDates = computed(() => {
   return []
 })
 
+// Disponibilità ordinata per giorni della settimana
+const orderedDoctorAvailability = computed(() => {
+  if (!doctorAvailability.value) return []
+
+  const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+  return dayOrder.map(day => ({
+    key: day,
+    label: getDayLabel(day),
+    schedule: doctorAvailability.value[day],
+    isAvailable: !!doctorAvailability.value[day]
+  })).filter(day => day.isAvailable)
+})
+
 // Available time slots
 const availableTimeSlots = computed(() => {
   if (!bookingForm.value.appointmentDate || !serviceDoctor.value || !doctorAvailability.value) return []
@@ -358,13 +364,7 @@ const availableTimeSlots = computed(() => {
       if (hour === startHour && minute < startMinute) continue
 
       const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
-
-      // Controlla se questo slot è già prenotato
-      const isBooked = bookedSlots.value.some(booking => {
-        const bookingDate = new Date(booking.appointment_date)
-        const bookingTime = booking.appointment_time
-        return bookingDate.toDateString() === selectedDate.toDateString() && bookingTime === timeString
-      })
+      const isBooked = bookedSlots.value.includes(timeString)
 
       if (!isBooked) {
         slots.push({
@@ -415,32 +415,64 @@ const loadService = async () => {
 }
 
 const loadDoctorForService = async () => {
+  if (!service.value?.doctor_id) {
+    serviceDoctor.value = null
+    doctorAvailability.value = null
+    return
+  }
+
   try {
-    if (service.value.doctor_id) {
-      serviceDoctor.value = await doctorsStore.getDoctorById(service.value.doctor_id)
-      if (serviceDoctor.value) {
-        doctorAvailability.value = serviceDoctor.value.availability || {}
-      }
-    } else {
-      error.value = 'Nessun medico associato a questo servizio'
+    serviceDoctor.value = await doctorsStore.getDoctorById(service.value.doctor_id)
+    if (serviceDoctor.value) {
+      doctorAvailability.value = serviceDoctor.value.availability || {}
     }
-  } catch (err) {
-    console.error('Error loading doctor for service:', err)
-    error.value = 'Errore nel caricamento delle informazioni del medico'
+  } catch (error) {
+    console.error('Error loading doctor for service:', error)
+    serviceDoctor.value = null
+    doctorAvailability.value = null
   }
 }
 
 const loadBookedSlotsForDate = async (date) => {
-  if (!serviceDoctor.value || !date) return
+  if (!serviceDoctor.value || !date) {
+    bookedSlots.value = []
+    return
+  }
 
   loadingSlots.value = true
   try {
-    // Chiama l'API per ottenere gli appuntamenti del medico per quella data
-    const formattedDate = new Date(date).toISOString().split('T')[0]
-    const response = await api.get(`/appointments?doctor_id=${serviceDoctor.value.id}&date=${formattedDate}`)
-    bookedSlots.value = response.data
-  } catch (err) {
-    console.error('Error loading booked slots:', err)
+    // Formatta la data per l'API (senza conversione di fuso orario)
+    console.log('Original date:', date)
+    const selectedDate = new Date(date)
+    // Formato YYYY-MM-DD mantenendo il fuso orario locale
+    const formattedDate = `${selectedDate.getFullYear()}-${(selectedDate.getMonth() + 1).toString().padStart(2, '0')}-${selectedDate.getDate().toString().padStart(2, '0')}`
+    const response = await api.get(`/appointments/doctor/${serviceDoctor.value.id}/busy-slots?date=${formattedDate}`)
+
+    // Reset bookedSlots per evitare duplicazioni
+    bookedSlots.value = []
+
+    for (const slot of response.data) {
+      if (!slot.start_time || !slot.end_time) {
+        console.warn('Invalid busy slot received:', slot)
+        continue
+      }
+
+      // Converti le date in oggetti Date per il confronto
+      const startTime = new Date(slot.start_time)
+      const endTime = new Date(slot.end_time)
+
+      // Genera tutte le mezz'ore tra start e end e aggiungile ai bookedSlots
+      const current = new Date(startTime)
+      while (current < endTime) {
+        // Usa formato HH:MM per coerenza con availableTimeSlots
+        const timeString = `${current.getHours().toString().padStart(2, '0')}:${current.getMinutes().toString().padStart(2, '0')}`
+        bookedSlots.value.push(timeString)
+        current.setMinutes(current.getMinutes() + 30)
+      }
+    }
+    console.log("bookedSlots:", bookedSlots.value)
+  } catch (error) {
+    console.error('Error loading booked slots:', error)
     bookedSlots.value = []
   } finally {
     loadingSlots.value = false

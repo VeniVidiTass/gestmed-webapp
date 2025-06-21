@@ -46,13 +46,24 @@
             placeholder="Seleziona data" :min-date="new Date()" />
           <small v-if="errors.appointment_date" class="p-error">{{ errors.appointment_date }}</small>
         </div>
-
         <div class="form-field">
           <label class="field-label">Orario *</label>
-          <DatePicker id="appointment_time" v-model="formData.appointment_time" :disabled="mode === 'view'"
-            :class="{ 'p-invalid': errors.appointment_time }" time-only hour-format="24" placeholder="Seleziona orario"
-            :show-icon="true" />
+          <Select v-if="mode !== 'view'" id="appointment_time" v-model="formData.appointment_time"
+            :options="availableTimeSlots" option-label="label" option-value="value"
+            :class="{ 'p-invalid': errors.appointment_time }"
+            :disabled="!formData.appointment_date || !formData.doctor_id || loadingSlots" :loading="loadingSlots"
+            placeholder="Seleziona prima data e medico" />
+          <DatePicker v-else id="appointment_time" v-model="formData.appointment_time" :disabled="true" time-only
+            hour-format="24" placeholder="Seleziona orario" :show-icon="true" />
           <small v-if="errors.appointment_time" class="p-error">{{ errors.appointment_time }}</small>
+          <small
+            v-if="mode !== 'view' && formData.appointment_date && formData.doctor_id && availableTimeSlots.length === 0 && !loadingSlots"
+            class="field-help">
+            Nessun slot disponibile per questa data
+          </small>
+          <small v-if="mode !== 'view' && (!formData.appointment_date || !formData.doctor_id)" class="field-help">
+            Seleziona prima una data e un medico per vedere gli orari disponibili
+          </small>
         </div>
 
         <div class="form-field">
@@ -134,6 +145,7 @@ import Button from 'primevue/button'
 import Divider from 'primevue/divider'
 import { useServicesStore } from '../stores/services'
 import { useDoctorsStore } from '../stores/doctors'
+import api from '../services/api'
 
 export default defineComponent({
   name: 'AppointmentForm',
@@ -172,7 +184,8 @@ export default defineComponent({
       default: null
     }
   },
-  emits: ['save', 'cancel', 'delete', 'switch-mode'], setup(props, { emit }) {
+  emits: ['save', 'cancel', 'delete', 'switch-mode'],
+  setup(props, { emit }) {
     const confirm = useConfirm()
     const servicesStore = useServicesStore()
     const doctorsStore = useDoctorsStore()
@@ -194,13 +207,20 @@ export default defineComponent({
       appointment_time: null,
       status: 'scheduled',
       notes: ''
-    })
-
-    // State per i dati filtrati
+    })    // State per i dati filtrati
     const allServices = ref([])
     const filteredServices = ref([])
     const filteredDoctors = ref([])
-    const loadingData = ref(false)    // Load initial data
+    const loadingData = ref(false)
+
+    // State per la gestione degli slot disponibili
+    const selectedDoctor = ref(null)
+    const doctorAvailability = ref(null)
+    const bookedSlots = ref([])
+    const loadingSlots = ref(false)
+    const availableTimeSlots = ref([])
+
+    // Load initial data
     const loadInitialData = async () => {
       loadingData.value = true
       try {
@@ -297,16 +317,179 @@ export default defineComponent({
       }
     }
 
-    // Watch per la selezione bidirezionale
-    watch(() => formData.value.doctor_id, (newDoctorId, oldDoctorId) => {
-      if (newDoctorId !== oldDoctorId) {
-        filterServicesByDoctor(newDoctorId)
+    // Funzioni per la gestione degli slot disponibili
+    const loadDoctorAvailability = async (doctorId) => {
+      if (!doctorId) {
+        selectedDoctor.value = null
+        doctorAvailability.value = null
+        availableTimeSlots.value = []
+        return
       }
-    })
 
+      try {
+        selectedDoctor.value = await doctorsStore.fetchDoctor(doctorId)
+        if (selectedDoctor.value) {
+          doctorAvailability.value = selectedDoctor.value.availability || {}
+        }
+      } catch (error) {
+        console.error('Error loading doctor availability:', error)
+        selectedDoctor.value = null
+        doctorAvailability.value = null
+      }
+    }
+
+    const loadBookedSlotsForDate = async (date, doctorId) => {
+      if (!doctorId || !date) {
+        bookedSlots.value = []
+        return
+      }
+
+      loadingSlots.value = true
+      try {        // Formatta la data per l'API (senza conversione di fuso orario)
+        console.log('Original date:', date)
+        const selectedDate = new Date(date)
+        // Formato YYYY-MM-DD mantenendo il fuso orario locale
+        const formattedDate = selectedDate.getFullYear() + '-' +
+          (selectedDate.getMonth() + 1).toString().padStart(2, '0') + '-' +
+          selectedDate.getDate().toString().padStart(2, '0')
+        console.log('Loading busy slots for doctor:', doctorId, 'date:', formattedDate)
+        const response = await api.get(`/appointments/doctor/${doctorId}/busy-slots?date=${formattedDate}`)
+        console.log('Busy slots response:', response)
+
+        // Reset bookedSlots per evitare duplicazioni
+        bookedSlots.value = []
+
+        for (const slot of response) {
+          if (!slot.start_time || !slot.end_time) {
+            console.warn('Invalid busy slot received:', slot)
+            continue
+          }
+
+          // Converti le date in oggetti Date per il confronto
+          const startTime = new Date(slot.start_time)
+          const endTime = new Date(slot.end_time)
+
+          // Genera tutte le mezz'ore tra start e end e aggiungile ai bookedSlots
+          const current = new Date(startTime)
+          while (current < endTime) {
+            // Usa formato HH:MM per coerenza con generateAvailableTimeSlots
+            const timeString = current.getHours().toString().padStart(2, '0') + ':' +
+              current.getMinutes().toString().padStart(2, '0')
+            bookedSlots.value.push(timeString)
+            current.setMinutes(current.getMinutes() + 30)
+          }
+        }
+        console.log("bookedSlots:", bookedSlots.value)
+      } catch (error) {
+        console.error('Error loading booked slots:', error)
+        bookedSlots.value = []
+      } finally {
+        loadingSlots.value = false
+      }
+    }
+
+    const generateAvailableTimeSlots = () => {
+      console.log('Generating slots with bookedSlots:', bookedSlots.value)
+
+      if (!formData.value.appointment_date || !doctorAvailability.value) {
+        availableTimeSlots.value = []
+        return
+      }
+
+      const selectedDate = new Date(formData.value.appointment_date)
+      const dayIndex = selectedDate.getDay() // 0 = Sunday, 1 = Monday, etc.
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+      const selectedDay = dayNames[dayIndex]
+      const dayAvailability = doctorAvailability.value[selectedDay]
+
+      if (!dayAvailability) {
+        availableTimeSlots.value = []
+        return
+      }
+
+      const slots = []
+      const [startTime, endTime] = dayAvailability.split('-')
+      const [startHour, startMinute] = startTime.split(':').map(Number)
+      const [endHour, endMinute] = endTime.split(':').map(Number)
+
+      // Genera tutti gli slot possibili per il giorno
+      for (let hour = startHour; hour < endHour || (hour === endHour && startMinute < endMinute); hour++) {
+        for (let minute = 0; minute < 60; minute += 30) {
+          if (hour === endHour && minute >= endMinute) break
+          if (hour === startHour && minute < startMinute) continue
+
+          const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+
+          // Controlla se questo slot è già prenotato
+          // Ora bookedSlots contiene direttamente le stringhe di tempo (es. "14:30")
+          const isBooked = bookedSlots.value.includes(timeString)
+
+          if (isBooked) {
+            console.log(`Slot ${timeString} is blocked (found in bookedSlots)`)
+          }
+
+          if (!isBooked) {
+            slots.push({
+              label: timeString,
+              value: timeString
+            })
+          }
+        }
+      }
+
+      console.log(`Generated ${slots.length} available slots for ${selectedDay}:`, slots.map(s => s.value))
+      availableTimeSlots.value = slots
+    }
+
+    const getDayLabel = (dayKey) => {
+      const dayLabels = {
+        monday: 'Lunedì',
+        tuesday: 'Martedì',
+        wednesday: 'Mercoledì',
+        thursday: 'Giovedì',
+        friday: 'Venerdì',
+        saturday: 'Sabato',
+        sunday: 'Domenica'
+      }
+      return dayLabels[dayKey] || dayKey
+    }
+
+    // Watch per la selezione bidirezionale
     watch(() => formData.value.service_id, (newServiceId, oldServiceId) => {
       if (newServiceId !== oldServiceId) {
         filterDoctorsByService(newServiceId)
+      }
+    })
+
+    // Watch per la gestione degli slot disponibili
+    watch(() => formData.value.appointment_date, async (newDate) => {
+      formData.value.appointment_time = null // Reset time when date changes
+      if (newDate && formData.value.doctor_id) {
+        console.log('Date changed, reloading slots for:', newDate, 'doctor:', formData.value.doctor_id)
+        await loadBookedSlotsForDate(newDate, formData.value.doctor_id)
+        generateAvailableTimeSlots()
+      } else {
+        availableTimeSlots.value = []
+      }
+    })
+
+    // Watch per i cambi di dottore - ricarica gli slot se c'è anche una data
+    watch(() => formData.value.doctor_id, async (newDoctorId, oldDoctorId) => {
+      if (newDoctorId !== oldDoctorId) {
+        filterServicesByDoctor(newDoctorId)
+        loadDoctorAvailability(newDoctorId) // Carica disponibilità dottore
+
+        // Se c'è una data selezionata, ricarica gli slot
+        if (formData.value.appointment_date && newDoctorId) {
+          console.log('Doctor changed, reloading slots for:', formData.value.appointment_date, 'doctor:', newDoctorId)
+          await loadBookedSlotsForDate(formData.value.appointment_date, newDoctorId)
+          generateAvailableTimeSlots()
+        } else {
+          availableTimeSlots.value = []
+        }
+
+        // Reset time when doctor changes
+        formData.value.appointment_time = null
       }
     })
 
@@ -324,24 +507,31 @@ export default defineComponent({
         // Re-apply service filter with new doctors
         filterDoctorsByService(formData.value.service_id)
       }
-    })
-
-    // Watch for appointment changes
+    })    // Watch for appointment changes
     watch(() => props.appointment, (newAppointment) => {
       if (newAppointment) {
         const appointmentDate = new Date(newAppointment.appointment_date)
+
+        // Extract time string for display in Select or keep Date for view mode
+        let appointmentTime
+        if (props.mode === 'view') {
+          appointmentTime = appointmentDate
+        } else {
+          // Convert to HH:MM format for Select component
+          const hours = appointmentDate.getHours().toString().padStart(2, '0')
+          const minutes = appointmentDate.getMinutes().toString().padStart(2, '0')
+          appointmentTime = `${hours}:${minutes}`
+        }
 
         formData.value = {
           patient_id: newAppointment.patient_id,
           doctor_id: newAppointment.doctor_id,
           service_id: newAppointment.service_id,
           appointment_date: appointmentDate,
-          appointment_time: appointmentDate,
+          appointment_time: appointmentTime,
           status: newAppointment.status || 'scheduled',
           notes: newAppointment.notes || ''
-        }
-
-        // Inizializza i filtri basati sui valori dell'appuntamento esistente
+        }        // Inizializza i filtri basati sui valori dell'appuntamento esistente
         if (newAppointment.doctor_id && newAppointment.service_id) {
           // Se abbiamo sia dottore che servizio, non filtriamo
           filteredDoctors.value = [...props.doctors]
@@ -349,22 +539,32 @@ export default defineComponent({
         } else if (newAppointment.doctor_id) {
           // Se abbiamo solo il dottore, filtra i servizi
           filterServicesByDoctor(newAppointment.doctor_id)
+          // Carica disponibilità per appuntamento esistente
+          loadDoctorAvailability(newAppointment.doctor_id)
         } else if (newAppointment.service_id) {
           // Se abbiamo solo il servizio, filtra i dottori
           filterDoctorsByService(newAppointment.service_id)
         }
-      } else {
-        // Reset form for new appointment
+
+        // Carica gli slot per l'appuntamento esistente se non in modalità view
+        if (props.mode !== 'view' && newAppointment.doctor_id && newAppointment.appointment_date) {
+          loadBookedSlotsForDate(newAppointment.appointment_date, newAppointment.doctor_id)
+            .then(() => generateAvailableTimeSlots())
+        }
+      } else {        // Reset form for new appointment
         const now = new Date()
         let appointmentDate = now
-        let appointmentTime = now
+        let appointmentTime = null // Start with null for Select component
 
         // Handle preselected date and hour
         if (props.preselectedDate) {
           appointmentDate = new Date(props.preselectedDate)
-        } if (props.preselectedHour !== null) {
-          appointmentTime = new Date()
-          appointmentTime.setHours(props.preselectedHour, 0, 0, 0)
+        }
+
+        if (props.preselectedHour !== null) {
+          // Convert preselected hour to HH:MM format
+          const hours = props.preselectedHour.toString().padStart(2, '0')
+          appointmentTime = `${hours}:00`
 
           if (props.preselectedDate) {
             appointmentDate.setHours(props.preselectedHour, 0, 0, 0)
@@ -404,10 +604,14 @@ export default defineComponent({
 
       if (!formData.value.appointment_date) {
         errors.value.appointment_date = 'La data è obbligatoria'
-      }
-
-      if (!formData.value.appointment_time) {
+      } if (!formData.value.appointment_time) {
         errors.value.appointment_time = 'L\'orario è obbligatorio'
+      } else if (props.mode !== 'view' && availableTimeSlots.value.length > 0) {
+        // Verifica che l'orario selezionato sia effettivamente disponibile
+        const isValidSlot = availableTimeSlots.value.some(slot => slot.value === formData.value.appointment_time)
+        if (!isValidSlot) {
+          errors.value.appointment_time = 'L\'orario selezionato non è disponibile'
+        }
       }
 
       return Object.keys(errors.value).length === 0
@@ -421,16 +625,21 @@ export default defineComponent({
 
         // Combine date and time
         const appointmentDateTime = new Date(formData.value.appointment_date)
-        const timeComponent = new Date(formData.value.appointment_time)
 
-        appointmentDateTime.setHours(
-          timeComponent.getHours(),
-          timeComponent.getMinutes(),
-          0,
-          0
-        )
-
-        const submitData = {
+        if (typeof formData.value.appointment_time === 'string') {
+          // Handle time string format (HH:MM)
+          const [hours, minutes] = formData.value.appointment_time.split(':').map(Number)
+          appointmentDateTime.setHours(hours, minutes, 0, 0)
+        } else {
+          // Handle Date object format (for view mode)
+          const timeComponent = new Date(formData.value.appointment_time)
+          appointmentDateTime.setHours(
+            timeComponent.getHours(),
+            timeComponent.getMinutes(),
+            0,
+            0
+          )
+        } const submitData = {
           patient_id: formData.value.patient_id,
           doctor_id: formData.value.doctor_id,
           service_id: formData.value.service_id,
@@ -438,6 +647,13 @@ export default defineComponent({
           status: formData.value.status,
           notes: formData.value.notes
         }
+
+        console.log('Submitting appointment data:', {
+          originalDate: formData.value.appointment_date,
+          originalTime: formData.value.appointment_time,
+          combinedDateTime: appointmentDateTime,
+          isoString: appointmentDateTime.toISOString()
+        })
 
         emit('save', submitData)
       } catch (error) {
@@ -466,8 +682,7 @@ export default defineComponent({
     const formatDateTime = (dateString) => {
       if (!dateString) return '-'
       return new Date(dateString).toLocaleDateString('it-IT', {
-        day: '2-digit',
-        month: '2-digit',
+        day: '2-digit', month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
@@ -479,6 +694,7 @@ export default defineComponent({
       errors,
       loading,
       loadingData,
+      loadingSlots,
       statusOptions,
       patientOptions,
       doctorOptions,
@@ -486,11 +702,19 @@ export default defineComponent({
       allServices,
       filteredServices,
       filteredDoctors,
+      selectedDoctor,
+      doctorAvailability,
+      bookedSlots,
+      availableTimeSlots,
       handleSubmit,
       switchToEditMode,
       confirmDelete,
       formatDateTime,
-      resetFilters
+      resetFilters,
+      loadDoctorAvailability,
+      loadBookedSlotsForDate,
+      generateAvailableTimeSlots,
+      getDayLabel
     }
   }
 })
@@ -580,6 +804,17 @@ export default defineComponent({
   font-size: 0.75rem;
   color: var(--text-color-secondary);
   font-style: italic;
+}
+
+/* Styling per i campi di orario */
+.p-select[disabled],
+.p-datepicker[disabled] {
+  opacity: 0.6;
+}
+
+.p-select.p-component.p-invalid,
+.p-datepicker.p-component.p-invalid {
+  border-color: var(--red-400);
 }
 
 .service-field-container {
