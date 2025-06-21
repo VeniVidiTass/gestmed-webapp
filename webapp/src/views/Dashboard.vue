@@ -65,12 +65,7 @@
         <div class="section-card custom-card">
           <div class="section-header">
             <h3>Prossimi Appuntamenti</h3>
-            <Button
-              label="Vedi Tutti"
-              icon="pi pi-calendar"
-              class="p-button-text p-button-sm"
-              @click="goToCalendar"
-            />
+            <Button label="Vedi Tutti" icon="pi pi-calendar" class="p-button-text p-button-sm" @click="goToCalendar" />
           </div>
           <div v-if="dashboardData.recentAppointments?.length" class="appointments-list">
             <div v-for="appointment in dashboardData.recentAppointments" :key="appointment.id" class="appointment-item">
@@ -86,7 +81,7 @@
                   Dr. {{ appointment.doctor_name }} - {{ appointment.doctor_specialization || 'Medico Generico' }}
                 </div>
               </div>
-              <Badge :value="appointment.status" :severity="getStatusSeverity(appointment.status)" />
+                <Badge :value="getStatusLabel(appointment.status)" :severity="getStatusSeverity(appointment.status)" />
             </div>
           </div>
 
@@ -103,24 +98,12 @@
           </div>
 
           <div class="quick-actions">
-            <Button
-              label="Nuovo Paziente"
-              icon="pi pi-user-plus"
-              class="p-button-outlined quick-action-btn"
-              @click="goToPatients"
-            />
-            <Button
-              label="Nuovo Medico"
-              icon="pi pi-plus"
-              class="p-button-outlined quick-action-btn"
-              @click="goToDoctors"
-            />
-            <Button
-              label="Nuovo Appuntamento"
-              icon="pi pi-calendar-plus"
-              class="quick-action-btn"
-              @click="goToCalendar"
-            />
+            <Button label="Nuovo Paziente" icon="pi pi-user-plus" class="p-button-outlined quick-action-btn"
+              @click="goToPatients" />
+            <Button label="Nuovo Medico" icon="pi pi-plus" class="p-button-outlined quick-action-btn"
+              @click="goToDoctors" />
+            <Button label="Nuovo Appuntamento" icon="pi pi-calendar-plus" class="quick-action-btn"
+              @click="goToCalendar" />
           </div>
         </div>
       </div>
@@ -153,9 +136,7 @@ export default defineComponent({
   setup() {
     const router = useRouter()
     const dashboardStore = useDashboardStore()
-    const appStore = useAppStore()
-
-    // Reactive refs from stores
+    const appStore = useAppStore()    // Reactive refs from stores
     const { dashboardData } = storeToRefs(dashboardStore)
     const { isLoading } = storeToRefs(appStore)
 
@@ -173,12 +154,24 @@ export default defineComponent({
 
     const getStatusSeverity = (status) => {
       const severityMap = {
-        'pending': 'warn',
-        'confirmed': 'success',
-        'cancelled': 'danger',
-        'completed': 'info'
+        scheduled: 'info',
+        confirmed: 'success',
+        in_progress: 'success',
+        completed: 'secondary',
+        cancelled: 'danger'
       }
       return severityMap[status] || 'info'
+    }
+
+    const getStatusLabel = (status) => {
+      const statusMap = {
+        scheduled: 'Programmato',
+        confirmed: 'Confermato',
+        in_progress: 'In Corso',
+        completed: 'Completato',
+        cancelled: 'Annullato'
+      }
+      return statusMap[status] || 'Sconosciuto'
     }
 
     const goToPatients = () => {
@@ -203,6 +196,7 @@ export default defineComponent({
       isLoading,
       formatDateTime,
       getStatusSeverity,
+      getStatusLabel,
       goToPatients,
       goToDoctors,
       goToCalendar

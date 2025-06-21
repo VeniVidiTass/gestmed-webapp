@@ -5,7 +5,8 @@ const pool = require('../config/database');
 // GET /appointments/services - Get all services
 router.get('/services', async (req, res) => {
   try {
-    const { doctor_id, is_active } = req.query;
+    const { doctor_id, is_active, is_external, sortBy, sortOrder } = req.query;
+    
     let query = 'SELECT * FROM services WHERE 1=1';
     let params = [];
     let paramCount = 0;
@@ -19,15 +20,55 @@ router.get('/services', async (req, res) => {
     if (is_active !== undefined) {
       paramCount++;
       query += ` AND is_active = $${paramCount}`;
-      params.push(is_active === 'true');
+      params.push(is_active === 'true' || is_active === true);
     }
 
-    query += ' ORDER BY doctor_id, name';
+    if (is_external !== undefined) {
+      paramCount++;
+      query += ` AND is_external_bookable = $${paramCount}`;
+      params.push(is_external === 'true' || is_external === true);
+    }
+
+    // Gestione dell'ordinamento
+    const validSortColumns = ['name', 'doctor_id', 'price', 'duration_minutes', 'created_at'];
+    const validSortOrders = ['ASC', 'DESC'];
+    
+    let orderByClause = ' ORDER BY doctor_id, name';
+    if (sortBy && validSortColumns.includes(sortBy)) {
+      const order = sortOrder && validSortOrders.includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'ASC';
+      orderByClause = ` ORDER BY ${sortBy} ${order}`;
+    }
+    
+    query += orderByClause;
 
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching services:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /appointments/services/doctor/:doctor_id - Get services by doctor
+router.get('/services/doctor/:doctor_id', async (req, res) => {
+  try {
+    const { doctor_id } = req.params;
+    const { is_active } = req.query;
+
+    let query = 'SELECT * FROM services WHERE doctor_id = $1';
+    let params = [doctor_id];
+
+    if (is_active !== undefined) {
+      query += ' AND is_active = $2';
+      params.push(is_active === 'true');
+    }
+
+    query += ' ORDER BY name';
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching services by doctor:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -52,15 +93,15 @@ router.get('/services/:id', async (req, res) => {
 // POST /appointments/services - Create a new service
 router.post('/services', async (req, res) => {
   try {
-    const { name, description, duration_minutes, price, doctor_id } = req.body;
+    const { name, description, duration_minutes, price, doctor_id, is_external_bookable } = req.body;
 
     if (!name || !doctor_id) {
       return res.status(400).json({ error: 'Name and Doctor ID are required' });
     }
 
     const result = await pool.query(
-      'INSERT INTO services (name, description, duration_minutes, price, doctor_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [name, description || '', duration_minutes || 30, price || 0.00, doctor_id]
+      'INSERT INTO services (name, description, duration_minutes, price, doctor_id, is_external_bookable) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [name, description || '', duration_minutes || 30, price || 0.00, doctor_id, is_external_bookable || false]
     );
 
     res.status(201).json(result.rows[0]);
@@ -74,11 +115,11 @@ router.post('/services', async (req, res) => {
 router.put('/services/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, duration_minutes, price, is_active } = req.body;
+    const { name, description, duration_minutes, price, is_active, is_external_bookable } = req.body;
 
     const result = await pool.query(
-      'UPDATE services SET name = $1, description = $2, duration_minutes = $3, price = $4, is_active = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING *',
-      [name, description, duration_minutes, price, is_active, id]
+      'UPDATE services SET name = $1, description = $2, duration_minutes = $3, price = $4, is_active = $5, is_external_bookable = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7 RETURNING *',
+      [name, description, duration_minutes, price, is_active, is_external_bookable, id]
     );
 
     if (result.rows.length === 0) {
@@ -113,30 +154,6 @@ router.delete('/services/:id', async (req, res) => {
     res.json({ message: 'Service deleted successfully' });
   } catch (error) {
     console.error('Error deleting service:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// GET /appointments/services/doctor/:doctor_id - Get services by doctor
-router.get('/services/doctor/:doctor_id', async (req, res) => {
-  try {
-    const { doctor_id } = req.params;
-    const { is_active } = req.query;
-
-    let query = 'SELECT * FROM services WHERE doctor_id = $1';
-    let params = [doctor_id];
-
-    if (is_active !== undefined) {
-      query += ' AND is_active = $2';
-      params.push(is_active === 'true');
-    }
-
-    query += ' ORDER BY name';
-
-    const result = await pool.query(query, params);
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Error fetching services by doctor:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -337,6 +354,58 @@ router.put('/:id/status', async (req, res) => {
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error updating appointment status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /appointments/doctor/:doctor_id/busy-slots - Get busy time slots for a doctor
+router.get('/doctor/:doctor_id/busy-slots', async (req, res) => {
+  try {
+    const { doctor_id } = req.params;
+    const { date, start_date, end_date } = req.query; let query = `
+      SELECT 
+        a.appointment_date,
+        a.appointment_date + INTERVAL '1 minute' * 30 AS end_time
+      FROM appointments a
+      WHERE a.doctor_id = $1 
+        AND a.status IN ('scheduled', 'in_progress')
+    `;
+
+    let params = [doctor_id];
+    let paramCount = 1;
+
+    // Filtro per data specifica
+    if (date) {
+      paramCount++;
+      query += ` AND DATE(a.appointment_date) = $${paramCount}`;
+      params.push(date);
+    }
+    // Filtro per range di date
+    else if (start_date && end_date) {
+      paramCount++;
+      query += ` AND DATE(a.appointment_date) >= $${paramCount}`;
+      params.push(start_date);
+
+      paramCount++;
+      query += ` AND DATE(a.appointment_date) <= $${paramCount}`;
+      params.push(end_date);
+    }
+    // Se non specificato, mostra solo gli appuntamenti futuri
+    else {
+      query += ` AND a.appointment_date >= CURRENT_TIMESTAMP`;
+    }
+
+    query += ' ORDER BY a.appointment_date ASC';
+
+    const result = await pool.query(query, params);    // Formatta i risultati per renderli più utili
+    const busySlots = result.rows.map(row => ({
+      start_time: row.appointment_date,
+      end_time: row.end_time
+    }));
+
+    res.json(busySlots);
+  } catch (error) {
+    console.error('Error fetching doctor busy slots:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

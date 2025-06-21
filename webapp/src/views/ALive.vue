@@ -16,7 +16,6 @@
             </div>
           </template>
         </Card>
-
         <Card class="status-card scheduled">
           <template #content>
             <div class="status-card-content">
@@ -26,6 +25,20 @@
               <div class="status-info">
                 <h3>{{ scheduledAppointments.length }}</h3>
                 <p>Programmati</p>
+              </div>
+            </div>
+          </template>
+        </Card>
+
+        <Card class="status-card confirmed">
+          <template #content>
+            <div class="status-card-content">
+              <div class="status-icon">
+                <i class="pi pi-check" />
+              </div>
+              <div class="status-info">
+                <h3>{{ confirmedAppointments.length }}</h3>
+                <p>Confermati</p>
               </div>
             </div>
           </template>
@@ -48,25 +61,12 @@
       <div class="controls-section">
         <div class="filter-section">
           <label for="statusFilter" class="filter-label">Filtra per stato:</label>
-          <Select
-            id="statusFilter"
-            v-model="selectedStatusFilter"
-            :options="statusFilterOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="Tutti gli stati"
-            class="status-filter"
-            @change="applyStatusFilter"
-          />
+          <Select id="statusFilter" v-model="selectedStatusFilter" :options="statusFilterOptions" option-label="label"
+            option-value="value" placeholder="Tutti gli stati" class="status-filter" @change="applyStatusFilter" />
         </div>
 
-        <Button
-          label="Aggiorna"
-          icon="pi pi-refresh"
-          :loading="loading"
-          class="p-button-outlined"
-          @click="refreshData"
-        />
+        <Button label="Aggiorna" icon="pi pi-refresh" :loading="loading" class="p-button-outlined"
+          @click="refreshData" />
       </div>
 
       <!-- Error Message -->
@@ -87,24 +87,18 @@
         </Card>
 
         <div v-else class="appointments-grid">
-          <Card
-            v-for="appointment in appointments"
-            :key="appointment.id"
-            class="appointment-card"
-            :class="{
-              'status-in-progress': appointment.status === 'in_progress',
-              'status-scheduled': appointment.status === 'scheduled'
-            }"
-          >
+          <Card v-for="appointment in appointments" :key="appointment.id" class="appointment-card" :class="{
+            'status-in-progress': appointment.status === 'in_progress',
+            'status-scheduled': appointment.status === 'scheduled',
+            'status-confirmed': appointment.status === 'confirmed'
+          }">
             <template #header>
               <div class="appointment-header">
-                <div class="appointment-status">
-                  <Tag
-                    :value="getStatusLabel(appointment.status)"
-                    :severity="getStatusSeverity(appointment.status)"
-                    :icon="getStatusIcon(appointment.status)"
-                  />
-                </div>
+                <Tag
+                  :value="getStatusLabel(appointment.status)"
+                  :severity="getStatusSeverity(appointment.status)"
+                  :icon="getStatusIcon(appointment.status)"
+                />
                 <div class="appointment-actions">
                   <Button
                     v-tooltip.top="'Aggiungi Log'"
@@ -166,41 +160,28 @@
         </div>
       </div>
     </div> <!-- Add Log Dialog -->
-    <AliveLogForm
-      v-model:visible="showLogForm"
-      :appointment-id="selectedAppointment?.id"
+    <AliveLogForm v-model:visible="showLogForm" :appointment-id="selectedAppointment?.id"
       :appointment-title="`${selectedAppointment?.patient_name} - Dr. ${selectedAppointment?.doctor_name}`"
-      :appointment-code="selectedAppointment?.code"
-      :loading="logLoading"
-      @submit="handleLogSubmit"
-      @cancel="closeLogForm"
-    />
+      :appointment-code="selectedAppointment?.code" :loading="logLoading" @submit="handleLogSubmit"
+      @cancel="closeLogForm" />
 
     <!-- Logs View Dialog -->
-    <Dialog
-      v-model:visible="showLogsDialog"
-      modal
+    <Dialog v-model:visible="showLogsDialog" modal
       :header="`Log Attività - ${selectedLogAppointment?.patient_name} - Dr. ${selectedLogAppointment?.doctor_name}`"
-      :style="{ width: '60vw' }"
-      :breakpoints="{ '960px': '75vw', '641px': '90vw' }"
-    >
+      :style="{ width: '60vw' }" :breakpoints="{ '960px': '75vw', '641px': '90vw' }">
       <div class="logs-dialog-content">
         <!-- Appointment Info Card -->
-        <Card
-          class="appointment-info-card"
-          :class="{
-            'status-in-progress': selectedLogAppointment?.status === 'in_progress',
-            'status-scheduled': selectedLogAppointment?.status === 'scheduled'
-          }"
-        >
+        <Card class="appointment-info-card" :class="{
+          'status-in-progress': selectedLogAppointment?.status === 'in_progress',
+          'status-scheduled': selectedLogAppointment?.status === 'scheduled',
+          'status-confirmed': selectedLogAppointment?.status === 'confirmed'
+        }">
           <template #content>
             <div class="appointment-content">
               <div class="appointment-header-info">
-                <Tag
-                  :value="getStatusLabel(selectedLogAppointment?.status)"
+                <Tag :value="getStatusLabel(selectedLogAppointment?.status)"
                   :severity="getStatusSeverity(selectedLogAppointment?.status)"
-                  :icon="getStatusIcon(selectedLogAppointment?.status)"
-                />
+                  :icon="getStatusIcon(selectedLogAppointment?.status)" />
               </div>
 
               <div class="appointment-info">
@@ -242,24 +223,14 @@
               <i class="pi pi-history" />
               Log Attività
             </h4>
-            <Button
-              label="Aggiungi Log"
-              icon="pi pi-plus"
-              class="p-button-sm"
-              @click="openLogFormFromDialog"
-            />
+            <Button label="Aggiungi Log" icon="pi pi-plus" class="p-button-sm" @click="openLogFormFromDialog" />
           </div>
 
           <div class="logs-list">
             <div v-if="getAppointmentLogs(selectedLogAppointment?.id).length === 0" class="no-logs">
               <p>Nessun log presente per questo appuntamento.</p>
             </div>
-            <div
-              v-for="log in getAppointmentLogs(selectedLogAppointment?.id)"
-              v-else
-              :key="log.id"
-              class="log-item"
-            >
+            <div v-for="log in getAppointmentLogs(selectedLogAppointment?.id)" v-else :key="log.id" class="log-item">
               <div class="log-header">
                 <h5>{{ log.title }}</h5>
                 <div class="log-meta">
@@ -317,20 +288,19 @@ export default defineComponent({
     const selectedAppointment = ref(null)
     const selectedLogAppointment = ref(null)
     const logLoading = ref(false)
-    const selectedStatusFilter = ref('active') // Default filter for active appointments
-
-    // Status options for dropdown
+    const selectedStatusFilter = ref('active') // Default filter for active appointments    // Status options for dropdown
     const statusOptions = [
       { label: 'Programmato', value: 'scheduled' },
-      { label: 'In Corso', value: 'in_progress' },      { label: 'Completato', value: 'completed' },
+      { label: 'Confermato', value: 'confirmed' },
+      { label: 'In Corso', value: 'in_progress' },
+      { label: 'Completato', value: 'completed' },
       { label: 'Annullato', value: 'cancelled' }
-    ]
-
-    // Status filter options
+    ]    // Status filter options
     const statusFilterOptions = [
-      { label: 'Solo attivi (Programmati + In Corso)', value: 'active' },
+      { label: 'Solo attivi (Programmati + Confermati + In Corso)', value: 'active' },
       { label: 'Tutti gli stati', value: 'all' },
       { label: 'Programmati', value: 'scheduled' },
+      { label: 'Confermati', value: 'confirmed' },
       { label: 'In Corso', value: 'in_progress' },
       { label: 'Completati', value: 'completed' },
       { label: 'Annullati', value: 'cancelled' }
@@ -338,19 +308,18 @@ export default defineComponent({
 
     // Computed
     const appointments = computed(() => {
-      let filteredAppointments = appointmentsStore.allAppointments
-
-      // Apply status filter
+      let filteredAppointments = appointmentsStore.allAppointments      // Apply status filter
       switch (selectedStatusFilter.value) {
         case 'active':
           filteredAppointments = filteredAppointments.filter(apt =>
-            ['scheduled', 'in_progress'].includes(apt.status)
+            ['scheduled', 'confirmed', 'in_progress'].includes(apt.status)
           )
           break
         case 'all':
           // Show all appointments
           break
         case 'scheduled':
+        case 'confirmed':
         case 'in_progress':
         case 'completed':
         case 'cancelled':
@@ -361,24 +330,26 @@ export default defineComponent({
         default:
           // Default to active appointments
           filteredAppointments = filteredAppointments.filter(apt =>
-            ['scheduled', 'in_progress'].includes(apt.status)
+            ['scheduled', 'confirmed', 'in_progress'].includes(apt.status)
           )
-      }            return filteredAppointments
+      }
+      return filteredAppointments
     })
 
     const loading = computed(() => appointmentsStore.loading)
-    const error = computed(() => appointmentsStore.error || aliveLogsStore.error)
-
-    // Status cards show counts based on all appointments, not filtered ones
+    const error = computed(() => appointmentsStore.error || aliveLogsStore.error)    // Status cards show counts based on all appointments, not filtered ones
     const scheduledAppointments = computed(() =>
       appointmentsStore.allAppointments.filter(apt => apt.status === 'scheduled')
+    )
+    const confirmedAppointments = computed(() =>
+      appointmentsStore.allAppointments.filter(apt => apt.status === 'confirmed')
     )
     const inProgressAppointments = computed(() =>
       appointmentsStore.allAppointments.filter(apt => apt.status === 'in_progress')
     )
     const totalActiveAppointments = computed(() =>
       appointmentsStore.allAppointments.filter(apt =>
-        ['scheduled', 'in_progress'].includes(apt.status)
+        ['scheduled', 'confirmed', 'in_progress'].includes(apt.status)
       )
     )
     // Methods
@@ -426,6 +397,7 @@ export default defineComponent({
     const getStatusLabel = (status) => {
       const statusMap = {
         scheduled: 'Programmato',
+        confirmed: 'Confermato',
         in_progress: 'In Corso',
         completed: 'Completato',
         cancelled: 'Annullato'
@@ -436,6 +408,7 @@ export default defineComponent({
     const getStatusSeverity = (status) => {
       const severityMap = {
         scheduled: 'info',
+        confirmed: 'success',
         in_progress: 'success',
         completed: 'secondary',
         cancelled: 'danger'
@@ -446,6 +419,7 @@ export default defineComponent({
     const getStatusIcon = (status) => {
       const iconMap = {
         scheduled: 'pi pi-clock',
+        confirmed: 'pi pi-check',
         in_progress: 'pi pi-play-circle',
         completed: 'pi pi-check-circle',
         cancelled: 'pi pi-times-circle'
@@ -519,11 +493,11 @@ export default defineComponent({
       await refreshData()
     })
 
-    return {
-      // State
+    return {      // State
       appointments,
       loading, error,
       scheduledAppointments,
+      confirmedAppointments,
       inProgressAppointments,
       totalActiveAppointments,
       showLogs,
@@ -628,6 +602,11 @@ export default defineComponent({
 .status-card.scheduled .status-icon {
   background-color: var(--blue-100);
   color: var(--blue-600);
+}
+
+.status-card.confirmed .status-icon {
+  background-color: var(--orange-100);
+  color: var(--orange-600);
 }
 
 .status-card.total .status-icon {
@@ -736,11 +715,15 @@ export default defineComponent({
   border-left-color: var(--blue-500);
 }
 
+.appointment-card.status-confirmed {
+  border-left-color: var(--orange-500);
+}
+
 .appointment-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
+  padding: 1rem;
   border-bottom: 1px solid var(--surface-200);
 }
 

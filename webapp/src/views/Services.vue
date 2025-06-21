@@ -5,71 +5,38 @@
       <div class="page-header">
         <div class="search-section">
           <div class="p-inputgroup">
-            <InputText
-              v-model="searchQuery"
-              placeholder="Cerca servizi per nome o descrizione..."
-              class="search-input"
-              @input="debouncedSearch"
-            />
+            <InputText v-model="searchQuery" placeholder="Cerca servizi per nome o descrizione..." class="search-input"
+              @input="debouncedSearch" />
             <Button icon="pi pi-search" class="p-button-primary" @click="searchServices" />
           </div>
-          
           <!-- Filtri -->
           <div class="filters">
-            <Select
-              v-model="selectedDoctor"
-              :options="doctorOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="Filtra per medico"
-              class="doctor-filter"
-              :show-clear="true"
-              @change="applyFilters"
-            />
-            
-            <Select
-              v-model="selectedStatus"
-              :options="statusOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="Stato servizio"
-              class="status-filter"
-              @change="applyFilters"
-            />
+            <Select v-model="selectedDoctor" :options="doctorOptions" option-label="label" option-value="value"
+              placeholder="Filtra per medico" class="doctor-filter" :show-clear="true" @change="applyFilters" />
+
+            <Select v-model="selectedStatus" :options="statusOptions" option-label="label" option-value="value"
+              placeholder="Stato servizio" class="status-filter" @change="applyFilters" />
+
+            <Select v-model="selectedBookingType" :options="bookingTypeOptions" option-label="label"
+              option-value="value" placeholder="Tipo prenotazione" class="booking-type-filter" :show-clear="true"
+              @change="applyFilters" />
           </div>
         </div>
-        
-        <Button
-          label="Nuovo Servizio"
-          icon="pi pi-plus"
-          class="p-button-primary"
-          @click="openNewServiceDialog"
-        />
+
+        <Button label="Nuovo Servizio" icon="pi pi-plus" class="p-button-primary" @click="openNewServiceDialog" />
       </div>
 
       <!-- Services Table -->
       <div class="table-container custom-card">
-        <DataTable
-          :value="filteredServices"
-          :loading="isLoading"
-          paginator
-          :rows="10"
-          :rows-per-page-options="[10, 25, 50]"
-          responsive-layout="scroll"
-          empty-message="Nessun servizio trovato"
-          class="services-table"
-        >
+        <DataTable :value="filteredServices" :loading="isLoading" paginator :rows="10"
+          :rows-per-page-options="[10, 25, 50]" responsive-layout="scroll" empty-message="Nessun servizio trovato"
+          class="services-table">
           <Column field="name" header="Nome Servizio" sortable>
             <template #body="{ data }">
               <div class="service-name">
                 <i class="pi pi-briefcase" />
                 {{ data.name }}
-                <Tag 
-                  v-if="!data.is_active" 
-                  value="Disattivo" 
-                  severity="warning" 
-                  class="ml-2" 
-                />
+                <Tag v-if="!data.is_active" value="Disattivo" severity="warning" class="ml-2" />
               </div>
             </template>
           </Column>
@@ -102,38 +69,30 @@
               <span class="price-value">€ {{ formatPrice(data.price) }}</span>
             </template>
           </Column>
-
           <Column header="Stato">
             <template #body="{ data }">
-              <Tag 
-                :value="data.is_active ? 'Attivo' : 'Disattivo'"
-                :severity="data.is_active ? 'success' : 'warning'"
-              />
+              <Tag :value="data.is_active ? 'Attivo' : 'Disattivo'"
+                :severity="data.is_active ? 'success' : 'warning'" />
+            </template>
+          </Column>
+
+          <Column header="Prenotazione Esterna">
+            <template #body="{ data }">
+              <Tag v-if="data.is_external_bookable" value="Prenotabile" severity="info" icon="pi pi-globe" />
+              <Tag v-else value="Solo interna" severity="secondary" icon="pi pi-lock" />
             </template>
           </Column>
 
           <Column header="Azioni" :exportable="false" style="min-width: 150px;">
             <template #body="{ data }">
               <div class="action-buttons">
-                <Button
-                  v-tooltip.top="'Visualizza'"
-                  icon="pi pi-eye"
-                  class="p-button-rounded p-button-text p-button-sm"
-                  @click="viewService(data)"
-                />
-                <Button
-                  v-tooltip.top="'Modifica'"
-                  icon="pi pi-pencil"
-                  class="p-button-rounded p-button-text p-button-sm"
-                  @click="editService(data)"
-                />
-                <Button
-                  v-tooltip.top="'Elimina'"
-                  icon="pi pi-trash"
-                  class="p-button-rounded p-button-text p-button-sm p-button-danger"
-                  :disabled="!canDeleteService(data)"
-                  @click="confirmDeleteService(data)"
-                />
+                <Button v-tooltip.top="'Visualizza'" icon="pi pi-eye" class="p-button-rounded p-button-text p-button-sm"
+                  @click="viewService(data)" />
+                <Button v-tooltip.top="'Modifica'" icon="pi pi-pencil"
+                  class="p-button-rounded p-button-text p-button-sm" @click="editService(data)" />
+                <Button v-tooltip.top="'Elimina'" icon="pi pi-trash"
+                  class="p-button-rounded p-button-text p-button-sm p-button-danger" :disabled="!canDeleteService(data)"
+                  @click="confirmDeleteService(data)" />
               </div>
             </template>
           </Column>
@@ -141,63 +100,58 @@
       </div>
 
       <!-- Service Form Dialog -->
-      <ServiceForm
-        :visible="showServiceDialog"
-        :service="currentService"
-        @update:visible="showServiceDialog = $event"
-        @saved="onServiceSaved"
-      />
+      <ServiceForm :visible="showServiceDialog" :service="currentService" @update:visible="showServiceDialog = $event"
+        @saved="onServiceSaved" />
 
       <!-- Service Detail Dialog -->
-      <Dialog
-        v-model:visible="showDetailDialog"
-        header="Dettagli Servizio"
-        modal
-        :style="{ width: '500px' }"
-        class="service-detail-dialog"
-      >
+      <Dialog v-model:visible="showDetailDialog" header="Dettagli Servizio" modal :style="{ width: '500px' }"
+        class="service-detail-dialog">
         <div v-if="currentService" class="service-details">
           <div class="detail-group">
             <label>Nome Servizio</label>
             <span>{{ currentService.name }}</span>
           </div>
-          
+
           <div class="detail-group">
             <label>Descrizione</label>
             <span>{{ currentService.description || 'Nessuna descrizione' }}</span>
           </div>
-          
+
           <div class="detail-row">
             <div class="detail-group">
               <label>Durata</label>
               <span>{{ currentService.duration_minutes }} minuti</span>
             </div>
-            
+
             <div class="detail-group">
               <label>Prezzo</label>
               <span>€ {{ formatPrice(currentService.price) }}</span>
             </div>
           </div>
-          
+
           <div class="detail-group">
             <label>Medico</label>
             <span>Dr. {{ getDoctorName(currentService.doctor_id) }}</span>
           </div>
-          
           <div class="detail-group">
             <label>Stato</label>
-            <Tag 
-              :value="currentService.is_active ? 'Attivo' : 'Disattivo'"
-              :severity="currentService.is_active ? 'success' : 'warning'"
-            />
+            <Tag :value="currentService.is_active ? 'Attivo' : 'Disattivo'"
+              :severity="currentService.is_active ? 'success' : 'warning'" />
           </div>
-          
+
+          <div class="detail-group">
+            <label>Prenotazione</label>
+            <Tag v-if="currentService.is_external_bookable" value="Prenotabile esternamente" severity="info"
+              icon="pi pi-globe" />
+            <Tag v-else value="Solo prenotazione interna" severity="secondary" icon="pi pi-lock" />
+          </div>
+
           <div class="detail-row">
             <div class="detail-group">
               <label>Creato il</label>
               <span>{{ formatDate(currentService.created_at) }}</span>
             </div>
-            
+
             <div class="detail-group">
               <label>Aggiornato il</label>
               <span>{{ formatDate(currentService.updated_at) }}</span>
@@ -206,18 +160,8 @@
         </div>
 
         <template #footer>
-          <Button
-            label="Chiudi"
-            icon="pi pi-times"
-            class="p-button-text"
-            @click="showDetailDialog = false"
-          />
-          <Button
-            label="Modifica"
-            icon="pi pi-pencil"
-            class="p-button-primary"
-            @click="editServiceFromDetail"
-          />
+          <Button label="Chiudi" icon="pi pi-times" class="p-button-text" @click="showDetailDialog = false" />
+          <Button label="Modifica" icon="pi pi-pencil" class="p-button-primary" @click="editServiceFromDetail" />
         </template>
       </Dialog>
 
@@ -252,6 +196,7 @@ const confirm = useConfirm()
 const searchQuery = ref('')
 const selectedDoctor = ref(null)
 const selectedStatus = ref(null) // Default: show all services
+const selectedBookingType = ref(null)
 const showServiceDialog = ref(false)
 const showDetailDialog = ref(false)
 const currentService = ref(null)
@@ -276,6 +221,12 @@ const statusOptions = ref([
   { label: 'Tutti i servizi', value: null },
   { label: 'Solo attivi', value: true },
   { label: 'Solo disattivi', value: false }
+])
+
+const bookingTypeOptions = ref([
+  { label: 'Tutti i tipi', value: null },
+  { label: 'Prenotabili esternamente', value: true },
+  { label: 'Solo prenotazione interna', value: false }
 ])
 
 // Methods
@@ -326,7 +277,8 @@ function applyFilters() {
   servicesStore.setFilters({
     search: searchQuery.value,
     doctor_id: selectedDoctor.value,
-    is_active: selectedStatus.value
+    is_active: selectedStatus.value,
+    is_external_bookable: selectedBookingType.value
   })
 }
 
@@ -545,7 +497,8 @@ onMounted(async () => {
   }
 
   .doctor-filter,
-  .status-filter {
+  .status-filter,
+  .booking-type-filter {
     min-width: auto;
   }
 

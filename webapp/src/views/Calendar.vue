@@ -5,27 +5,14 @@
       <div class="page-header">
         <div class="filters-section">
           <div class="filter-group">
-            <Select
-              id="doctor-filter"
-              v-model="selectedDoctor"
-              :options="doctorOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="Tutti i medici"
-              :filter="true"
-              filter-placeholder="Cerca medico..."
-              :show-clear="true"
-              :virtual-scroller-options="{ itemSize: 44 }"
-            />
+            <Select id="doctor-filter" v-model="selectedDoctor" :options="doctorOptions" option-label="label"
+              option-value="value" placeholder="Tutti i medici" :filter="true" filter-placeholder="Cerca medico..."
+              :show-clear="true" :virtual-scroller-options="{ itemSize: 44 }" />
           </div>
         </div>
 
-        <Button
-          label="Nuovo Appuntamento"
-          icon="pi pi-plus"
-          class="p-button-primary add-appointment-btn"
-          @click="openNewAppointmentDialog"
-        />
+        <Button label="Nuovo Appuntamento" icon="pi pi-plus" class="p-button-primary add-appointment-btn"
+          @click="openNewAppointmentDialog" />
       </div>
 
       <!-- Calendar View -->
@@ -41,16 +28,10 @@
 
           <div class="view-controls">
             <div class="view-toggles">
-              <Button
-                label="Settimana"
-                :class="['p-button-text p-button-sm', { 'active-view': viewMode === 'week' }]"
-                @click="setViewMode('week')"
-              />
-              <Button
-                label="Giorno"
-                :class="['p-button-text p-button-sm', { 'active-view': viewMode === 'day' }]"
-                @click="setViewMode('day')"
-              />
+              <Button label="Settimana" :class="['p-button-text p-button-sm', { 'active-view': viewMode === 'week' }]"
+                @click="setViewMode('week')" />
+              <Button label="Giorno" :class="['p-button-text p-button-sm', { 'active-view': viewMode === 'day' }]"
+                @click="setViewMode('day')" />
             </div>
             <Button label="Oggi" class="p-button-text p-button-sm" @click="goToToday" />
           </div>
@@ -64,10 +45,8 @@
             <div v-for="hour in timeSlots" :key="hour" class="time-slot">
               {{ hour }}:00
             </div>
-          </div>
-
-          <!-- Days columns -->
-          <div v-for="day in displayDays" :key="day.date" class="day-column">
+          </div>          <!-- Days columns -->
+          <div v-for="day in displayDays" :key="day.date" class="day-column" :class="{ 'weekend-column': day.isWeekend && viewMode === 'week' }">
             <div class="day-header">
               <div class="day-name">
                 {{ day.name }}
@@ -77,21 +56,14 @@
               </div>
             </div>
             <div class="day-slots">
-              <div
-                v-for="hour in timeSlots"
-                :key="`${day.date}-${hour}`"
-                class="hour-slot"
-                @click="openAppointmentDialog(day.date, hour)"
-              >
+              <div v-for="hour in timeSlots" :key="`${day.date}-${hour}`" class="hour-slot"
+                @click="openAppointmentDialog(day.date, hour)">
                 <!-- Appointments for this hour -->
                 <div class="appointments-container">
-                  <div
-                    v-for="(appointment, index) in getAppointmentsForSlot(day.date, hour)"
-                    :key="appointment.id"
+                  <div v-for="(appointment, index) in getAppointmentsForSlot(day.date, hour)" :key="appointment.id"
                     class="appointment-card"
                     :class="[getAppointmentClass(appointment), getAppointmentPosition(index, getAppointmentsForSlot(day.date, hour).length)]"
-                    @click.stop="viewAppointment(appointment)"
-                  >
+                    @click.stop="viewAppointment(appointment)">
                     <div class="appointment-time">
                       {{ formatTime(appointment.appointment_date) }}
                     </div>
@@ -106,11 +78,8 @@
                     </div>
                   </div>
                   <!-- Indicator for more appointments -->
-                  <div
-                    v-if="getAppointmentsForSlot(day.date, hour).length > 3"
-                    class="more-appointments-indicator"
-                    @click.stop="showMoreAppointments(day.date, hour)"
-                  >
+                  <div v-if="getAppointmentsForSlot(day.date, hour).length > 3" class="more-appointments-indicator"
+                    @click.stop="showMoreAppointments(day.date, hour)">
                     +{{ getAppointmentsForSlot(day.date, hour).length - 3 }} altri
                   </div>
                 </div>
@@ -121,34 +90,17 @@
       </div>
 
       <!-- Appointment Dialog -->
-      <Dialog
-        v-model:visible="appointmentDialogVisible"
-        :modal="true"
+      <Dialog v-model:visible="appointmentDialogVisible" :modal="true"
         :header="dialogMode === 'create' ? 'Nuovo Appuntamento' : dialogMode === 'edit' ? 'Modifica Appuntamento' : 'Dettagli Appuntamento'"
-        :maximizable="false"
-        :closable="true"
-      >
-        <AppointmentForm
-          :appointment="selectedAppointment"
-          :mode="dialogMode"
-          :doctors="doctors"
-          :patients="patients"
-          :preselected-date="preselectedDate"
-          :preselected-hour="preselectedHour"
-          @save="handleSaveAppointment"
-          @cancel="closeAppointmentDialog"
-          @switch-mode="handleSwitchMode"
-          @delete="handleDeleteAppointment"
-        />
+        :maximizable="false" :closable="true">
+        <AppointmentForm :appointment="selectedAppointment" :mode="dialogMode" :doctors="doctors" :patients="patients"
+          :preselected-date="preselectedDate" :preselected-hour="preselectedHour" @save="handleSaveAppointment"
+          @cancel="closeAppointmentDialog" @switch-mode="handleSwitchMode" @delete="handleDeleteAppointment" />
       </Dialog>
 
       <!-- Floating Action Button -->
-      <Button
-        v-tooltip.left="'Nuovo Appuntamento'"
-        icon="pi pi-plus"
-        class="p-button-rounded p-button-primary floating-button"
-        @click="openNewAppointmentDialog"
-      />
+      <Button v-tooltip.left="'Nuovo Appuntamento'" icon="pi pi-plus"
+        class="p-button-rounded p-button-primary floating-button" @click="openNewAppointmentDialog" />
     </div>
   </DashboardLayout>
 </template>
@@ -178,7 +130,9 @@ export default defineComponent({
     const appointmentsStore = useAppointmentsStore()
     const doctorsStore = useDoctorsStore()
     const patientsStore = usePatientsStore()
-    const appStore = useAppStore()    // Local reactive data
+    const appStore = useAppStore()
+
+    // Local reactive data
     const selectedDoctor = ref(null)
     const currentWeekStart = ref(getStartOfWeek(new Date()))
     const currentDay = ref(new Date())
@@ -190,7 +144,7 @@ export default defineComponent({
     const preselectedDate = ref(null)
     const preselectedHour = ref(null)
 
-    const timeSlots = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+    const timeSlots = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 
     function getStartOfWeek(date) {
       const d = new Date(date)
@@ -214,11 +168,13 @@ export default defineComponent({
       for (let i = 0; i < 7; i++) {
         const date = new Date(start)
         date.setDate(start.getDate() + i)
+        const dayOfWeek = date.getDay() // 0 = Sunday, 6 = Saturday
         days.push({
           name: date.toLocaleDateString('it-IT', { weekday: 'short' }),
           date: date.toISOString().split('T')[0],
           displayDate: date.toLocaleDateString('it-IT'),
-          fullDate: new Date(date)
+          fullDate: new Date(date),
+          isWeekend: dayOfWeek === 0 || dayOfWeek === 6 // Sunday or Saturday
         })
       }
 
@@ -668,6 +624,18 @@ export default defineComponent({
 
 .day-column {
   border-right: 1px solid var(--surface-200);
+}
+
+.weekend-column {
+  background-color: var(--surface-100);
+}
+
+.weekend-column .day-header {
+  background-color: var(--surface-100);
+}
+
+.weekend-column .hour-slot:hover {
+  background-color: var(--surface-100);
 }
 
 .day-header {

@@ -94,9 +94,7 @@
           </template>
         </Select>
         <small v-if="errors.doctor_id" class="p-error">{{ errors.doctor_id }}</small>
-      </div>
-
-      <!-- Stato attivo -->
+      </div>      <!-- Stato attivo -->
       <div v-if="isEdit" class="form-group">
         <div class="form-check">
           <Checkbox id="service-active" v-model="formData.is_active" binary />
@@ -104,6 +102,17 @@
         </div>
         <small class="help-text">
           I servizi disattivati non saranno disponibili per nuovi appuntamenti
+        </small>
+      </div>
+
+      <!-- Prenotabilità esterna -->
+      <div class="form-group">
+        <div class="form-check">
+          <Checkbox id="service-external-bookable" v-model="formData.is_external_bookable" binary />
+          <label for="service-external-bookable" class="checkbox-label">Prenotabile da utenti esterni</label>
+        </div>
+        <small class="help-text">
+          Se attivato, il servizio sarà disponibile per la prenotazione autonoma da parte di utenti esterni alla struttura
         </small>
       </div>
     </form>
@@ -169,7 +178,8 @@ const formData = ref({
     duration_minutes: 30,
     price: 0.00,
     doctor_id: null,
-    is_active: true
+    is_active: true,
+    is_external_bookable: false
 })
 
 const errors = ref({})
@@ -195,7 +205,8 @@ function resetForm() {
         duration_minutes: 30,
         price: 0.00,
         doctor_id: null,
-        is_active: true
+        is_active: true,
+        is_external_bookable: false
     }
     errors.value = {}
 }
@@ -208,7 +219,8 @@ function loadFormData() {
             duration_minutes: props.service.duration_minutes || 30,
             price: parseFloat(props.service.price) || 0.00,
             doctor_id: props.service.doctor_id || null,
-            is_active: props.service.is_active !== undefined ? props.service.is_active : true
+            is_active: props.service.is_active !== undefined ? props.service.is_active : true,
+            is_external_bookable: props.service.is_external_bookable !== undefined ? props.service.is_external_bookable : false
         }
     } else {
         resetForm()
@@ -250,18 +262,17 @@ function validateForm() {
 async function handleSubmit() {
     if (!validateForm()) {
         return
-    }
-
-    try {
-        setLoading(true)
-
+    }    try {
+        setLoading(true);
+        
         const serviceData = {
             name: formData.value.name.trim(),
             description: formData.value.description?.trim() || '',
             duration_minutes: formData.value.duration_minutes,
             price: formData.value.price,
             doctor_id: formData.value.doctor_id,
-            is_active: formData.value.is_active
+            is_active: formData.value.is_active,
+            is_external_bookable: formData.value.is_external_bookable
         }
 
         if (isEdit.value) {

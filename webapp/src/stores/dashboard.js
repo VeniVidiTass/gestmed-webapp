@@ -19,7 +19,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     )
 
     const pendingAppointments = appointmentsStore.allAppointments.filter(apt =>
-      apt.status === 'pending'
+      apt.appointment_date && new Date(apt.appointment_date) > new Date() && apt.status !== 'cancelled'
     )
 
     // Prendi i pazienti più recenti (ordinati per data di creazione)

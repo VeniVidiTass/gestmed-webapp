@@ -7,7 +7,7 @@ const CACHE_DURATION = 5 * 60 * 1000 // 5 minuti
 
 // Create axios instance with optimizations
 const api = axios.create({
-  baseURL: import.meta.env.API_BASE_URL || 'http://api-gateway:3000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://api-gateway:3000/api',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
@@ -128,18 +128,45 @@ function clearCacheByPattern(pattern) {
   }
 }
 
+// Helper function to clean empty parameters
+function cleanParams(params, preserveKeys = []) {
+  const cleaned = {}
+
+  // Add preserved keys with their values or defaults
+  preserveKeys.forEach(key => {
+    if (params[key] !== undefined) {
+      cleaned[key] = params[key]
+    }
+  })
+
+  // Add other parameters, filtering out empty values
+  Object.keys(params).forEach(key => {
+    if (!preserveKeys.includes(key)) {
+      const value = params[key]
+      // Allow boolean false values and 0, but filter out empty strings, null, undefined
+      if (value !== undefined && value !== null && value !== '') {
+        cleaned[key] = value
+      }
+    }
+  })
+
+  return cleaned
+}
+
 // API Service methods with optimizations
 export const apiService = {
   // Dashboard
-  getDashboardData: () => api.get('/dashboard'),
-
-  // Patients with optimized queries
+  getDashboardData: () => api.get('/dashboard'),  // Patients with optimized queries
   getPatients: (params = {}) => {
     const optimizedParams = {
       page: params.page || 1,
-      limit: Math.min(params.limit || 10, 50), // Limit max items per page
-      ...params
+      limit: Math.min(params.limit || 10, 50)
     }
+
+    // Add cleaned parameters
+    const cleanedParams = cleanParams(params, ['page', 'limit'])
+    Object.assign(optimizedParams, cleanedParams)
+
     return api.get('/patients', { params: optimizedParams })
   },
 
@@ -160,15 +187,17 @@ export const apiService = {
     clearCacheByPattern('/patients')
     clearCacheByPattern(`/patients/${id}`)
     return api.delete(`/patients/${id}`)
-  },
-
-  // Doctors with optimized queries
+  },  // Doctors with optimized queries
   getDoctors: (params = {}) => {
     const optimizedParams = {
       page: params.page || 1,
-      limit: Math.min(params.limit || 10, 50),
-      ...params
+      limit: Math.min(params.limit || 10, 50)
     }
+
+    // Add cleaned parameters
+    const cleanedParams = cleanParams(params, ['page', 'limit'])
+    Object.assign(optimizedParams, cleanedParams)
+
     return api.get('/doctors', { params: optimizedParams })
   },
 
@@ -188,21 +217,25 @@ export const apiService = {
     clearCacheByPattern('/doctors')
     clearCacheByPattern(`/doctors/${id}`)
     return api.delete(`/doctors/${id}`)
-  },
-
-  // Services
+  },  // Services
   getServices: (params = {}) => {
-    const optimizedParams = {
-      doctor_id: params.doctor_id,
-      is_active: params.is_active,
-      ...params
-    }
+    // Use helper function to clean parameters
+    const optimizedParams = cleanParams(params)
+
     return api.get('/appointments/services', { params: optimizedParams })
   },
 
   getServicesByDoctor: (doctorId, isActive = true) => {
     const params = { is_active: isActive }
     return api.get(`/appointments/services/doctor/${doctorId}`, { params })
+  },
+
+  getExternalBookableServices: (doctorId = null) => {
+    const params = {}
+    if (doctorId) {
+      params.doctor_id = doctorId
+    }
+    return api.get('/appointments/services/external', { params })
   },
 
   getService: (id) => api.get(`/appointments/services/${id}`),
@@ -222,15 +255,17 @@ export const apiService = {
     clearCacheByPattern('/appointments/services')
     clearCacheByPattern(`/appointments/services/${id}`)
     return api.delete(`/appointments/services/${id}`)
-  },
-
-  // Appointments with optimized queries
+  },  // Appointments with optimized queries
   getAppointments: (params = {}) => {
     const optimizedParams = {
       page: params.page || 1,
-      limit: Math.min(params.limit || 20, 100),
-      ...params
+      limit: Math.min(params.limit || 20, 100)
     }
+
+    // Add cleaned parameters
+    const cleanedParams = cleanParams(params, ['page', 'limit'])
+    Object.assign(optimizedParams, cleanedParams)
+
     return api.get('/appointments', { params: optimizedParams })
   },
 

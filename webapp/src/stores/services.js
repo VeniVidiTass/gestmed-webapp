@@ -13,11 +13,11 @@ export const useServicesStore = defineStore('services', () => {
         total: 0,
         totalPages: 0
     })
-    
     const filters = ref({
         search: '',
         doctor_id: '',
-        is_active: true,
+        is_active: '',
+        is_external_bookable: '',
         sortBy: 'name',
         sortOrder: 'asc'
     })
@@ -30,9 +30,12 @@ export const useServicesStore = defineStore('services', () => {
         if (!lastFetched.value) return true
         return Date.now() - lastFetched.value > cacheTimeout
     })
-    
-    const activeServices = computed(() =>
+      const activeServices = computed(() =>
         (services.value || []).filter(service => service.is_active)
+    )
+    
+    const externalBookableServices = computed(() =>
+        (services.value || []).filter(service => service.is_active && service.is_external_bookable)
     )
     
     const servicesByDoctor = computed(() => {
@@ -63,10 +66,15 @@ export const useServicesStore = defineStore('services', () => {
         if (filters.value.doctor_id) {
             filtered = filtered.filter(service => service.doctor_id === parseInt(filters.value.doctor_id))
         }
-
+        
         // Active filter
         if (filters.value.is_active !== null && filters.value.is_active !== '') {
             filtered = filtered.filter(service => service.is_active === filters.value.is_active)
+        }
+
+        // External bookable filter
+        if (filters.value.is_external_bookable !== null && filters.value.is_external_bookable !== '') {
+            filtered = filtered.filter(service => service.is_external_bookable === filters.value.is_external_bookable)
         }
 
         // Sorting
@@ -236,15 +244,29 @@ export const useServicesStore = defineStore('services', () => {
         }
     }
 
-    function setFilters(newFilters) {
-        filters.value = { ...filters.value, ...newFilters }
+    async function fetchExternalBookableServices(doctorId = null) {
+        try {
+            const response = await apiService.getExternalBookableServices(doctorId)
+            return response // response è già .data
+        } catch (error) {
+            console.error('Error fetching external bookable services:', error)
+            appStore.addNotification({
+                severity: 'error',
+                summary: 'Errore',
+                detail: 'Errore nel caricamento dei servizi prenotabili esternamente'
+            })
+            throw error
+        }
     }
 
-    function resetFilters() {
+    function setFilters(newFilters) {
+        filters.value = { ...filters.value, ...newFilters }
+    }    function resetFilters() {
         filters.value = {
             search: '',
             doctor_id: '',
-            is_active: true,
+            is_active: '',
+            is_external_bookable: '',
             sortBy: 'name',
             sortOrder: 'asc'
         }
@@ -265,22 +287,20 @@ export const useServicesStore = defineStore('services', () => {
         services,
         currentService,
         pagination,
-        filters,
-
-        // Getters
+        filters,        // Getters
         allServices,
         isDataStale,
         activeServices,
+        externalBookableServices,
         servicesByDoctor,
-        filteredServices,
-
-        // Actions
+        filteredServices,        // Actions
         fetchServices,
         fetchServiceById,
         createService,
         updateService,
         deleteService,
         fetchServicesByDoctor,
+        fetchExternalBookableServices,
         setFilters,
         resetFilters,
         clearCache,

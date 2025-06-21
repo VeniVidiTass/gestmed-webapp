@@ -1,5 +1,4 @@
 - gestire autenticazione tramite header nginx e oauth2-proxy
 - aggiungere supporto a email degli appuntamenti
 
-- prenotazione dinamica
 - branch con api appointsment che butta su mongodb
