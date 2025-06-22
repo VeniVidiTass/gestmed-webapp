@@ -42,26 +42,17 @@ services:
       timeout: 10s
       retries: 5
 
-  appointments-db:
-    image: postgres:15-alpine
-    container_name: appointments-db
-    environment:
-      POSTGRES_DB: gestmed_appointments_db
-      POSTGRES_USER: gestmed_user
-      POSTGRES_PASSWORD: gestmed_password
+  appointments-mongo:
+    image: mongo:7
+    container_name: appointments-mongo
     ports:
-      - "5434:5432"
+      - "27017:27017"
     volumes:
-      - appointments_db_data:/var/lib/postgresql/data
-      - ./sql/appointments.sql:/docker-entrypoint-initdb.d/init.sql
+      - appointments_mongo_data:/data/db
+      - ./mongo/appointments.mongo.js:/docker-entrypoint-initdb.d/appointments.mongo.js:ro
     networks:
       - gestmed-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gestmed_user -d gestmed_appointments_db"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
 
   alive-db:
     image: postgres:15-alpine
@@ -179,16 +170,16 @@ services:
       - NODE_ENV=development
       - SERVICE=appointments
       - PORT=3003
-      - DB_HOST=appointments-db
-      - DB_PORT=5432
-      - DB_NAME=gestmed_appointments_db
-      - DB_USER=gestmed_user
-      - DB_PASSWORD=gestmed_password
+      - MONGO_HOST=appointments-mongo
+      - MONGO_PORT=27017
+      - MONGO_DB=gestmed_appointments_db
+      - MONGO_USER=gestmed_user
+      - MONGO_PASSWORD=gestmed_password
       - PATIENTS_SERVICE_URL=http://patients-service:3001
       - DOCTORS_SERVICE_URL=http://doctors-service:3002
     depends_on:
-      appointments-db:
-        condition: service_healthy
+      appointments-mongo:
+        condition: service_started
     networks:
       - gestmed-network
     restart: unless-stopped
@@ -282,7 +273,7 @@ volumes:
     driver: local
   doctors_db_data:
     driver: local
-  appointments_db_data:
+  appointments_mongo_data:
     driver: local
   alive_db_data:
     driver: local
