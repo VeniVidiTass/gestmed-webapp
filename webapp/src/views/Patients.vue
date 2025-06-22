@@ -6,7 +6,7 @@
         <div class="search-section">
           <InputText
             v-model="searchQuery"
-            placeholder="Cerca pazienti per nome, email o telefono"
+            placeholder="Cerca pazienti per nome, email, telefono o codice fiscale"
             class="search-input"
             @input="debouncedSearch"
           />
@@ -31,7 +31,7 @@
           :rows-per-page-options="[10, 25, 50]"
           lazy
           responsive-layout="scroll"
-          :global-filter-fields="['name', 'email', 'phone']"
+          :global-filter-fields="['name', 'email', 'phone', 'codice_fiscale']"
           empty-message="Nessun paziente trovato"
           class="patients-table"
           @page="onPageChange"
@@ -56,6 +56,12 @@
           <Column field="phone" header="Telefono" sortable>
             <template #body="{ data }">
               <span class="phone-number">{{ data.phone }}</span>
+            </template>
+          </Column>
+
+          <Column field="codice_fiscale" header="Codice Fiscale" sortable>
+            <template #body="{ data }">
+              <span class="codice-fiscale">{{ data.codice_fiscale }}</span>
             </template>
           </Column>
 
@@ -336,6 +342,13 @@ export default defineComponent({
 
 .phone-number {
   font-family: monospace;
+}
+
+.codice-fiscale {
+  font-family: monospace;
+  font-weight: 500;
+  color: var(--primary-700);
+  text-transform: uppercase;
 }
 
 .action-buttons {

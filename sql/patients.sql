@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS patients (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
+    codice_fiscale VARCHAR(16) UNIQUE NOT NULL,
     phone VARCHAR(20),
     date_of_birth DATE,
     address TEXT,
@@ -32,14 +33,15 @@ CREATE TABLE IF NOT EXISTS patients (
 
 -- create indexes for patients table
 CREATE INDEX IF NOT EXISTS idx_patients_email ON patients(email);
+CREATE INDEX IF NOT EXISTS idx_patients_codice_fiscale ON patients(codice_fiscale);
 
 -- Insert sample data
-INSERT INTO patients (name, email, phone, date_of_birth, address, medical_history) VALUES
-('Mario Rossi', 'mario.rossi@email.com', '+39 123 456 7890', '1980-05-15', 'Via Roma 123, Milano', 'Nessuna allergia nota'),
-('Laura Bianchi', 'laura.bianchi@email.com', '+39 098 765 4321', '1975-08-22', 'Via Garibaldi 45, Roma', 'Allergia ai pollini'),
-('Giuseppe Verdi', 'giuseppe.verdi@email.com', '+39 111 222 3333', '1990-12-10', 'Corso Italia 67, Napoli', 'Diabete tipo 2'),
-('Anna Ferrari', 'anna.ferrari@email.com', '+39 444 555 6666', '1985-03-18', 'Via Dante 89, Torino', 'Ipertensione'),
-('Francesco Conti', 'francesco.conti@email.com', '+39 777 888 9999', '1970-11-05', 'Via Manzoni 12, Firenze', 'Nessuna patologia nota');
+INSERT INTO patients (name, email, codice_fiscale, phone, date_of_birth, address, medical_history) VALUES
+('Mario Rossi', 'mario.rossi@email.com', 'RSSMRA80E15F205X', '+39 123 456 7890', '1980-05-15', 'Via Roma 123, Milano', 'Nessuna allergia nota'),
+('Laura Bianchi', 'laura.bianchi@email.com', 'BNCLRA75M62H501Y', '+39 098 765 4321', '1975-08-22', 'Via Garibaldi 45, Roma', 'Allergia ai pollini'),
+('Giuseppe Verdi', 'giuseppe.verdi@email.com', 'VRDGPP90T10F839K', '+39 111 222 3333', '1990-12-10', 'Corso Italia 67, Napoli', 'Diabete tipo 2'),
+('Anna Ferrari', 'anna.ferrari@email.com', 'FRRNNA85C58L219Z', '+39 444 555 6666', '1985-03-18', 'Via Dante 89, Torino', 'Ipertensione'),
+('Francesco Conti', 'francesco.conti@email.com', 'CNTFNC70S05D612W', '+39 777 888 9999', '1970-11-05', 'Via Manzoni 12, Firenze', 'Nessuna patologia nota');
 
 
 -- Grant permissions to the gestmed_user

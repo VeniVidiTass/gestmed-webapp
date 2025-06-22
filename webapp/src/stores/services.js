@@ -97,6 +97,20 @@ export const useServicesStore = defineStore('services', () => {
     })
     
     // Actions
+    async function ensureServicesLoaded() {
+        // Se non abbiamo servizi o i dati sono obsoleti, caricali
+        if (!services.value || services.value.length === 0 || isDataStale.value) {
+            try {
+                await fetchServices(true) // Forza il reload
+                console.log('✅ Services data ensured and loaded')
+            } catch (error) {
+                console.warn('⚠️ Failed to ensure services data:', error)
+                throw error
+            }
+        }
+        return services.value
+    }
+
     async function fetchServices(force = false) {
         if (!force && !isDataStale.value && services.value.length > 0) {
             return services.value
@@ -287,13 +301,18 @@ export const useServicesStore = defineStore('services', () => {
         services,
         currentService,
         pagination,
-        filters,        // Getters
+        filters,
+
+        // Getters
         allServices,
         isDataStale,
         activeServices,
         externalBookableServices,
         servicesByDoctor,
-        filteredServices,        // Actions
+        filteredServices,
+
+        // Actions
+        ensureServicesLoaded,
         fetchServices,
         fetchServiceById,
         createService,

@@ -34,7 +34,11 @@ CREATE TABLE IF NOT EXISTS services (
 -- Create appointments table
 CREATE TABLE IF NOT EXISTS appointments (
     id SERIAL PRIMARY KEY,
-    patient_id INTEGER NOT NULL,
+    patient_id INTEGER,
+    patient_full_name VARCHAR(255) NOT NULL,
+    patient_email VARCHAR(255),
+    patient_codice_fiscale VARCHAR(16), -- can be null if the patient is not italian
+    patient_phone VARCHAR(20),
     doctor_id INTEGER NOT NULL,
     service_id INTEGER NOT NULL,
     code VARCHAR(8) NOT NULL UNIQUE,
@@ -137,15 +141,19 @@ INSERT INTO services (name, description, duration_minutes, price, doctor_id, is_
 ('Prescrizione Farmaci', 'Rinnovo prescrizioni croniche', 30, 20.00, 5, false);
 
 -- Insert sample data (i codici verranno generati automaticamente)
-INSERT INTO appointments (patient_id, doctor_id, service_id, appointment_date, status, notes, code) VALUES
-(1, 1, 1, '2025-06-15 10:00:00', 'in_progress', 'Controllo cardiologico di routine', 'AHUSX001'),
-(2, 2, 5, '2025-06-15 14:30:00', 'in_progress', 'Visita pediatrica per controllo crescita', 'QRWTE002'),
-(3, 5, 18, '2025-06-16 09:15:00', 'scheduled', 'Controllo diabete e terapia', 'MNBVC003'),
-(4, 1, 3, '2025-06-16 11:00:00', 'scheduled', 'Controllo pressione arteriosa', 'ZXCVB004'),
-(5, 3, 9, '2025-06-17 15:30:00', 'scheduled', 'Consulto ortopedico per dolore al ginocchio', 'POIUY005'),
-(1, 5, 17, '2025-06-18 16:00:00', 'scheduled', 'Visita generale di controllo', 'LKJHG006'),
-(2, 4, 13, '2025-06-19 10:30:00', 'scheduled', 'Controllo dermatologico', 'FDSAQ007'),
-(3, 1, 4, '2025-06-20 08:45:00', 'scheduled', 'Follow-up cardiologico', 'WERTYU08');
+INSERT INTO appointments (patient_id, patient_full_name, patient_email, patient_codice_fiscale, patient_phone, doctor_id, service_id, appointment_date, status, notes, code) VALUES
+(1, 'Mario Rossi', 'mario.rossi@email.com', 'RSSMRA85M01H501Z', '+39 333 1234567', 1, 1, '2025-06-15 10:00:00', 'in_progress', 'Controllo cardiologico di routine', 'AHUSX001'),
+(2, 'Anna Bianchi', 'anna.bianchi@email.com', 'BNCNNA90F15H501W', '+39 334 7654321', 2, 5, '2025-06-15 14:30:00', 'in_progress', 'Visita pediatrica per controllo crescita', 'QRWTE002'),
+(3, 'Luigi Verdi', 'luigi.verdi@email.com', 'VRDLGU75C20H501X', '+39 335 9876543', 5, 18, '2025-06-16 09:15:00', 'scheduled', 'Controllo diabete e terapia', 'MNBVC003'),
+(4, 'Elena Neri', 'elena.neri@email.com', 'NRRLNE88D25H501Y', '+39 336 5432109', 1, 3, '2025-06-16 11:00:00', 'scheduled', 'Controllo pressione arteriosa', 'ZXCVB004'),
+(5, 'Marco Gialli', 'marco.gialli@email.com', 'GLLMRC92H10H501Z', '+39 337 8765432', 3, 9, '2025-06-17 15:30:00', 'scheduled', 'Consulto ortopedico per dolore al ginocchio', 'POIUY005'),
+(1, 'Mario Rossi', 'mario.rossi@email.com', 'RSSMRA85M01H501Z', '+39 333 1234567', 5, 17, '2025-06-18 16:00:00', 'scheduled', 'Visita generale di controllo', 'LKJHG006'),
+(2, 'Anna Bianchi', 'anna.bianchi@email.com', 'BNCNNA90F15H501W', '+39 334 7654321', 4, 13, '2025-06-19 10:30:00', 'scheduled', 'Controllo dermatologico', 'FDSAQ007'),
+(3, 'Luigi Verdi', 'luigi.verdi@email.com', 'VRDLGU75C20H501X', '+39 335 9876543', 1, 4, '2025-06-20 08:45:00', 'scheduled', 'Follow-up cardiologico', 'WERTYU08'),
+-- Appuntamenti esterni (senza patient_id)
+(NULL, 'Sofia Ferrari', 'sofia.ferrari@email.com', 'FRRSFR95E15H501A', '+39 338 1122334', 2, 6, '2025-06-21 09:00:00', 'scheduled', 'Controllo crescita bambino', ''),
+(NULL, 'Giovanni Costa', 'giovanni.costa@email.com', NULL, '+33 612345678', 4, 14, '2025-06-22 11:30:00', 'scheduled', 'Mappatura nei - paziente francese', ''),
+(NULL, 'Maria Lombardi', 'maria.lombardi@email.com', 'LMBMRA80A41H501B', '+39 339 9988776', 3, 11, '2025-06-23 14:00:00', 'scheduled', 'Controllo post-operatorio', '');
 
 -- Grant permissions to the gestmed_user
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO gestmed_user;

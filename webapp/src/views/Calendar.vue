@@ -42,11 +42,12 @@
             <div class="time-header">
               Orario
             </div>
-            <div v-for="hour in timeSlots" :key="hour" class="time-slot">
-              {{ hour }}:00
+            <div v-for="timeSlot in timeSlots" :key="timeSlot" class="time-slot">
+              {{ timeSlot }}
             </div>
-          </div>          <!-- Days columns -->
-          <div v-for="day in displayDays" :key="day.date" class="day-column" :class="{ 'weekend-column': day.isWeekend && viewMode === 'week' }">
+          </div> <!-- Days columns -->
+          <div v-for="day in displayDays" :key="day.date" class="day-column"
+            :class="{ 'weekend-column': day.isWeekend && viewMode === 'week' }">
             <div class="day-header">
               <div class="day-name">
                 {{ day.name }}
@@ -56,13 +57,13 @@
               </div>
             </div>
             <div class="day-slots">
-              <div v-for="hour in timeSlots" :key="`${day.date}-${hour}`" class="hour-slot"
-                @click="openAppointmentDialog(day.date, hour)">
-                <!-- Appointments for this hour -->
+              <div v-for="timeSlot in timeSlots" :key="`${day.date}-${timeSlot}`" class="hour-slot"
+                @click="openAppointmentDialog(day.date, timeSlot)">
+                <!-- Appointments for this time slot -->
                 <div class="appointments-container">
-                  <div v-for="(appointment, index) in getAppointmentsForSlot(day.date, hour)" :key="appointment.id"
+                  <div v-for="(appointment, index) in getAppointmentsForSlot(day.date, timeSlot)" :key="appointment.id"
                     class="appointment-card"
-                    :class="[getAppointmentClass(appointment), getAppointmentPosition(index, getAppointmentsForSlot(day.date, hour).length)]"
+                    :class="[getAppointmentClass(appointment), getAppointmentPosition(index, getAppointmentsForSlot(day.date, timeSlot).length)]"
                     @click.stop="viewAppointment(appointment)">
                     <div class="appointment-time">
                       {{ formatTime(appointment.appointment_date) }}
@@ -73,14 +74,14 @@
                     <div class="appointment-service" :title="appointment.service_description">
                       {{ appointment.service_name || 'Prestazione non specificata' }}
                     </div>
-                    <div v-if="getAppointmentsForSlot(day.date, hour).length <= 2" class="appointment-doctor">
+                    <div v-if="getAppointmentsForSlot(day.date, timeSlot).length <= 2" class="appointment-doctor">
                       Dr. {{ appointment.doctor_name || appointment.doctor?.name || 'Dottore sconosciuto' }}
                     </div>
                   </div>
                   <!-- Indicator for more appointments -->
-                  <div v-if="getAppointmentsForSlot(day.date, hour).length > 3" class="more-appointments-indicator"
-                    @click.stop="showMoreAppointments(day.date, hour)">
-                    +{{ getAppointmentsForSlot(day.date, hour).length - 3 }} altri
+                  <div v-if="getAppointmentsForSlot(day.date, timeSlot).length > 3" class="more-appointments-indicator"
+                    @click.stop="showMoreAppointments(day.date, timeSlot)">
+                    +{{ getAppointmentsForSlot(day.date, timeSlot).length - 3 }} altri
                   </div>
                 </div>
               </div>
@@ -92,8 +93,7 @@
       <!-- Appointment Dialog -->
       <Dialog v-model:visible="appointmentDialogVisible" :modal="true"
         :header="dialogMode === 'create' ? 'Nuovo Appuntamento' : dialogMode === 'edit' ? 'Modifica Appuntamento' : 'Dettagli Appuntamento'"
-        :maximizable="false" :closable="true">
-        <AppointmentForm :appointment="selectedAppointment" :mode="dialogMode" :doctors="doctors" :patients="patients"
+        :maximizable="false" :closable="true">        <AppointmentForm :appointment="selectedAppointment" :mode="dialogMode"
           :preselected-date="preselectedDate" :preselected-hour="preselectedHour" @save="handleSaveAppointment"
           @cancel="closeAppointmentDialog" @switch-mode="handleSwitchMode" @delete="handleDeleteAppointment" />
       </Dialog>
@@ -144,7 +144,12 @@ export default defineComponent({
     const preselectedDate = ref(null)
     const preselectedHour = ref(null)
 
-    const timeSlots = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    const timeSlots = [
+      '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
+      '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
+      '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
+      '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'
+    ]
 
     function getStartOfWeek(date) {
       const d = new Date(date)
@@ -216,8 +221,8 @@ export default defineComponent({
         // Error notifications are handled by the store
       }
     }
-
-    const getAppointmentsForSlot = (date, hour) => {
+    
+    const getAppointmentsForSlot = (date, timeSlot) => {
       if (!appointmentsStore.allAppointments || !Array.isArray(appointmentsStore.allAppointments)) {
         return []
       }
@@ -230,10 +235,13 @@ export default defineComponent({
         try {
           const appointmentDate = new Date(appointment.appointment_date)
           const appointmentDateStr = appointmentDate.toISOString().split('T')[0]
-          const appointmentHour = appointmentDate.getHours()
+          const appointmentTime = appointmentDate.toLocaleTimeString('it-IT', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })
 
           // Filtro per data e ora
-          const dateTimeMatch = appointmentDateStr === date && appointmentHour === hour
+          const dateTimeMatch = appointmentDateStr === date && appointmentTime === timeSlot
 
           // Filtro per medico (se selezionato)
           const doctorMatch = !selectedDoctor.value || appointment.doctor_id === selectedDoctor.value
@@ -267,16 +275,16 @@ export default defineComponent({
       }
       return ''
     }
-
-    const showMoreAppointments = (date, hour) => {
-      const appointments = getAppointmentsForSlot(date, hour)
+    
+    const showMoreAppointments = (date, timeSlot) => {
+      const appointments = getAppointmentsForSlot(date, timeSlot)
       // Qui potresti aprire un dialog o popover per mostrare tutti gli appuntamenti
-      console.log(`Showing ${appointments.length} appointments for ${date} at ${hour}:00`, appointments)
+      console.log(`Showing ${appointments.length} appointments for ${date} at ${timeSlot}`, appointments)
       // Per ora, mostreremo un alert semplice, ma potresti implementare un dialog più sofisticato
       /* const appointmentsList = appointments.map(apt =>
         `${formatTime(apt.appointment_date)} - ${apt.patient_name} (Dr. ${apt.doctor_name})`
       ).join('\n')
-      alert(`Appuntamenti per ${date} alle ${hour}:00:\n\n${appointmentsList}`) */
+      alert(`Appuntamenti per ${date} alle ${timeSlot}:\n\n${appointmentsList}`) */
     }
 
     const formatTime = (dateString) => {
@@ -367,11 +375,13 @@ export default defineComponent({
       dialogMode.value = 'create'
       appointmentDialogVisible.value = true
     }
-
-    const openAppointmentDialog = (date, hour) => {
+    
+    const openAppointmentDialog = (date, timeSlot) => {
       selectedAppointment.value = null
       preselectedDate.value = date
-      preselectedHour.value = hour
+      // Converte il timeSlot da stringa HH:MM a ora per compatibilità con AppointmentForm
+      const [hour, minute] = timeSlot.split(':').map(Number)
+      preselectedHour.value = hour + (minute / 60) // Converte in decimale (es: 19.5 per 19:30)
       dialogMode.value = 'create'
       appointmentDialogVisible.value = true
     }
@@ -729,21 +739,21 @@ export default defineComponent({
   left: 2px;
   right: 2px;
   top: 2px;
-  height: 18px;
+  height: 8px;
 }
 
 .appointment-second {
   left: 2px;
   right: 2px;
-  top: 21px;
-  height: 18px;
+  top: 11px;
+  height: 8px;
 }
 
 .appointment-third {
   left: 2px;
   right: 2px;
-  top: 40px;
-  height: 16px;
+  top: 20px;
+  height: 6px;
 }
 
 .appointment-hidden {
@@ -896,7 +906,7 @@ export default defineComponent({
   }
 
   .hour-slot {
-    height: 40px;
+    height: 20px;
   }
 
   .time-header,
@@ -911,22 +921,22 @@ export default defineComponent({
 
   /* Adattamento per appuntamenti multipli su mobile */
   .appointment-first {
-    height: 12px;
+    height: 6px;
     top: 2px;
   }
 
   .appointment-second {
-    height: 12px;
-    top: 15px;
+    height: 6px;
+    top: 9px;
   }
 
   .appointment-third {
-    height: 10px;
-    top: 28px;
+    height: 4px;
+    top: 16px;
   }
 
   .more-appointments-indicator {
-    height: 8px;
+    height: 4px;
     font-size: 0.375rem;
     bottom: 1px;
   }

@@ -161,7 +161,7 @@ router.delete('/services/:id', async (req, res) => {
 // GET /appointments - Get all appointments with services
 router.get('/', async (req, res) => {
   try {
-    const { date, doctor_id, patient_id, service_id } = req.query;
+    const { date, doctor_id, patient_id, service_id, patient_email, patient_codice_fiscale, code } = req.query;
     let query = `
       SELECT a.*, s.name as service_name, s.description as service_description, 
              s.duration_minutes, s.price
@@ -194,6 +194,24 @@ router.get('/', async (req, res) => {
       paramCount++;
       query += ` AND a.service_id = $${paramCount}`;
       params.push(service_id);
+    }
+
+    if (patient_email) {
+      paramCount++;
+      query += ` AND LOWER(a.patient_email) = LOWER($${paramCount})`;
+      params.push(patient_email);
+    }
+
+    if (patient_codice_fiscale) {
+      paramCount++;
+      query += ` AND UPPER(a.patient_codice_fiscale) = UPPER($${paramCount})`;
+      params.push(patient_codice_fiscale);
+    }
+
+    if (code) {
+      paramCount++;
+      query += ` AND UPPER(a.code) = UPPER($${paramCount})`;
+      params.push(code);
     }
 
     query += ' ORDER BY a.appointment_date ASC';
@@ -232,13 +250,38 @@ router.get('/:id', async (req, res) => {
 // POST /appointments - Create a new appointment
 router.post('/', async (req, res) => {
   try {
-    const { patient_id, doctor_id, service_id, appointment_date, notes, status } = req.body;
+    const { 
+      patient_id, 
+      patient_full_name, 
+      patient_email, 
+      patient_codice_fiscale, 
+      patient_phone,
+      doctor_id, 
+      service_id, 
+      appointment_date, 
+      notes, 
+      status 
+    } = req.body;
 
-    console.log('Received appointment creation request:', { patient_id, doctor_id, service_id, appointment_date, notes, status });
+    console.log('Received appointment creation request:', { 
+      patient_id, 
+      patient_full_name, 
+      patient_email, 
+      patient_codice_fiscale, 
+      patient_phone, 
+      doctor_id, 
+      service_id, 
+      appointment_date, 
+      notes, 
+      status 
+    });
 
-    if (!patient_id || !doctor_id || !service_id || !appointment_date) {
+    // Validazione campi obbligatori
+    if (!patient_full_name || !doctor_id || !service_id || !appointment_date) {
       console.log('Validation failed: missing required fields');
-      return res.status(400).json({ error: 'Patient ID, Doctor ID, Service ID and appointment date are required' });
+      return res.status(400).json({ 
+        error: 'Nome completo paziente, Doctor ID, Service ID e data appuntamento sono obbligatori' 
+      });
     }
 
     // Verifica che il servizio esista e appartenga al dottore specificato
@@ -253,8 +296,8 @@ router.post('/', async (req, res) => {
 
     // Il codice viene generato automaticamente dal trigger del database
     const result = await pool.query(
-      'INSERT INTO appointments (patient_id, doctor_id, service_id, appointment_date, notes, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [patient_id, doctor_id, service_id, appointment_date, notes || '', status || 'scheduled']
+      'INSERT INTO appointments (patient_id, patient_full_name, patient_email, patient_codice_fiscale, patient_phone, doctor_id, service_id, appointment_date, notes, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+      [patient_id, patient_full_name, patient_email, patient_codice_fiscale, patient_phone, doctor_id, service_id, appointment_date, notes || '', status || 'scheduled']
     );
 
     console.log('Appointment created successfully:', result.rows[0]);
@@ -272,7 +315,18 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { patient_id, doctor_id, service_id, appointment_date, notes, status } = req.body;
+    const { 
+      patient_id, 
+      patient_full_name, 
+      patient_email, 
+      patient_codice_fiscale, 
+      patient_phone,
+      doctor_id, 
+      service_id, 
+      appointment_date, 
+      notes, 
+      status 
+    } = req.body;
 
     // Verifica che il servizio esista e appartenga al dottore specificato se forniti
     if (service_id && doctor_id) {
@@ -287,8 +341,8 @@ router.put('/:id', async (req, res) => {
     }
 
     const result = await pool.query(
-      'UPDATE appointments SET patient_id = $1, doctor_id = $2, service_id = $3, appointment_date = $4, notes = $5, status = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7 RETURNING *',
-      [patient_id, doctor_id, service_id, appointment_date, notes, status, id]
+      'UPDATE appointments SET patient_id = $1, patient_full_name = $2, patient_email = $3, patient_codice_fiscale = $4, patient_phone = $5, doctor_id = $6, service_id = $7, appointment_date = $8, notes = $9, status = $10, updated_at = CURRENT_TIMESTAMP WHERE id = $11 RETURNING *',
+      [patient_id, patient_full_name, patient_email, patient_codice_fiscale, patient_phone, doctor_id, service_id, appointment_date, notes, status, id]
     );
 
     if (result.rows.length === 0) {

@@ -51,6 +51,20 @@ export const usePatientsStore = defineStore('patients', () => {
   })
 
   // Actions
+  async function ensurePatientsLoaded() {
+    // Se non abbiamo pazienti o i dati sono obsoleti, caricali
+    if (patients.value.length === 0 || isDataStale.value) {
+      try {
+        await fetchPatients({ limit: 100 }) // Carica più pazienti per assicurarci di avere tutti quelli necessari
+        console.log('✅ Patients data ensured and loaded')
+      } catch (error) {
+        console.warn('⚠️ Failed to ensure patients data:', error)
+        throw error
+      }
+    }
+    return patients.value
+  }
+
   async function fetchPatients(params = {}, force = false) {
     // Skip if data is fresh and not forced
     if (!force && !isDataStale.value && patients.value.length > 0) {
@@ -264,6 +278,7 @@ export const usePatientsStore = defineStore('patients', () => {
     filteredPatients,
 
     // Actions
+    ensurePatientsLoaded,
     fetchPatients,
     fetchPatient,
     createPatient,

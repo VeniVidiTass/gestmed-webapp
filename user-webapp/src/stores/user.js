@@ -6,6 +6,7 @@ export const useUserStore = defineStore('user', () => {
     id: '1', // Simulazione utente per demo
     name: 'Mario Rossi',
     email: 'mario.rossi@email.com',
+    codice_fiscale: 'RSSMRA80E15F205X',
     phone: '+39 123 456 7890'
   })
 

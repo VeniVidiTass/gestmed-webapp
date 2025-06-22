@@ -28,6 +28,20 @@
         </div>
 
         <div class="form-field">
+          <label for="codice_fiscale" class="field-label">Codice Fiscale *</label>
+          <InputText
+            id="codice_fiscale"
+            v-model="formData.codice_fiscale"
+            :disabled="mode === 'view'"
+            :class="{ 'p-invalid': errors.codice_fiscale }"
+            placeholder="RSSMRA80E15F205X"
+            style="text-transform: uppercase"
+            maxlength="16"
+          />
+          <small v-if="errors.codice_fiscale" class="p-error">{{ errors.codice_fiscale }}</small>
+        </div>
+
+        <div class="form-field">
           <label for="phone" class="field-label">Telefono</label>
           <InputText
             id="phone"
@@ -136,6 +150,7 @@ export default defineComponent({
     const formData = ref({
       name: '',
       email: '',
+      codice_fiscale: '',
       phone: '',
       date_of_birth: null,
       address: '',
@@ -148,6 +163,7 @@ export default defineComponent({
         formData.value = {
           name: newPatient.name || '',
           email: newPatient.email || '',
+          codice_fiscale: newPatient.codice_fiscale || '',
           phone: newPatient.phone || '',
           date_of_birth: newPatient.date_of_birth ? new Date(newPatient.date_of_birth) : null,
           address: newPatient.address || '',
@@ -158,6 +174,7 @@ export default defineComponent({
         formData.value = {
           name: '',
           email: '',
+          codice_fiscale: '',
           phone: '',
           date_of_birth: null,
           address: '',
@@ -183,6 +200,15 @@ export default defineComponent({
         }
       }
 
+      if (!formData.value.codice_fiscale.trim()) {
+        errors.value.codice_fiscale = 'Il codice fiscale è obbligatorio'
+      } else {
+        const cfRegex = /^[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]$/
+        if (!cfRegex.test(formData.value.codice_fiscale.toUpperCase())) {
+          errors.value.codice_fiscale = 'Formato codice fiscale non valido'
+        }
+      }
+
       return Object.keys(errors.value).length === 0
     }
 
@@ -196,6 +222,7 @@ export default defineComponent({
 
         const submitData = {
           ...formData.value,
+          codice_fiscale: formData.value.codice_fiscale.toUpperCase(),
           date_of_birth: formData.value.date_of_birth ?
             formData.value.date_of_birth.toISOString().split('T')[0] : null
         }

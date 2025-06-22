@@ -7,45 +7,64 @@ export async function preloadAppData() {
     const patientsStore = usePatientsStore()
     const servicesStore = useServicesStore()
 
-    // Preload critical data in parallel with timeout
+    console.log('🔄 Starting application data preload...')
+
+    // Preload critical data in parallel with improved error handling
     const preloadPromises = [
-      // Doctors list (frequently accessed)
-      doctorsStore.fetchDoctors({ limit: 20 }).catch(error => {
-        console.warn('Failed to preload doctors:', error)
+      // Doctors list (frequently accessed) - usando ensureDoctorsLoaded
+      doctorsStore.ensureDoctorsLoaded().then(() => {
+        console.log('✅ Doctors preloaded successfully')
+      }).catch(error => {
+        console.warn('⚠️ Failed to preload doctors:', error)
+        return null // Non fallire completamente
       }),
 
-      // Patients data (for dashboard statistics)
-      patientsStore.fetchPatients({ limit: 50 }).catch(error => {
-        console.warn('Failed to preload patients:', error)
+      // Patients data (for dashboard statistics) - usando ensurePatientsLoaded
+      patientsStore.ensurePatientsLoaded().then(() => {
+        console.log('✅ Patients preloaded successfully')
+      }).catch(error => {
+        console.warn('⚠️ Failed to preload patients:', error)
+        return null
       }),
-      
+
+      // Services data - usando ensureServicesLoaded
+      servicesStore.ensureServicesLoaded().then(() => {
+        console.log('✅ Services preloaded successfully')
+      }).catch(error => {
+        console.warn('⚠️ Failed to preload services:', error)
+        return null
+      }),
+
       // Today's appointments
       appointmentsStore.fetchAppointments({
         limit: 20,
         dateFrom: new Date().toISOString().split('T')[0]
+      }).then(() => {
+        console.log('✅ Today\'s appointments preloaded successfully')
       }).catch(error => {
-        console.warn('Failed to preload appointments:', error)
-      }),
-
-      // Services data
-      servicesStore.fetchServices().catch(error => {
-        console.warn('Failed to preload services:', error)
+        console.warn('⚠️ Failed to preload appointments:', error)
+        return null
       })
     ]
 
-    // Wait for all preload operations with a timeout
-    await Promise.race([
+    // Wait for all preload operations with a longer timeout
+    const results = await Promise.race([
       Promise.allSettled(preloadPromises),
       new Promise((_, reject) =>
-        globalThis.setTimeout(() => reject(new Error('Preload timeout')), 5000)
+        globalThis.setTimeout(() => reject(new Error('Preload timeout')), 8000)
       )
     ])
 
-    console.log('✅ Application data preloaded successfully')
+    // Verifica quante operazioni sono riuscite
+    const successful = results.filter(result => result.status === 'fulfilled').length
+    const total = preloadPromises.length
 
-    return true
+    console.log(`✅ Application data preload completed: ${successful}/${total} successful`)
+
+    // Restituisce true se almeno il 75% delle operazioni è riuscito
+    return successful >= Math.ceil(total * 0.75)
   } catch (error) {
-    console.warn('⚠️ Some preload operations failed or timed out:', error)
+    console.warn('⚠️ Preload operations failed or timed out:', error)
     return false
   }
 }
@@ -106,4 +125,59 @@ export function setupCacheWarming() {
 
   // Cleanup on page unload
   window.addEventListener('beforeunload', stopWarming)
+}
+
+// Funzione per garantire che tutti i dati necessari siano caricati
+export async function ensureAllDataLoaded() {
+  try {
+    const doctorsStore = useDoctorsStore()
+    const patientsStore = usePatientsStore()
+    const servicesStore = useServicesStore()
+
+    console.log('🔄 Ensuring all critical data is loaded...')
+
+    // Carica tutti i dati necessari in parallelo
+    await Promise.allSettled([
+      doctorsStore.ensureDoctorsLoaded(),
+      patientsStore.ensurePatientsLoaded(),
+      servicesStore.ensureServicesLoaded()
+    ])
+
+    console.log('✅ All critical data ensured and available')
+    return true
+  } catch (error) {
+    console.warn('⚠️ Failed to ensure all data loaded:', error)
+    return false
+  }
+}
+
+// Funzione per il preload su richiesta specifico per i form
+export async function ensureFormDataLoaded() {
+  try {
+    const doctorsStore = useDoctorsStore()
+    const patientsStore = usePatientsStore()
+    const servicesStore = useServicesStore()
+
+    console.log('🔄 Ensuring form data is loaded...')
+
+    // Carica dati necessari per i form con priorità
+    const results = await Promise.allSettled([
+      doctorsStore.ensureDoctorsLoaded(),
+      servicesStore.ensureServicesLoaded(),
+      patientsStore.ensurePatientsLoaded()
+    ])
+
+    const successful = results.filter(result => result.status === 'fulfilled').length
+
+    if (successful >= 2) { // Almeno dottori e servizi devono essere caricati
+      console.log('✅ Form data ensured and available')
+      return true
+    } else {
+      console.warn('⚠️ Not enough form data could be loaded')
+      return false
+    }
+  } catch (error) {
+    console.warn('⚠️ Failed to ensure form data loaded:', error)
+    return false
+  }
 }

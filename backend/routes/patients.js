@@ -8,9 +8,9 @@ router.get('/', async (req, res) => {
     const { search } = req.query;
     let query = 'SELECT * FROM patients';
     let params = [];
-
+    
     if (search) {
-      query += ' WHERE name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1';
+      query += ' WHERE name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1 OR codice_fiscale ILIKE $1';
       params.push(`%${search}%`);
     }
 
@@ -44,11 +44,11 @@ router.get('/:id', async (req, res) => {
 // POST /patients - Create a new patient
 router.post('/', async (req, res) => {
   try {
-    const { name, email, phone, date_of_birth, address, medical_history } = req.body;
+    const { name, email, codice_fiscale, phone, date_of_birth, address, medical_history } = req.body;
 
     const result = await pool.query(
-      'INSERT INTO patients (name, email, phone, date_of_birth, address, medical_history) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [name, email, phone, date_of_birth, address, medical_history || '']
+      'INSERT INTO patients (name, email, codice_fiscale, phone, date_of_birth, address, medical_history) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [name, email, codice_fiscale, phone, date_of_birth, address, medical_history || '']
     );
 
     //TODO add sending email notification to patient
@@ -64,11 +64,11 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, date_of_birth, address, medical_history } = req.body;
+    const { name, email, codice_fiscale, phone, date_of_birth, address, medical_history } = req.body;
 
     const result = await pool.query(
-      'UPDATE patients SET name = $1, email = $2, phone = $3, date_of_birth = $4, address = $5, medical_history = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7 RETURNING *',
-      [name, email, phone, date_of_birth, address, medical_history, id]
+      'UPDATE patients SET name = $1, email = $2, codice_fiscale = $3, phone = $4, date_of_birth = $5, address = $6, medical_history = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8 RETURNING *',
+      [name, email, codice_fiscale, phone, date_of_birth, address, medical_history, id]
     );
 
     if (result.rows.length === 0) {

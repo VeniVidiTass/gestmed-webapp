@@ -73,6 +73,20 @@ export const useDoctorsStore = defineStore('doctors', () => {
   })
 
   // Actions
+  async function ensureDoctorsLoaded() {
+    // Se non abbiamo dottori o i dati sono obsoleti, caricali
+    if (doctors.value.length === 0 || isDataStale.value) {
+      try {
+        await fetchDoctors({ limit: 50 }) // Carica più dottori per assicurarci di avere tutti quelli necessari
+        console.log('✅ Doctors data ensured and loaded')
+      } catch (error) {
+        console.warn('⚠️ Failed to ensure doctors data:', error)
+        throw error
+      }
+    }
+    return doctors.value
+  }
+
   async function fetchDoctors(params = {}, force = false) {
     // Skip if data is fresh and not forced
     if (!force && !isDataStale.value && doctors.value.length > 0) {
@@ -304,6 +318,7 @@ export const useDoctorsStore = defineStore('doctors', () => {
     filteredDoctors,
 
     // Actions
+    ensureDoctorsLoaded,
     fetchDoctors,
     fetchDoctor,
     createDoctor,

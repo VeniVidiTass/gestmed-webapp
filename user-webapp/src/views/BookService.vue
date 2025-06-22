@@ -517,19 +517,23 @@ const submitBooking = async () => {
     })
     return
   }
-
   submitting.value = true
 
   try {
+    // Combina data e ora
+    const appointmentDateTime = new Date(bookingForm.value.appointmentDate)
+    const [hours, minutes] = bookingForm.value.appointmentTime.split(':').map(Number)
+    appointmentDateTime.setHours(hours, minutes, 0, 0)
+
     const bookingData = {
       service_id: service.value.id,
       doctor_id: serviceDoctor.value.id,
-      patient_id: userStore.user.id,
-      patient_name: userStore.user.name,
-      patient_email: userStore.user.email,
-      patient_phone: userStore.user.phone,
-      appointment_date: bookingForm.value.appointmentDate,
-      appointment_time: bookingForm.value.appointmentTime,
+      patient_id: userStore.user?.id || null,
+      patient_full_name: userStore.user?.name || '',
+      patient_email: userStore.user?.email || '',
+      patient_codice_fiscale: userStore.user?.codice_fiscale || null,
+      patient_phone: userStore.user?.phone || null,
+      appointment_date: appointmentDateTime.toISOString(),
       notes: bookingForm.value.notes,
       status: 'scheduled'
     }
