@@ -20,7 +20,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO gestmed_user
 -- Create appointment logs table
 CREATE TABLE IF NOT EXISTS alive_logs (
     id SERIAL PRIMARY KEY,
-    appointment_id INTEGER NOT NULL,
+    appointment_id CHAR(24) NOT NULL,
     code VARCHAR(255) NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
