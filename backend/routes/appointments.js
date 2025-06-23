@@ -1,468 +1,529 @@
-const express = require('express');
-const router = express.Router();
-const pool = require('../config/database');
+const express       = require('express');
+const { ObjectId }  = require('mongodb');
+const { connect }   = require('../config/mongo');
+const router        = express.Router();
 
-// GET /appointments/services - Get all services
-router.get('/services', async (req, res) => {
-  try {
-    const { doctor_id, is_active, is_external, sortBy, sortOrder } = req.query;
-    
-    let query = 'SELECT * FROM services WHERE 1=1';
-    let params = [];
-    let paramCount = 0;
+/**
+ * Wraps async route handlers to forward errors to Express error middleware.
+ * @param {Function} fn async route handler
+ */
+const asyncHandler = fn => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch(next);
 
-    if (doctor_id) {
-      paramCount++;
-      query += ` AND doctor_id = $${paramCount}`;
-      params.push(doctor_id);
-    }
+// —————————————————————————————————————————
+// ———————— Shared Utilities ————————
+// —————————————————————————————————————————
 
-    if (is_active !== undefined) {
-      paramCount++;
-      query += ` AND is_active = $${paramCount}`;
-      params.push(is_active === 'true' || is_active === true);
-    }
-
-    if (is_external !== undefined) {
-      paramCount++;
-      query += ` AND is_external_bookable = $${paramCount}`;
-      params.push(is_external === 'true' || is_external === true);
-    }
-
-    // Gestione dell'ordinamento
-    const validSortColumns = ['name', 'doctor_id', 'price', 'duration_minutes', 'created_at'];
-    const validSortOrders = ['ASC', 'DESC'];
-    
-    let orderByClause = ' ORDER BY doctor_id, name';
-    if (sortBy && validSortColumns.includes(sortBy)) {
-      const order = sortOrder && validSortOrders.includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'ASC';
-      orderByClause = ` ORDER BY ${sortBy} ${order}`;
-    }
-    
-    query += orderByClause;
-
-    const result = await pool.query(query, params);
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Error fetching services:', error);
-    res.status(500).json({ error: 'Internal server error' });
+/**
+ * Convert MongoDB ObjectId to string in a single document.
+ * @param {Object} doc
+ * @returns {Object} with `_id` as string
+ */
+function stringifyId(doc) {
+  if (doc && doc._id) {
+    doc._id = doc._id.toString();
   }
-});
+  return doc;
+}
 
-// GET /appointments/services/doctor/:doctor_id - Get services by doctor
-router.get('/services/doctor/:doctor_id', async (req, res) => {
-  try {
-    const { doctor_id } = req.params;
-    const { is_active } = req.query;
+/**
+ * Convert ObjectId to string in an array of documents.
+ * @param {Array<Object>} docs
+ */
+function stringifyIds(docs) {
+  return docs.map(d => stringifyId({ ...d }));
+}
 
-    let query = 'SELECT * FROM services WHERE doctor_id = $1';
-    let params = [doctor_id];
-
-    if (is_active !== undefined) {
-      query += ' AND is_active = $2';
-      params.push(is_active === 'true');
-    }
-
-    query += ' ORDER BY name';
-
-    const result = await pool.query(query, params);
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Error fetching services by doctor:', error);
-    res.status(500).json({ error: 'Internal server error' });
+/**
+ * Alias `_id` to `id` and remove the original `_id` field.
+ * @param {Object} doc
+ */
+function aliasId(doc) {
+  if (doc && doc._id) {
+    doc.id = doc._id.toString();
+    delete doc._id;
   }
-});
+  return doc;
+}
 
-// GET /appointments/services/:id - Get a specific service
-router.get('/services/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query('SELECT * FROM services WHERE id = $1', [id]);
+/**
+ * Alias `_id` to `id` for each document in array.
+ * @param {Array<Object>} docs
+ */
+function aliasIds(docs) {
+  return docs.map(d => aliasId({ ...d }));
+}
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Service not found' });
-    }
+/**
+ * Retrieve a MongoDB collection by name.
+ * @param {string} name
+ * @returns {Collection}
+ */
+async function getCollection(name) {
+  const db = await connect();
+  return db.collection(name);
+}
 
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Error fetching service:', error);
-    res.status(500).json({ error: 'Internal server error' });
+// —————————————————————————————————————————
+// ———————— Service Endpoints ————————
+// —————————————————————————————————————————
+
+/**
+ * GET /appointments/services
+ * List all services, with optional filters and sorting.
+ */
+router.get('/services', asyncHandler(async (req, res) => {
+  const { doctor_id, is_active, is_external, sortBy, sortOrder } = req.query;
+
+  // Build filter object
+  const filter = {};
+  if (doctor_id) filter.doctor_id = parseInt(doctor_id, 10);
+  if (is_active !== undefined)
+    filter.is_active = is_active === 'true';
+  if (is_external !== undefined)
+    filter.is_external_bookable = is_external === 'true';
+
+  // Determine sort options
+  const validSort = ['name', 'doctor_id', 'price', 'duration_minutes', 'created_at'];
+  const sortField = validSort.includes(sortBy) ? sortBy : 'doctor_id';
+  const order     = (sortOrder || 'ASC').toUpperCase() === 'DESC' ? -1 : 1;
+
+  const services = await (await getCollection('services'))
+    .find(filter)
+    .sort({ [sortField]: order, name: 1 })
+    .toArray();
+
+  res.json(aliasIds(services));
+}));
+
+/**
+ * GET /appointments/services/doctor/:doctor_id
+ * List services for a specific doctor.
+ */
+router.get('/services/doctor/:doctor_id', asyncHandler(async (req, res) => {
+  const doctorId = parseInt(req.params.doctor_id, 10);
+  const filter   = { doctor_id: doctorId };
+
+  if (req.query.is_active !== undefined)
+    filter.is_active = req.query.is_active === 'true';
+
+  const services = await (await getCollection('services'))
+    .find(filter)
+    .sort({ name: 1 })
+    .toArray();
+
+  res.json(aliasIds(services));
+}));
+
+/**
+ * GET /appointments/services/:id
+ * Retrieve a single service by its ObjectId.
+ */
+router.get('/services/:id', asyncHandler(async (req, res) => {
+  const _id = new ObjectId(req.params.id);
+  const service = await (await getCollection('services')).findOne({ _id });
+  if (!service) return res.status(404).json({ error: 'Service not found' });
+  res.json(aliasId(service));
+}));
+
+/**
+ * POST /appointments/services
+ * Create a new service. Requires `name` and `doctor_id`.
+ */
+router.post('/services', asyncHandler(async (req, res) => {
+  const {
+    name,
+    doctor_id,
+    description = '',
+    duration_minutes = 30,
+    price = 0,
+    is_external_bookable = false
+  } = req.body;
+
+  // Validate required fields
+  if (!name || doctor_id == null) {
+    return res.status(400).json({ error: 'Name and doctor_id are required' });
   }
-});
 
-// POST /appointments/services - Create a new service
-router.post('/services', async (req, res) => {
-  try {
-    const { name, description, duration_minutes, price, doctor_id, is_external_bookable } = req.body;
+  const now = new Date();
+  const doc = {
+    name,
+    doctor_id,
+    description,
+    duration_minutes,
+    price,
+    is_active: true,
+    is_external_bookable,
+    created_at: now,
+    updated_at: now
+  };
 
-    if (!name || !doctor_id) {
-      return res.status(400).json({ error: 'Name and Doctor ID are required' });
+  const { insertedId } = await (await getCollection('services')).insertOne(doc);
+  doc.id = insertedId.toString();
+  res.status(201).json(doc);
+}));
+
+/**
+ * PUT /appointments/services/:id
+ * Update fields on an existing service.
+ */
+router.put('/services/:id', asyncHandler(async (req, res) => {
+  const {
+    name,
+    description,
+    duration_minutes,
+    price,
+    is_active,
+    is_external_bookable
+  } = req.body;
+
+  const updates = {
+    $set: {
+      name,
+      description,
+      duration_minutes,
+      price,
+      is_active,
+      is_external_bookable,
+      updated_at: new Date()
     }
+  };
 
-    const result = await pool.query(
-      'INSERT INTO services (name, description, duration_minutes, price, doctor_id, is_external_bookable) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [name, description || '', duration_minutes || 30, price || 0.00, doctor_id, is_external_bookable || false]
-    );
+  const _id = new ObjectId(req.params.id);
+  const result = await (await getCollection('services'))
+    .findOneAndUpdate({ _id }, updates, { returnDocument: 'after' });
 
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error('Error creating service:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (!result.value) {
+    return res.status(404).json({ error: 'Service not found' });
   }
-});
 
-// PUT /appointments/services/:id - Update a service
-router.put('/services/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, description, duration_minutes, price, is_active, is_external_bookable } = req.body;
+  res.json(aliasId(result.value));
+}));
 
-    const result = await pool.query(
-      'UPDATE services SET name = $1, description = $2, duration_minutes = $3, price = $4, is_active = $5, is_external_bookable = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7 RETURNING *',
-      [name, description, duration_minutes, price, is_active, is_external_bookable, id]
-    );
+/**
+ * DELETE /appointments/services/:id
+ * Only allow deletion if the service is not referenced by any appointment.
+ */
+router.delete('/services/:id', asyncHandler(async (req, res) => {
+  const _id = new ObjectId(req.params.id);
+  const apptInUse = await (await getCollection('appointments'))
+    .findOne({ service_id: _id });
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Service not found' });
-    }
-
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Error updating service:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (apptInUse) {
+    return res.status(400).json({ error: 'Cannot delete: service in use' });
   }
-});
 
-// DELETE /appointments/services/:id - Delete a service
-router.delete('/services/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
+  const result = await (await getCollection('services'))
+    .findOneAndDelete({ _id });
 
-    // Check if service is used in appointments
-    const appointmentCheck = await pool.query('SELECT COUNT(*) FROM appointments WHERE service_id = $1', [id]);
-
-    if (parseInt(appointmentCheck.rows[0].count) > 0) {
-      return res.status(400).json({ error: 'Cannot delete service: it is used in existing appointments' });
-    }
-
-    const result = await pool.query('DELETE FROM services WHERE id = $1 RETURNING *', [id]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Service not found' });
-    }
-
-    res.json({ message: 'Service deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting service:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (!result.value) {
+    return res.status(404).json({ error: 'Service not found' });
   }
-});
 
-// GET /appointments - Get all appointments with services
-router.get('/', async (req, res) => {
-  try {
-    const { date, doctor_id, patient_id, service_id, patient_email, patient_codice_fiscale, code } = req.query;
-    let query = `
-      SELECT a.*, s.name as service_name, s.description as service_description, 
-             s.duration_minutes, s.price
-      FROM appointments a
-      JOIN services s ON a.service_id = s.id
-      WHERE 1=1
-    `;
-    let params = [];
-    let paramCount = 0;
+  res.json({ message: 'Service deleted successfully' });
+}));
 
-    if (date) {
-      paramCount++;
-      query += ` AND DATE(a.appointment_date) = $${paramCount}`;
-      params.push(date);
-    }
+// —————————————————————————————————————————
+// ———————— Appointment Helpers ————————
+// —————————————————————————————————————————
 
-    if (doctor_id) {
-      paramCount++;
-      query += ` AND a.doctor_id = $${paramCount}`;
-      params.push(doctor_id);
-    }
-
-    if (patient_id) {
-      paramCount++;
-      query += ` AND a.patient_id = $${paramCount}`;
-      params.push(patient_id);
-    }
-
-    if (service_id) {
-      paramCount++;
-      query += ` AND a.service_id = $${paramCount}`;
-      params.push(service_id);
-    }
-
-    if (patient_email) {
-      paramCount++;
-      query += ` AND LOWER(a.patient_email) = LOWER($${paramCount})`;
-      params.push(patient_email);
-    }
-
-    if (patient_codice_fiscale) {
-      paramCount++;
-      query += ` AND UPPER(a.patient_codice_fiscale) = UPPER($${paramCount})`;
-      params.push(patient_codice_fiscale);
-    }
-
-    if (code) {
-      paramCount++;
-      query += ` AND UPPER(a.code) = UPPER($${paramCount})`;
-      params.push(code);
-    }
-
-    query += ' ORDER BY a.appointment_date ASC';
-
-    const result = await pool.query(query, params);
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Error fetching appointments:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// GET /appointments/:id - Get a specific appointment with service details
-router.get('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query(`
-      SELECT a.*, s.name as service_name, s.description as service_description, 
-             s.duration_minutes, s.price
-      FROM appointments a
-      JOIN services s ON a.service_id = s.id
-      WHERE a.id = $1
-    `, [id]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Appointment not found' });
-    }
-
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Error fetching appointment:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// POST /appointments - Create a new appointment
-router.post('/', async (req, res) => {
-  try {
-    const { 
-      patient_id, 
-      patient_full_name, 
-      patient_email, 
-      patient_codice_fiscale, 
-      patient_phone,
-      doctor_id, 
-      service_id, 
-      appointment_date, 
-      notes, 
-      status 
-    } = req.body;
-
-    console.log('Received appointment creation request:', { 
-      patient_id, 
-      patient_full_name, 
-      patient_email, 
-      patient_codice_fiscale, 
-      patient_phone, 
-      doctor_id, 
-      service_id, 
-      appointment_date, 
-      notes, 
-      status 
-    });
-
-    // Validazione campi obbligatori
-    if (!patient_full_name || !doctor_id || !service_id || !appointment_date) {
-      console.log('Validation failed: missing required fields');
-      return res.status(400).json({ 
-        error: 'Nome completo paziente, Doctor ID, Service ID e data appuntamento sono obbligatori' 
-      });
-    }
-
-    // Verifica che il servizio esista e appartenga al dottore specificato
-    const serviceCheck = await pool.query(
-      'SELECT id FROM services WHERE id = $1 AND doctor_id = $2 AND is_active = true',
-      [service_id, doctor_id]
-    );
-
-    if (serviceCheck.rows.length === 0) {
-      return res.status(400).json({ error: 'Service not found or not available for this doctor' });
-    }
-
-    // Il codice viene generato automaticamente dal trigger del database
-    const result = await pool.query(
-      'INSERT INTO appointments (patient_id, patient_full_name, patient_email, patient_codice_fiscale, patient_phone, doctor_id, service_id, appointment_date, notes, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
-      [patient_id, patient_full_name, patient_email, patient_codice_fiscale, patient_phone, doctor_id, service_id, appointment_date, notes || '', status || 'scheduled']
-    );
-
-    console.log('Appointment created successfully:', result.rows[0]);
-
-    //TODO aggiungere la logica per inviare email e sms di conferma
-
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error('Error creating appointment:', error);
-    res.status(500).json({ error: 'Internal server error', details: error.message });
-  }
-});
-
-// PUT /appointments/:id - Update an appointment
-router.put('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { 
-      patient_id, 
-      patient_full_name, 
-      patient_email, 
-      patient_codice_fiscale, 
-      patient_phone,
-      doctor_id, 
-      service_id, 
-      appointment_date, 
-      notes, 
-      status 
-    } = req.body;
-
-    // Verifica che il servizio esista e appartenga al dottore specificato se forniti
-    if (service_id && doctor_id) {
-      const serviceCheck = await pool.query(
-        'SELECT id FROM services WHERE id = $1 AND doctor_id = $2 AND is_active = true',
-        [service_id, doctor_id]
-      );
-
-      if (serviceCheck.rows.length === 0) {
-        return res.status(400).json({ error: 'Service not found or not available for this doctor' });
+/**
+ * Fetch appointments joined with their service metadata.
+ * @param {Object} filter MongoDB match filter
+ * @param {Object} options e.g. { sort: { appointment_date: 1 } }
+ */
+async function fetchAppointmentsWithService(filter, options = {}) {
+  const pipeline = [
+    { $match: filter },
+    {
+      $lookup: {
+        from: 'services',
+        localField: 'service_id',
+        foreignField: '_id',
+        as: 'service'
       }
-    }
+    },
+    { $unwind: '$service' },
+    {
+      $project: {
+        _id: 1,
+        patient_id: 1,
+        patient_full_name: 1,
+        patient_email: 1,
+        patient_codice_fiscale: 1,
+        patient_phone: 1,
+        doctor_id: 1,
+        service_id: 1,
+        code: 1,
+        appointment_date: 1,
+        status: 1,
+        notes: 1,
+        created_at: 1,
+        updated_at: 1,
+        // service metadata:
+        service_name: '$service.name',
+        service_description: '$service.description',
+        duration_minutes: '$service.duration_minutes',
+        price: '$service.price'
+      }
+    },
+    { $sort: options.sort || { appointment_date: 1 } }
+  ];
 
-    const result = await pool.query(
-      'UPDATE appointments SET patient_id = $1, patient_full_name = $2, patient_email = $3, patient_codice_fiscale = $4, patient_phone = $5, doctor_id = $6, service_id = $7, appointment_date = $8, notes = $9, status = $10, updated_at = CURRENT_TIMESTAMP WHERE id = $11 RETURNING *',
-      [patient_id, patient_full_name, patient_email, patient_codice_fiscale, patient_phone, doctor_id, service_id, appointment_date, notes, status, id]
+  const docs = await (await getCollection('appointments'))
+    .aggregate(pipeline)
+    .toArray();
+
+  return aliasIds(docs);
+}
+
+// —————————————————————————————————————————
+// ———————— Appointment Endpoints ————————
+// —————————————————————————————————————————
+
+/**
+ * GET /appointments
+ * List appointments with optional filtering by date, doctor, patient, etc.
+ */
+router.get('/', asyncHandler(async (req, res) => {
+  const { date, doctor_id, patient_id, service_id, patient_email, patient_codice_fiscale, code } = req.query;
+  const filter = {};
+
+  // Date filter: full-day range
+  if (date) {
+    const d = new Date(date);
+    filter.appointment_date = {
+      $gte: new Date(d.setHours(0,0,0)),
+      $lt:  new Date(d.setHours(23,59,59))
+    };
+  }
+  if (doctor_id)    filter.doctor_id    = parseInt(doctor_id, 10);
+  if (patient_id)   filter.patient_id   = parseInt(patient_id, 10);
+  if (service_id)   filter.service_id   = new ObjectId(service_id);
+  if (patient_email)
+    filter.patient_email = { $regex: `^${patient_email}$`, $options: 'i' };
+  if (patient_codice_fiscale)
+    filter.patient_codice_fiscale = { $regex: `^${patient_codice_fiscale}$`, $options: 'i' };
+  if (code)
+    filter.code = { $regex: `^${code}$`, $options: 'i' };
+
+  console.log('GET /appointments - Using filter criteria:', filter);
+
+  // Retrieve all appointments before filtering for debugging purposes
+  const allAppointments = await (await getCollection('appointments')).find({}).toArray();
+  console.log(`GET /appointments - Retrieved ${allAppointments.length} appointments BEFORE filtering.`);
+  console.log(JSON.stringify(allAppointments, null, 2));
+
+  // Retrieve filtered appointments with service metadata
+  const appointments = await fetchAppointmentsWithService(filter);
+  console.log(`GET /appointments - Retrieved ${appointments.length} appointments AFTER applying filter.`);
+  console.log(JSON.stringify(appointments, null, 2));
+
+  res.json(appointments);
+}));
+
+/**
+ * GET /appointments/:id
+ * Retrieve a single appointment by its ObjectId.
+ */
+router.get('/:id', asyncHandler(async (req, res) => {
+  const filter = { _id: new ObjectId(req.params.id) };
+  const results = await fetchAppointmentsWithService(filter);
+  if (!results.length) {
+    return res.status(404).json({ error: 'Appointment not found' });
+  }
+  res.json(results[0]);
+}));
+
+/**
+ * POST /appointments
+ * Create a new appointment. Validates doctor/service consistency.
+ */
+router.post('/', asyncHandler(async (req, res) => {
+  const {
+    patient_full_name,
+    doctor_id,
+    service_id,
+    appointment_date,
+    patient_id:rawPatientId = null,
+    patient_email = '',
+    patient_codice_fiscale = '',
+    patient_phone = '',
+    notes = '',
+    status = 'scheduled'
+  } = req.body;
+
+  const patient_id = rawPatientId !== null ? parseInt(rawPatientId, 10) : null;
+
+  // Required fields check
+  if (!patient_full_name || !doctor_id || !service_id || !appointment_date) {
+    return res.status(400)
+      .json({ error: 'patient_full_name, doctor_id, service_id and appointment_date are required' });
+  }
+
+  // Ensure service exists and is active for that doctor
+  const svc = await (await getCollection('services')).findOne({
+    _id: new ObjectId(service_id),
+    doctor_id,
+    is_active: true
+  });
+  if (!svc) {
+    return res.status(400).json({ error: 'Service not available for this doctor' });
+  }
+
+  // Generate unique code
+  const code = `APT-${Date.now().toString().slice(-6)}`;
+  const now  = new Date();
+
+  const doc = {
+    patient_id,
+    patient_full_name,
+    patient_email,
+    patient_codice_fiscale,
+    patient_phone,
+    doctor_id,
+    service_id: svc._id,
+    code,
+    appointment_date: new Date(appointment_date),
+    notes,
+    status,
+    created_at: now,
+    updated_at: now
+  };
+
+  const { insertedId } = await (await getCollection('appointments')).insertOne(doc);
+  doc.id = insertedId.toString();
+
+  // Return with service metadata
+  const saved = await fetchAppointmentsWithService({ _id: insertedId });
+  res.status(201).json(saved[0]);
+}));
+
+/**
+ * PUT /appointments/:id
+ * Update an existing appointment. Only whitelist allowed fields.
+ */
+router.put('/:id', asyncHandler(async (req, res) => {
+  const allowedFields = [
+    'patient_id','patient_full_name','patient_email',
+    'patient_codice_fiscale','patient_phone',
+    'doctor_id','notes','status'
+  ];
+  const updateset = {};
+
+  // Whitelist
+  for (const field of allowedFields) {
+    if (req.body[field] !== undefined) {
+      updateset[field] = req.body[field];
+    }
+  }
+  if (req.body.service_id) {
+    updateset.service_id = new ObjectId(req.body.service_id);
+  }
+  if (req.body.appointment_date) {
+    updateset.appointment_date = new Date(req.body.appointment_date);
+  }
+  updateset.updated_at = new Date();
+
+  const result = await (await getCollection('appointments'))
+    .findOneAndUpdate(
+      { _id: new ObjectId(req.params.id) },
+      { $set: updateset },
+      { returnDocument: 'after' }
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Appointment not found' });
-    }
-
-    //TODO aggiungere la logica per inviare email e sms di conferma aggiornamento
-
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Error updating appointment:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (!result.value) {
+    return res.status(404).json({ error: 'Appointment not found' });
   }
-});
 
-// DELETE /appointments/:id - Delete an appointment
-router.delete('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query('DELETE FROM appointments WHERE id = $1 RETURNING *', [id]);
+  const updated = await fetchAppointmentsWithService({ _id: result.value._id });
+  res.json(updated[0]);
+}));
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Appointment not found' });
-    }
+/**
+ * PUT /appointments/:id/status
+ * Change only the status of an appointment. Enforces allowed statuses.
+ */
+router.put('/:id/status', asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  const allowed = ['scheduled', 'in_progress', 'completed', 'cancelled'];
 
-    //TODO aggiungere la logica per inviare email e sms di conferma cancellazione
-
-    res.json({ message: 'Appointment deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting appointment:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (!status) {
+    return res.status(400).json({ error: 'Status is required' });
   }
-});
-
-// PUT /appointments/:id/status - Update appointment status
-router.put('/:id/status', async (req, res) => {
-  try {
-    const appointmentId = req.params.id;
-    const { status } = req.body;
-
-    if (!status) {
-      return res.status(400).json({ error: 'Status is required' });
-    }
-
-    const allowedStatuses = ['scheduled', 'in_progress', 'completed', 'cancelled'];
-    if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
-    }
-
-    const query = `
-      UPDATE appointments 
-      SET status = $1, updated_at = CURRENT_TIMESTAMP 
-      WHERE id = $2 
-      RETURNING *
-    `;
-
-    const result = await pool.query(query, [status, appointmentId]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Appointment not found' });
-    }
-
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Error updating appointment status:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (!allowed.includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' });
   }
-});
 
-// GET /appointments/doctor/:doctor_id/busy-slots - Get busy time slots for a doctor
-router.get('/doctor/:doctor_id/busy-slots', async (req, res) => {
-  try {
-    const { doctor_id } = req.params;
-    const { date, start_date, end_date } = req.query; 
-    let query = `
-      SELECT 
-        a.appointment_date,
-        a.appointment_date + INTERVAL '1 minute' * 30 AS end_time
-      FROM appointments a
-      WHERE a.doctor_id = $1 
-        AND a.status IN ('scheduled', 'in_progress')
-    `;
+  const result = await (await getCollection('appointments'))
+    .findOneAndUpdate(
+      { _id: new ObjectId(req.params.id) },
+      { $set: { status, updated_at: new Date() } },
+      { returnDocument: 'after' }
+    );
 
-    let params = [doctor_id];
-    let paramCount = 1;
-
-    // Filtro per data specifica
-    if (date) {
-      paramCount++;
-      query += ` AND DATE(a.appointment_date) = $${paramCount}`;
-      params.push(date);
-    }
-    // Filtro per range di date
-    else if (start_date && end_date) {
-      paramCount++;
-      query += ` AND DATE(a.appointment_date) >= $${paramCount}`;
-      params.push(start_date);
-
-      paramCount++;
-      query += ` AND DATE(a.appointment_date) <= $${paramCount}`;
-      params.push(end_date);
-    }
-    // Se non specificato, mostra solo gli appuntamenti futuri
-    else {
-      query += ` AND a.appointment_date >= CURRENT_TIMESTAMP`;
-    }
-
-    query += ' ORDER BY a.appointment_date ASC';
-
-    const result = await pool.query(query, params);    // Formatta i risultati per renderli più utili
-    const busySlots = result.rows.map(row => ({
-      start_time: row.appointment_date,
-      end_time: row.end_time
-    }));
-
-    res.json(busySlots);
-  } catch (error) {
-    console.error('Error fetching doctor busy slots:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (!result.value) {
+    return res.status(404).json({ error: 'Appointment not found' });
   }
-});
+
+  const updated = await fetchAppointmentsWithService({ _id: result.value._id });
+  res.json(updated[0]);
+}));
+
+/**
+ * DELETE /appointments/:id
+ * Remove an appointment by its ObjectId.
+ */
+router.delete('/:id', asyncHandler(async (req, res) => {
+  const result = await (await getCollection('appointments'))
+    .findOneAndDelete({ _id: new ObjectId(req.params.id) });
+
+  if (!result.value) {
+    return res.status(404).json({ error: 'Appointment not found' });
+  }
+
+  res.json({ message: 'Appointment deleted successfully' });
+}));
+
+/**
+ * GET /appointments/doctor/:doctor_id/busy-slots
+ * List busy time slots for a doctor, optionally within a date or range.
+ */
+router.get('/doctor/:doctor_id/busy-slots', asyncHandler(async (req, res) => {
+  const doctorId = parseInt(req.params.doctor_id, 10);
+  const filter = {
+    doctor_id: doctorId,
+    status: { $in: ['scheduled', 'in_progress'] }
+  };
+
+  // Date vs. range filtering
+  if (req.query.start_date && req.query.end_date) {
+    filter.appointment_date = {
+      $gte: new Date(req.query.start_date),
+      $lte: new Date(req.query.end_date)
+    };
+  } else if (req.query.date) {
+    const d = new Date(req.query.date);
+    filter.appointment_date = {
+      $gte: new Date(d.setHours(0,0,0)),
+      $lt:  new Date(d.setHours(23,59,59))
+    };
+  } else {
+    filter.appointment_date = { $gte: new Date() };
+  }
+
+  const appts = await (await getCollection('appointments'))
+    .find(filter)
+    .sort({ appointment_date: 1 })
+    .toArray();
+
+  // Map each appointment to its busy slot window
+  const slots = appts.map(a => ({
+    start_time: a.appointment_date,
+    end_time: new Date(a.appointment_date.getTime() + ((a.duration_minutes || 30) * 60000))
+  }));
+
+  res.json(slots);
+}));
 
 module.exports = router;
