@@ -1,4 +1,38 @@
 services:
+
+  # MongoDB
+  mongo1:
+    image: mongo:8.0.9
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - 27017:27017
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27017'}]}) }" | mongosh --port 27017 --quiet
+      interval: 10s
+      timeout: 10s
+      start_period: 0s
+      start_interval: 1s
+      retries: 5
+    volumes:
+      - "mongo1_data:/data/db"
+      - "mongo1_config:/data/configdb"
+
+  mongo_init:
+    image: mongo:8.0.9
+    depends_on:
+      mongo1:
+        condition: service_healthy
+    entrypoint:
+      [
+        "bash","-c",
+        "echo '💉 Seeding gestmed_appointments_db…'; \
+         mongosh --host mongo1 --port 27017 gestmed_appointments_db /init/02-init-appointments.js"
+      ]
+    volumes:
+      - ./mongo/init-appointments.js:/init/02-init-appointments.js:ro
+
   # Database
   patients-db:
     image: postgres:15-alpine
@@ -278,6 +312,10 @@ services:
       - gestmed-network
 
 volumes:
+  mongo1_data:
+    driver: local
+  mongo1_config:
+    driver: local
   patients_db_data:
     driver: local
   doctors_db_data:
