@@ -77,7 +77,8 @@ services:
     volumes:
       - appointments_db_data:/data/db
       - appointments_db_config:/data/configdb
-    networks: [gestmed-network]
+    networks:
+      - gestmed-network
 
   mongo_init:
     image: mongo:8.0.9
