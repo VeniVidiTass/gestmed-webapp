@@ -280,11 +280,30 @@ services:
     command: npm run dev -- --host 0.0.0.0 --port 5174
     restart: unless-stopped
 
+  # DB Management Tools
   adminer:
     image: adminer:latest
     container_name: adminer
     ports:
       - "8080:8080"
+    networks:
+      - gestmed-network
+    
+  # Mongo Express (MongoDB web admin)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: unless-stopped
+    depends_on:
+      appointments-db:
+        condition: service_healthy
+    environment:
+      ME_CONFIG_MONGODB_URL: "mongodb://appointments-db:27017/gestmed_appointments_db?replicaSet=rs0"
+      ME_CONFIG_BASICAUTH_ENABLED: "false"
+      ME_CONFIG_SITE_COOKIESECRET: "changeme"
+      ME_CONFIG_SITE_SESSIONSECRET: "changeme"
+    ports:
+      - "8081:8081"
     networks:
       - gestmed-network
 
