@@ -2,7 +2,7 @@
 import axios from 'axios'
 
 // Configurazione URL da variabili d'ambiente
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://api-gateway:3000/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 const LOGIN_URL = import.meta.env.VITE_LOGIN_URL || 'http://localhost:8080/auth/login'
 const LOGOUT_URL = import.meta.env.VITE_LOGOUT_URL || 'http://localhost:8080/auth/logout'
 const USERINFO_URL = import.meta.env.VITE_USERINFO_URL
