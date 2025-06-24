@@ -53,7 +53,7 @@
             <template #body="{ data }">
               <div class="doctor-info">
                 <i class="pi pi-user-plus" />
-                Dr. {{ getDoctorName(data.doctor_id) }}
+                {{ getDoctorName(data.doctor_id) }}
               </div>
             </template>
           </Column>
@@ -131,7 +131,7 @@
 
           <div class="detail-group">
             <label>Medico</label>
-            <span>Dr. {{ getDoctorName(currentService.doctor_id) }}</span>
+            <span>{{ getDoctorName(currentService.doctor_id) }}</span>
           </div>
           <div class="detail-group">
             <label>Stato</label>

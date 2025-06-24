@@ -38,7 +38,7 @@
             <template #body="{ data }">
               <div class="doctor-name">
                 <i class="pi pi-user-plus" />
-                Dr. {{ data.name }}
+                {{ data.name }}
               </div>
             </template>
           </Column>

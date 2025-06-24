@@ -53,7 +53,7 @@
                   </div>
                   <div v-if="service.doctor_name" class="meta-row">
                     <i class="pi pi-user" />
-                    <span>Medico: Dr. {{ service.doctor_name }}</span>
+                    <span>Medico: {{ service.doctor_name }}</span>
                   </div>
                 </div>
               </div>
@@ -99,7 +99,7 @@
                   <h4>Medico del Servizio</h4>
                   <div class="doctor-info-card">
                     <div class="doctor-details">
-                      <h5>Dr. {{ serviceDoctor.name }}</h5>
+                      <h5>{{ serviceDoctor.name }}</h5>
                       <p class="doctor-specialization">
                         {{ serviceDoctor.specialization }}
                       </p>

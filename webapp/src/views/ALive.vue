@@ -133,7 +133,7 @@
                   </div>
                   <div class="info-row">
                     <i class="pi pi-user-plus" />
-                    <span><strong>Medico:</strong> Dr. {{ appointment.doctor_name }}</span>
+                    <span><strong>Medico:</strong> {{ appointment.doctor_name }}</span>
                   </div>
                   <div class="info-row">
                     <i class="pi pi-calendar" />
@@ -191,7 +191,7 @@
                 </div>
                 <div class="info-row">
                   <i class="pi pi-user-plus" />
-                  <span><strong>Medico:</strong> Dr. {{ selectedLogAppointment?.doctor_name }}</span>
+                  <span><strong>Medico:</strong> {{ selectedLogAppointment?.doctor_name }}</span>
                 </div>
                 <div class="info-row">
                   <i class="pi pi-calendar" />

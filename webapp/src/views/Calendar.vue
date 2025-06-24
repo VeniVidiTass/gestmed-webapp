@@ -69,13 +69,13 @@
                       {{ formatTime(appointment.appointment_date) }}
                     </div>
                     <div class="appointment-patient">
-                      {{ appointment.patient_name || appointment.patient?.name || 'Paziente sconosciuto' }}
+                      {{ appointment.patient_name || appointment.patient?.name || appointment.patient_full_name || 'Paziente sconosciuto' }}
                     </div>
                     <div class="appointment-service" :title="appointment.service_description">
                       {{ appointment.service_name || 'Prestazione non specificata' }}
                     </div>
                     <div v-if="getAppointmentsForSlot(day.date, timeSlot).length <= 2" class="appointment-doctor">
-                      Dr. {{ appointment.doctor_name || appointment.doctor?.name || 'Dottore sconosciuto' }}
+                      {{ appointment.doctor_name || appointment.doctor?.name || 'Dottore sconosciuto' }}
                     </div>
                   </div>
                   <!-- Indicator for more appointments -->

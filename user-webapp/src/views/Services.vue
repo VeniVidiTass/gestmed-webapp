@@ -126,7 +126,7 @@
                   class="meta-item"
                 >
                   <i class="pi pi-user" />
-                  <span>Dr. {{ service.doctor_name }}</span>
+                  <span>{{ service.doctor_name }}</span>
                 </div>
               </div>
 
