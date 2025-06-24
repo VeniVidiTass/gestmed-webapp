@@ -86,7 +86,7 @@ services:
       appointments-db:
         condition: service_healthy
     restart: "no"
-    entrypoint: ["/init/mongo-init.sh"]
+    entrypoint: ["sh", "-c", "chmod +x /init/mongo-init.sh && /init/mongo-init.sh"]
     volumes:
       - ./mongo/mongo-init.sh:/init/mongo-init.sh:ro
       - ./mongo/init-appointments.js:/init/02-init-appointments.js:ro
