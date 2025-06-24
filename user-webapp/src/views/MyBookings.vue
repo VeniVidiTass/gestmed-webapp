@@ -70,6 +70,7 @@
                     <Tag
                       :value="getStatusLabel(booking.status)"
                       :severity="getStatusSeverity(booking.status)"
+                      :icon="getStatusIcon(booking.status)"
                       class="booking-status"
                     />
                   </div>
@@ -151,6 +152,7 @@
                     <Tag
                       :value="getStatusLabel(booking.status)"
                       :severity="getStatusSeverity(booking.status)"
+                      :icon="getStatusIcon(booking.status)"
                       class="booking-status"
                     />
                   </div>
@@ -306,6 +308,7 @@ const formatTime = (dateString) => {
 const getStatusLabel = (status) => {
   const statusLabels = {
     'scheduled': 'Programmato',
+    'in_progress': 'In Corso',
     'confirmed': 'Confermato',
     'completed': 'Completato',
     'cancelled': 'Cancellato',
@@ -317,12 +320,30 @@ const getStatusLabel = (status) => {
 const getStatusSeverity = (status) => {
   const severityMap = {
     'scheduled': 'info',
+    'in_progress': 'info',
     'confirmed': 'success',
     'completed': 'success',
     'cancelled': 'danger',
     'no-show': 'warn'
   }
   return severityMap[status] || 'info'
+}
+
+/**
+ * Restituisce l'icona appropriata per lo stato dell'appuntamento
+ * @param {string} status - Lo stato dell'appuntamento
+ * @returns {string} Classe CSS dell'icona PrimeIcons
+ */
+const getStatusIcon = (status) => {
+  const iconMap = {
+    'scheduled': 'pi pi-calendar',
+    'in-progress': 'pi pi-clock',
+    'confirmed': 'pi pi-check-circle',
+    'completed': 'pi pi-check',
+    'cancelled': 'pi pi-times-circle',
+    'no-show': 'pi pi-exclamation-triangle'
+  }
+  return iconMap[status] || 'pi pi-calendar'
 }
 
 const formatCustomFieldValue = (field) => {

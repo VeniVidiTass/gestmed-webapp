@@ -201,9 +201,7 @@
           </Card>
         </div>
       </div>
-    </div>
-
-    <!-- Success Dialog -->
+    </div>    <!-- Success Dialog -->
     <Dialog
       v-model:visible="showSuccessDialog"
       modal
@@ -213,7 +211,16 @@
       <template #header>
         <div class="dialog-header">
           <i class="pi pi-check-circle success-icon" />
-          <h3>Prenotazione Confermata!</h3>
+          <div class="header-content">
+            <h3>Prenotazione Confermata!</h3>
+            <Tag
+              v-if="confirmedBooking"
+              :value="getStatusLabel(confirmedBooking.status || 'scheduled')"
+              :severity="getStatusSeverity(confirmedBooking.status || 'scheduled')"
+              :icon="getStatusIcon(confirmedBooking.status || 'scheduled')"
+              class="header-status-tag"
+            />
+          </div>
         </div>
       </template>
 
@@ -231,6 +238,15 @@
           </div>
           <div class="summary-item">
             <strong>Prezzo:</strong> €{{ service.price }}
+          </div>
+          <div class="summary-item status-item">
+            <strong>Stato:</strong>
+            <Tag
+              :value="getStatusLabel(confirmedBooking.status)"
+              :severity="getStatusSeverity(confirmedBooking.status)"
+              :icon="getStatusIcon(confirmedBooking.status)"
+              class="booking-status-tag"
+            />
           </div>
         </div>
         <p class="confirmation-note">
@@ -271,6 +287,7 @@ import DatePicker from 'primevue/datepicker'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
 import Dialog from 'primevue/dialog'
+import Tag from 'primevue/tag'
 
 const router = useRouter()
 const servicesStore = useServicesStore()
@@ -542,7 +559,10 @@ const submitBooking = async () => {
 
     confirmedBooking.value = {
       ...bookingData,
-      id: result.id
+      id: result.id,
+      appointmentDate: bookingForm.value.appointmentDate,
+      appointmentTime: bookingForm.value.appointmentTime,
+      status: 'scheduled'
     }
 
     showSuccessDialog.value = true
@@ -574,6 +594,58 @@ const goToServices = () => {
 
 const goToBookings = () => {
   router.push('/my-bookings')
+}
+
+// Status formatting utilities
+/**
+ * Converte lo stato tecnico dell'appuntamento in una label leggibile
+ * @param {string} status - Lo stato dell'appuntamento
+ * @returns {string} Label formattata in italiano
+ */
+const getStatusLabel = (status) => {
+  const statusLabels = {
+    'scheduled': 'Programmato',
+    'confirmed': 'Confermato',
+    'completed': 'Completato',
+    'cancelled': 'Cancellato',
+    'in_progress': 'In corso',
+    'no-show': 'Non presentato'
+  }
+  return statusLabels[status] || status
+}
+
+/**
+ * Restituisce la severity per il componente Tag in base allo stato
+ * @param {string} status - Lo stato dell'appuntamento
+ * @returns {string} Severity per PrimeVue Tag
+ */
+const getStatusSeverity = (status) => {
+  const severityMap = {
+    'scheduled': 'info',
+    'confirmed': 'success',
+    'completed': 'success',
+    'cancelled': 'danger',
+    'in_progress': 'warn',
+    'no-show': 'warn'
+  }
+  return severityMap[status] || 'info'
+}
+
+/**
+ * Restituisce l'icona appropriata per lo stato dell'appuntamento
+ * @param {string} status - Lo stato dell'appuntamento
+ * @returns {string} Classe CSS dell'icona PrimeIcons
+ */
+const getStatusIcon = (status) => {
+  const iconMap = {
+    'scheduled': 'pi pi-calendar',
+    'confirmed': 'pi pi-check-circle',
+    'completed': 'pi pi-check',
+    'cancelled': 'pi pi-times-circle',
+    'in_progress': 'pi pi-clock',
+    'no-show': 'pi pi-exclamation-triangle'
+  }
+  return iconMap[status] || 'pi pi-calendar'
 }
 
 // Lifecycle
@@ -836,6 +908,20 @@ onMounted(() => {
   gap: 1rem;
 }
 
+.success-dialog .header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.success-dialog .header-content h3 {
+  margin: 0;
+}
+
+.header-status-tag {
+  align-self: flex-start;
+}
+
 .success-icon {
   font-size: 2rem;
   color: var(--primary-600);
@@ -862,10 +948,18 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
-.confirmation-note {
-  color: var(--text-color-secondary);
-  font-style: italic;
-  margin-top: 1rem;
+.status-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.booking-status-tag {
+  margin-left: 0.5rem;
+}
+
+.booking-status-tag .p-tag-icon {
+  margin-right: 0.25rem;
 }
 
 .dialog-actions {
@@ -960,11 +1054,29 @@ onMounted(() => {
     grid-template-columns: 1fr;
     gap: 0.5rem;
   }
-
   .availability-day {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+  }
+
+  /* Status dialog mobile styles */
+  .success-dialog .header-content {
+    align-items: flex-start;
+  }
+
+  .header-status-tag {
+    margin-top: 0.25rem;
+  }
+
+  .status-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .booking-status-tag {
+    margin-left: 0;
   }
 }
 

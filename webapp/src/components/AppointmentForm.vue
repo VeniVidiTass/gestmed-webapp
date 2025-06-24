@@ -577,6 +577,9 @@ export default defineComponent({
       const [startHour, startMinute] = startTime.split(':').map(Number)
       const [endHour, endMinute] = endTime.split(':').map(Number)
 
+      // Ottieni l'orario corrente dell'appuntamento in modifica (se presente)
+      const currentAppointmentTime = props.mode === 'edit' && props.appointment ? formData.value.appointment_time : null
+
       // Genera tutti gli slot possibili per il giorno
       for (let hour = startHour; hour < endHour || (hour === endHour && startMinute < endMinute); hour++) {
         for (let minute = 0; minute < 60; minute += 30) {
@@ -586,18 +589,22 @@ export default defineComponent({
           const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
 
           // Controlla se questo slot è già prenotato
-          // Ora bookedSlots contiene direttamente le stringhe di tempo (es. "14:30")
           const isBooked = bookedSlots.value.includes(timeString)
 
-          if (isBooked) {
-            console.log(`Slot ${timeString} is blocked (found in bookedSlots)`)
-          }
+          // Se stiamo modificando un appuntamento, includi sempre l'orario corrente anche se è "occupato"
+          const isCurrentAppointmentSlot = currentAppointmentTime === timeString
 
-          if (!isBooked) {
+          if (isBooked && !isCurrentAppointmentSlot) {
+            console.log(`Slot ${timeString} is blocked (found in bookedSlots)`)
+          } else {
             slots.push({
               label: timeString,
               value: timeString
             })
+
+            if (isCurrentAppointmentSlot) {
+              console.log(`Slot ${timeString} included as current appointment time`)
+            }
           }
         }
       }
@@ -770,7 +777,7 @@ export default defineComponent({
             appointmentDate.setHours(hours, minutes, 0, 0)
           }
         }
-        
+
         formData.value = {
           patient_id: null,
           patient_full_name: '',
@@ -948,7 +955,7 @@ export default defineComponent({
       formData.value.patient_codice_fiscale = ''
       formData.value.patient_phone = ''
     }
-    
+
     // Funzioni per la gestione dei campi personalizzati
     const addCustomField = () => {
       formData.value.customFields.push({
