@@ -1,7 +1,7 @@
 <template>
   <div class="availability-view">
     <div v-if="doctor" class="doctor-info">
-      <h4>Dr. {{ doctor.name }}</h4>
+      <h4>{{ doctor.name }}</h4>
       <p class="specialization">
         {{ doctor.specialization }}
       </p>

@@ -78,7 +78,7 @@
                   {{ appointment.patient_name }}
                 </div>
                 <div class="doctor-info">
-                  Dr. {{ appointment.doctor_name }} - {{ appointment.doctor_specialization || 'Medico Generico' }}
+                  {{ appointment.doctor_name }} - {{ appointment.doctor_specialization || 'Medico Generico' }}
                 </div>
               </div>
                 <Badge :value="getStatusLabel(appointment.status)" :severity="getStatusSeverity(appointment.status)" />

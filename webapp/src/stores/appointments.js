@@ -25,7 +25,8 @@ export const useAppointmentsStore = defineStore('appointments', () => {
     doctorId: '',
     patientId: '',
     dateFrom: '',
-    dateTo: '',    sortBy: 'appointment_date',
+    dateTo: '',
+    sortBy: 'appointment_date',
     sortOrder: 'asc'
   })
   const lastFetched = ref(null)
@@ -116,7 +117,6 @@ export const useAppointmentsStore = defineStore('appointments', () => {
 
     return filtered
   })
-
   // Computed per appuntamenti arricchiti con dati paziente e dottore
   const enrichedAppointments = computed(() => {
     return appointments.value.map(appointment => {
@@ -125,9 +125,9 @@ export const useAppointmentsStore = defineStore('appointments', () => {
 
       return {
         ...appointment,
-        patient_name: patient?.name || 'Paziente non trovato',
-        patient_email: patient?.email || '',
-        patient_phone: patient?.phone || '',
+        patient_name: patient?.name || appointment.patient_full_name || 'Paziente non trovato',
+        patient_email: patient?.email || appointment.patient_email || '',
+        patient_phone: patient?.phone || appointment.patient_phone || '',
         doctor_name: doctor?.name || 'Dottore non trovato',
         doctor_specialization: doctor?.specialization || '',
         doctor_email: doctor?.email || ''

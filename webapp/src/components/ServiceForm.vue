@@ -46,7 +46,7 @@
                     <template #option="{ option }">
                         <div class="doctor-option">
                             <i class="pi pi-user-plus" />
-                            <span>Dr. {{ option.name }}</span>
+                            <span>{{ option.name }}</span>
                             <small class="specialization">{{ option.specialization }}</small>
                         </div>
                     </template>

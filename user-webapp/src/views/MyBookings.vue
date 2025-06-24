@@ -85,7 +85,7 @@
                     </div>
                     <div v-if="booking.doctor_name" class="detail-item">
                       <i class="pi pi-user" />
-                      <span>Dr. {{ booking.doctor_name }}</span>
+                      <span>{{ booking.doctor_name }}</span>
                     </div>
                     <div v-if="booking.service_price" class="detail-item">
                       <i class="pi pi-euro" />
@@ -149,7 +149,7 @@
                     </div>
                     <div v-if="booking.doctor_name" class="detail-item">
                       <i class="pi pi-user" />
-                      <span>Dr. {{ booking.doctor_name }}</span>
+                      <span>{{ booking.doctor_name }}</span>
                     </div>
                   </div>
 
