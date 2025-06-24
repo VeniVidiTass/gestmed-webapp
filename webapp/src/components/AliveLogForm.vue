@@ -75,7 +75,7 @@ export default defineComponent({
       default: false
     },
     appointmentId: {
-      type: Number,
+      type: String,
       default: null
     },
     appointmentTitle: {
