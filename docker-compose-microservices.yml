@@ -1,33 +1,5 @@
 services:
 
-  # MongoDB
-  appointments-db:
-    image: mongo:8.0.9
-    command: ["--replSet","rs0","--bind_ip_all","--port","27017"]
-    # ports: ["27017:27017"]
-    healthcheck:
-      test: ["CMD","mongosh","--quiet","--eval","db.adminCommand({ping:1}).ok"]
-      interval: 10s
-      timeout: 5s
-      start_period: 15s
-    volumes:
-      - appointments_db_data:/data/db
-      - appointments_db_config:/data/configdb
-    networks: [gestmed-network]
-
-  mongo_init:
-    image: mongo:8.0.9
-    depends_on:
-      appointments-db:
-        condition: service_healthy
-    restart: "no"
-    entrypoint: ["/init/mongo-init.sh"]
-    volumes:
-      - ./mongo/mongo-init.sh:/init/mongo-init.sh:ro
-      - ./mongo/init-appointments.js:/init/02-init-appointments.js:ro
-    networks:
-      - gestmed-network
-
   # Database
   patients-db:
     image: postgres:15-alpine
@@ -71,27 +43,6 @@ services:
       timeout: 10s
       retries: 5
 
-  # appointments-db:
-  #   image: postgres:15-alpine
-  #   container_name: appointments-db
-  #   environment:
-  #     POSTGRES_DB: gestmed_appointments_db
-  #     POSTGRES_USER: gestmed_user
-  #     POSTGRES_PASSWORD: gestmed_password
-  #   ports:
-  #     - "5434:5432"
-  #   volumes:
-  #     - appointments_db_data:/var/lib/postgresql/data
-  #     - ./sql/appointments.sql:/docker-entrypoint-initdb.d/init.sql
-  #   networks:
-  #     - gestmed-network
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U gestmed_user -d gestmed_appointments_db"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
-
   alive-db:
     image: postgres:15-alpine
     container_name: alive-db
@@ -112,6 +63,34 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5  # API Gateway (Nginx)
+    
+      # MongoDB
+  appointments-db:
+    image: mongo:8.0.9
+    command: ["--replSet","rs0","--bind_ip_all","--port","27017"]
+    # ports: ["27017:27017"]
+    healthcheck:
+      test: ["CMD","mongosh","--quiet","--eval","db.adminCommand({ping:1}).ok"]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+    volumes:
+      - appointments_db_data:/data/db
+      - appointments_db_config:/data/configdb
+    networks: [gestmed-network]
+
+  mongo_init:
+    image: mongo:8.0.9
+    depends_on:
+      appointments-db:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: ["/init/mongo-init.sh"]
+    volumes:
+      - ./mongo/mongo-init.sh:/init/mongo-init.sh:ro
+      - ./mongo/init-appointments.js:/init/02-init-appointments.js:ro
+    networks:
+      - gestmed-network
   
   api-gateway:
     build:
