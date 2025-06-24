@@ -1,29 +1,31 @@
 /* global localStorage */
 import axios from 'axios'
 
+// Configurazione URL da variabili d'ambiente
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://api-gateway:3000/api'
+const LOGIN_URL = import.meta.env.VITE_LOGIN_URL || 'http://localhost:8080/auth/login'
+const LOGOUT_URL = import.meta.env.VITE_LOGOUT_URL || 'http://localhost:8080/auth/logout'
+const USERINFO_URL = import.meta.env.VITE_USERINFO_URL
+
 // Cache per le richieste
 const requestCache = new Map()
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minuti
 
 // Create axios instance with optimizations
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://api-gateway:3000/api',
+  baseURL: API_BASE_URL,
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: true // Importante per inviare i cookie automaticamente
 })
 
 // Request interceptor con cache
 api.interceptors.request.use(
   (config) => {
-    // Add auth token if available
-    if (typeof localStorage !== 'undefined') {
-      const token = localStorage.getItem('auth_token')
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-      }
-    }
+    // I cookie vengono inviati automaticamente con withCredentials: true
+    // Non è più necessario aggiungere manualmente l'header Authorization
 
     // Add request ID for tracking
     config.metadata = { startTime: Date.now() }
@@ -78,14 +80,11 @@ api.interceptors.response.use(
       status: error.response?.status,
       message: error.message,
       data: error.response?.data
-    })
-
-    // Handle different error types
+    })    // Handle different error types
     if (error.response?.status === 401) {
-      // Handle unauthorized access
-      if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem('auth_token')
-      }
+      // Handle unauthorized access - con oauth2-proxy il cookie viene gestito automaticamente
+      // Se riceviamo 401, probabilmente il cookie è scaduto o non valido
+      console.warn('Cookie di sessione non valido o scaduto, reindirizzamento alla pagina di login')
       window.location.href = '/'
       return Promise.reject(error)
     }
@@ -155,6 +154,10 @@ function cleanParams(params, preserveKeys = []) {
 
 // API Service methods with optimizations
 export const apiService = {
+  // Auth
+  login: (data) => api.post(LOGIN_URL, data),
+  logout: () => api.post(LOGOUT_URL),
+
   // Dashboard
   getDashboardData: () => api.get('/dashboard'),  // Patients with optimized queries
   getPatients: (params = {}) => {
@@ -297,7 +300,52 @@ export const apiService = {
 
   addAppointmentLog: (appointmentId, data) => api.post(`/alive/${appointmentId}/logs`, data),
 
-  updateAppointmentStatus: (appointmentId, status) => api.put(`/appointments/${appointmentId}/status`, { status })
+  updateAppointmentStatus: (appointmentId, status) => api.put(`/appointments/${appointmentId}/status`, { status }),
+
+  // Authentication functions
+  auth: {
+    // Get authentication URLs (for external components or debugging)
+    getUrls: () => ({
+      loginUrl: LOGIN_URL,
+      logoutUrl: LOGOUT_URL,
+      apiBaseUrl: API_BASE_URL
+    }),
+
+    // Check token validity
+    validateToken: (token) => {
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      return api.get('/auth/validate', { headers })
+    },
+
+    // Refresh token if supported by backend
+    refreshToken: (refreshToken) => {
+      return api.post('/auth/refresh', { refreshToken })
+    },    // Get user profile
+    getProfile: () => api.get('/auth/profile'),    // Get user info from external endpoint
+    getUserInfo: async () => {
+      if (!USERINFO_URL) {
+        throw new Error('VITE_USERINFO_URL non configurato')
+      }
+
+      // Con oauth2-proxy, i cookie vengono inviati automaticamente
+      const response = await fetch(USERINFO_URL, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include' // Importante per includere i cookie
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      return response.json()
+    },
+
+    // Update user profile
+    updateProfile: (data) => api.put('/auth/profile', data)
+  }
 }
 
 export default api

@@ -29,15 +29,6 @@
           </router-link>
         </nav>
       </div>
-
-      <div class="sidebar-footer">
-        <Button
-          label="Logout"
-          icon="pi pi-sign-out"
-          class="p-button-text logout-btn"
-          @click="logout"
-        />
-      </div>
     </div>
 
     <!-- Main Content -->
@@ -56,10 +47,7 @@
           {{ currentPageTitle }}
         </h2>
         <div class="header-actions">
-          <span class="user-info">
-            <i class="pi pi-user" />
-            Admin User
-          </span>
+          <AuthControls />
         </div>
       </div>
 
@@ -78,11 +66,13 @@
 import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Button from 'primevue/button'
+import AuthControls from './AuthControls.vue'
 
 export default defineComponent({
   name: 'DashboardLayout',
   components: {
-    Button
+    Button,
+    AuthControls
   },
   setup() {
     const router = useRouter()
@@ -95,8 +85,7 @@ export default defineComponent({
       { name: 'Patients', label: 'Pazienti', route: '/patients', icon: 'pi pi-users' },
       { name: 'Doctors', label: 'Medici', route: '/doctors', icon: 'pi pi-user-plus' },
       { name: 'Services', label: 'Servizi', route: '/services', icon: 'pi pi-briefcase' },
-      { name: 'Calendar', label: 'Calendario', route: '/calendar', icon: 'pi pi-calendar' },
-      { name: 'ALive', label: 'A-Live', route: '/alive', icon: 'pi pi-circle text-success' }
+      { name: 'Calendar', label: 'Calendario', route: '/calendar', icon: 'pi pi-calendar' },      { name: 'ALive', label: 'A-Live', route: '/alive', icon: 'pi pi-circle text-success' }
     ]
 
     const isMobile = computed(() => windowWidth.value <= 768)
@@ -112,10 +101,6 @@ export default defineComponent({
 
     const closeSidebar = () => {
       sidebarVisible.value = false
-    }
-
-    const logout = () => {
-      router.push('/')
     }
 
     const handleResize = () => {
@@ -139,8 +124,7 @@ export default defineComponent({
       isMobile,
       currentPageTitle,
       toggleSidebar,
-      closeSidebar,
-      logout
+      closeSidebar
     }
   }
 })

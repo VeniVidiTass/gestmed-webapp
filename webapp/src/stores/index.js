@@ -1,4 +1,5 @@
 export { useAppStore } from './app'
+export { useUserStore } from './user'
 export { useDashboardStore } from './dashboard'
 export { usePatientsStore } from './patients'
 export { useDoctorsStore } from './doctors'

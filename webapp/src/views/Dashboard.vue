@@ -124,10 +124,9 @@ import DashboardLayout from '../components/DashboardLayout.vue'
 import Button from 'primevue/button'
 import Badge from 'primevue/badge'
 import ProgressSpinner from 'primevue/progressspinner'
-import { useDashboardStore, useAppStore } from '../stores'
+import { useDashboardStore, useAppStore, useUserStore } from '../stores'
 
-export default defineComponent({
-  components: {
+export default defineComponent({  components: {
     DashboardLayout,
     Button,
     Badge,
@@ -136,7 +135,10 @@ export default defineComponent({
   setup() {
     const router = useRouter()
     const dashboardStore = useDashboardStore()
-    const appStore = useAppStore()    // Reactive refs from stores
+    const appStore = useAppStore()
+    const userStore = useUserStore()
+    
+    // Reactive refs from stores
     const { dashboardData } = storeToRefs(dashboardStore)
     const { isLoading } = storeToRefs(appStore)
 
@@ -194,6 +196,7 @@ export default defineComponent({
     return {
       dashboardData,
       isLoading,
+      userStore,
       formatDateTime,
       getStatusSeverity,
       getStatusLabel,
@@ -355,6 +358,17 @@ export default defineComponent({
   font-weight: 500;
 }
 
+.user-info-section {
+  margin: 2rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.user-info-section .p-card {
+  width: 100%;
+  max-width: 400px;
+}
+
 /* Responsive design */
 @media (max-width: 1024px) {
   .dashboard-sections {
@@ -384,6 +398,10 @@ export default defineComponent({
 
   .appointment-time {
     min-width: auto;
+  }
+
+  .user-info-section {
+    margin: 1rem 0;
   }
 }
 
