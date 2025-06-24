@@ -60,17 +60,17 @@ export default defineComponent({
     const callbackMessage = ref('Elaborazione autenticazione...')
     const callbackDescription = ref('Stiamo completando il processo di autenticazione.')
     const error = ref(null)
-    
+
     const processAuthCallback = async () => {
       try {
         // Con oauth2-proxy, non abbiamo più token nei parametri URL
         // Il cookie _oauth2_proxy viene gestito automaticamente dal browser
-        const userData = route.query.user ? JSON.parse(decodeURIComponent(route.query.user)) : null
+        /* const userData = route.query.user ? JSON.parse(decodeURIComponent(route.query.user)) : null
         const errorParam = route.query.error
         
         if (errorParam) {
           throw new Error(decodeURIComponent(errorParam))
-        }
+        } */
 
         callbackMessage.value = 'Autenticazione completata!'
         callbackDescription.value = 'Ti stiamo reindirizzando...'
