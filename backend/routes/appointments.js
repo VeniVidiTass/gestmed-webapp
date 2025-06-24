@@ -260,6 +260,7 @@ async function fetchAppointmentsWithService(filter, options = {}) {
         notes: 1,
         created_at: 1,
         updated_at: 1,
+        customFields: { $ifNull: ['$customFields', []] },
         // service metadata:
         service_name: '$service.name',
         service_description: '$service.description',

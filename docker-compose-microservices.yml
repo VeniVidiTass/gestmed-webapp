@@ -88,7 +88,7 @@ services:
     restart: "no"
     entrypoint: ["sh", "-c", "chmod +x /init/mongo-init.sh && /init/mongo-init.sh"]
     volumes:
-      - ./mongo/mongo-init.sh:/init/mongo-init.sh:ro
+      - ./mongo/mongo-init.sh:/init/mongo-init.sh
       - ./mongo/init-appointments.js:/init/02-init-appointments.js:ro
     networks:
       - gestmed-network
