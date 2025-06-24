@@ -350,7 +350,8 @@ router.post('/', asyncHandler(async (req, res) => {
     patient_codice_fiscale = '',
     patient_phone = '',
     notes = '',
-    status = 'scheduled'
+    status = 'scheduled',
+    customFields = []
   } = req.body;
 
   const patient_id = rawPatientId !== null ? parseInt(rawPatientId, 10) : null;
@@ -374,7 +375,6 @@ router.post('/', asyncHandler(async (req, res) => {
   // Generate unique code
   const code = `APT-${Date.now().toString().slice(-6)}`;
   const now  = new Date();
-
   const doc = {
     patient_id,
     patient_full_name,
@@ -387,6 +387,7 @@ router.post('/', asyncHandler(async (req, res) => {
     appointment_date: new Date(appointment_date),
     notes,
     status,
+    customFields,
     created_at: now,
     updated_at: now
   };
@@ -403,11 +404,10 @@ router.post('/', asyncHandler(async (req, res) => {
  * PUT /appointments/:id
  * Update an existing appointment. Only whitelist allowed fields.
  */
-router.put('/:id', asyncHandler(async (req, res) => {
-  const allowedFields = [
+router.put('/:id', asyncHandler(async (req, res) => {  const allowedFields = [
     'patient_id','patient_full_name','patient_email',
     'patient_codice_fiscale','patient_phone',
-    'doctor_id','notes','status'
+    'doctor_id','notes','status','customFields'
   ];
   const updateset = {};
 

@@ -135,6 +135,44 @@
           </div>
         </div>
 
+        <!-- Sezione Campi Personalizzati -->
+        <div class="custom-fields-section form-field-full">
+          <div class="custom-fields-header">
+            <h4>Campi Personalizzati</h4>
+            <Button v-if="mode !== 'view'" label="Aggiungi Campo" icon="pi pi-plus"
+              class="p-button-sm p-button-outlined" @click="addCustomField" />
+          </div>
+
+          <div v-if="formData.customFields && formData.customFields.length > 0" class="custom-fields-list">
+            <div v-for="(field, index) in formData.customFields" :key="`custom-field-${index}`"
+              class="custom-field-item">
+              <div class="custom-field-controls">
+                <div class="form-field">
+                  <label class="field-label">Titolo Campo</label>
+                  <InputText v-model="field.title" :disabled="mode === 'view'"
+                    placeholder="Es: Allergie, Note speciali, Anamnesi..." />
+                </div>
+
+                <div v-if="mode !== 'view'" class="field-actions">
+                  <Button icon="pi pi-trash" class="p-button-danger p-button-text p-button-sm"
+                    @click="removeCustomField(index)" title="Rimuovi campo" />
+                </div>
+              </div>
+
+              <div class="custom-field-value">
+                <label class="field-label">{{ field.title || 'Contenuto' }}</label>
+                <Textarea v-model="field.value" :disabled="mode === 'view'" rows="4"
+                  :placeholder="`Inserisci ${field.title || 'contenuto'}...`" />
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="empty-custom-fields">
+            <p v-if="mode === 'view'">Nessun campo personalizzato presente per questo appuntamento.</p>
+            <p v-else>Nessun campo personalizzato aggiunto. Clicca "Aggiungi Campo" per iniziare.</p>
+          </div>
+        </div>
+
         <!-- Codice appuntamento (solo in visualizzazione) -->
         <div v-if="mode === 'view' && appointment?.code" class="form-field">
           <label class="field-label">Codice Alive</label>
@@ -222,14 +260,11 @@ export default defineComponent({
       default: null
     }
   },
-  emits: ['save', 'cancel', 'delete', 'switch-mode'],
-  setup(props, { emit }) {
+  emits: ['save', 'cancel', 'delete', 'switch-mode'], setup(props, { emit }) {
     const confirm = useConfirm()
     const servicesStore = useServicesStore()
     const doctorsStore = useDoctorsStore()
-    const patientsStore = usePatientsStore()
-
-    // Utilizziamo il composable per gestire i dati del form
+    const patientsStore = usePatientsStore()    // Utilizziamo il composable per gestire i dati del form
     const {
       doctors: allDoctors,
       patients: allPatients,
@@ -259,7 +294,8 @@ export default defineComponent({
       appointment_date: null,
       appointment_time: null,
       status: 'scheduled',
-      notes: ''
+      notes: '',
+      customFields: []
     })
 
     // Inizializza formData immediatamente se non c'è un appuntamento
@@ -271,9 +307,7 @@ export default defineComponent({
       // Handle preselected date and hour
       if (props.preselectedDate) {
         appointmentDate = new Date(props.preselectedDate)
-      }
-
-      if (props.preselectedHour !== null) {
+      } if (props.preselectedHour !== null) {
         const hours = Math.floor(props.preselectedHour)
         const minutes = Math.round((props.preselectedHour - hours) * 60)
         appointmentTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
@@ -294,7 +328,8 @@ export default defineComponent({
         appointment_date: appointmentDate,
         appointment_time: appointmentTime,
         status: 'scheduled',
-        notes: ''
+        notes: '',
+        customFields: []
       }
     }
 
@@ -670,9 +705,7 @@ export default defineComponent({
     watch(() => props.appointment, async (newAppointment) => {
       console.log('Appointment prop changed:', newAppointment)
       if (newAppointment) {
-        const appointmentDate = new Date(newAppointment.appointment_date)
-
-        // Per tutti i modi, convertiamo l'orario in formato HH:MM string con padding
+        const appointmentDate = new Date(newAppointment.appointment_date)        // Per tutti i modi, convertiamo l'orario in formato HH:MM string con padding
         const hours = appointmentDate.getHours().toString().padStart(2, '0')
         const minutes = appointmentDate.getMinutes().toString().padStart(2, '0')
         const appointmentTime = `${hours}:${minutes}`
@@ -688,7 +721,8 @@ export default defineComponent({
           appointment_date: appointmentDate,
           appointment_time: appointmentTime,
           status: newAppointment.status || 'scheduled',
-          notes: newAppointment.notes || ''
+          notes: newAppointment.notes || '',
+          customFields: newAppointment.customFields || []
         }
 
         console.log('Form data populated:', formData.value)
@@ -736,7 +770,7 @@ export default defineComponent({
             appointmentDate.setHours(hours, minutes, 0, 0)
           }
         }
-
+        
         formData.value = {
           patient_id: null,
           patient_full_name: '',
@@ -748,7 +782,8 @@ export default defineComponent({
           appointment_date: appointmentDate,
           appointment_time: appointmentTime,
           status: 'scheduled',
-          notes: ''
+          notes: '',
+          customFields: []
         }
 
         // Reset filters for new appointment
@@ -833,8 +868,7 @@ export default defineComponent({
         if (formData.value.appointment_time && typeof formData.value.appointment_time === 'string') {
           const [hours, minutes] = formData.value.appointment_time.split(':').map(Number)
           appointmentDateTime.setHours(hours, minutes, 0, 0)
-        }
-        const submitData = {
+        } const submitData = {
           patient_id: formData.value.patient_id,
           patient_full_name: formData.value.patient_full_name.trim(),
           patient_email: formData.value.patient_email || null,
@@ -844,7 +878,8 @@ export default defineComponent({
           service_id: formData.value.service_id,
           appointment_date: appointmentDateTime.toISOString(),
           status: formData.value.status,
-          notes: formData.value.notes
+          notes: formData.value.notes,
+          customFields: formData.value.customFields || []
         }
 
         console.log('Submitting appointment data:', {
@@ -913,6 +948,18 @@ export default defineComponent({
       formData.value.patient_codice_fiscale = ''
       formData.value.patient_phone = ''
     }
+    
+    // Funzioni per la gestione dei campi personalizzati
+    const addCustomField = () => {
+      formData.value.customFields.push({
+        title: '',
+        value: ''
+      })
+    }
+
+    const removeCustomField = (index) => {
+      formData.value.customFields.splice(index, 1)
+    }
 
     return {
       formData,
@@ -938,6 +985,8 @@ export default defineComponent({
       formatTimeForDisplay,
       resetFilters,
       resetPatientSelection,
+      addCustomField,
+      removeCustomField,
       loadDoctorAvailability,
       loadBookedSlotsForDate,
       generateAvailableTimeSlots,
@@ -1141,14 +1190,67 @@ export default defineComponent({
   padding-bottom: 0.5rem;
 }
 
-/* Codice fiscale uppercase */
-#patient_codice_fiscale {
-  text-transform: uppercase;
+/* Styling per i campi personalizzati */
+.custom-fields-section {
+  padding: 1rem;
+  background: var(--surface-50);
+  border-radius: 8px;
+  border: 1px solid var(--surface-200);
+  margin-bottom: 1rem;
 }
 
-/* Phone field styling */
-#patient_phone {
-  font-family: monospace;
+.custom-fields-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.custom-fields-header h4 {
+  margin: 0;
+  color: var(--primary-700);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.custom-fields-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.custom-field-item {
+  padding: 1rem;
+  background: var(--surface-0);
+  border: 1px solid var(--surface-300);
+  border-radius: 6px;
+}
+
+.custom-field-controls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: end;
+}
+
+.custom-field-value {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-actions {
+  display: flex;
+  align-items: end;
+  padding-bottom: 0.25rem;
+}
+
+.empty-custom-fields {
+  text-align: center;
+  color: var(--text-color-secondary);
+  font-style: italic;
+  padding: 2rem;
 }
 
 /* Responsive design */

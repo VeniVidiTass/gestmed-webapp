@@ -164,9 +164,6 @@
           <Button label="Modifica" icon="pi pi-pencil" class="p-button-primary" @click="editServiceFromDetail" />
         </template>
       </Dialog>
-
-      <!-- Delete Confirmation Dialog -->
-      <ConfirmDialog />
     </div>
   </DashboardLayout>
 </template>
@@ -185,7 +182,6 @@ import Tag from 'primevue/tag'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-import ConfirmDialog from 'primevue/confirmdialog'
 
 // Stores
 const servicesStore = useServicesStore()

@@ -91,10 +91,27 @@
                       <i class="pi pi-euro" />
                       <span>€{{ booking.service_price }}</span>
                     </div>
-                  </div>
-
+                  </div>                  
                   <div v-if="booking.notes" class="booking-notes">
                     <strong>Note:</strong> {{ booking.notes }}
+                  </div>
+
+                  <!-- Campi personalizzati -->
+                  <div
+                    v-if="booking.customFields && booking.customFields.length > 0"
+                    class="custom-fields"
+                  >
+                    <strong>Informazioni aggiuntive:</strong>
+                    <div class="custom-fields-list">
+                      <div
+                        v-for="field in booking.customFields"
+                        :key="`${booking.id}-${field.title}`"
+                        class="custom-field-item"
+                      >
+                        <span class="field-title">{{ field.title }}:</span>
+                        <span class="field-value">{{ formatCustomFieldValue(field) }}</span>
+                      </div>
+                    </div>
                   </div>
 
                   <div class="booking-actions">
@@ -137,7 +154,6 @@
                       class="booking-status"
                     />
                   </div>
-
                   <div class="booking-details">
                     <div class="detail-item">
                       <i class="pi pi-calendar" />
@@ -150,6 +166,24 @@
                     <div v-if="booking.doctor_name" class="detail-item">
                       <i class="pi pi-user" />
                       <span>{{ booking.doctor_name }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Campi personalizzati per past bookings -->
+                  <div
+                    v-if="booking.customFields && booking.customFields.length > 0"
+                    class="custom-fields"
+                  >
+                    <strong>Informazioni aggiuntive:</strong>
+                    <div class="custom-fields-list">
+                      <div
+                        v-for="field in booking.customFields"
+                        :key="`past-${booking.id}-${field.title}`"
+                        class="custom-field-item"
+                      >
+                        <span class="field-title">{{ field.title }}:</span>
+                        <span class="field-value">{{ formatCustomFieldValue(field) }}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -289,6 +323,11 @@ const getStatusSeverity = (status) => {
     'no-show': 'warn'
   }
   return severityMap[status] || 'info'
+}
+
+const formatCustomFieldValue = (field) => {
+  if (!field.value) return '-'
+  return field.value
 }
 
 const canModifyBooking = (booking) => {
@@ -527,12 +566,57 @@ onMounted(() => {
 }
 
 .booking-notes {
-  background-color: rgba(184, 134, 11, 0.1);
+  margin-top: 1rem;
   padding: 0.75rem;
+  background: var(--surface-100);
   border-radius: 6px;
-  border-left: 3px solid var(--primary-color);
+  border-left: 4px solid var(--primary-color);
   font-size: 0.9rem;
+}
+
+/* Stili per i campi personalizzati */
+.custom-fields {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--surface-100);
+  border-radius: 6px;
+  border: 1px solid var(--surface-200);
+}
+
+.custom-fields strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--primary-600);
+  font-size: 0.9rem;
+}
+
+.custom-fields-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.custom-field-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: var(--surface-0);
+  border-radius: 4px;
+  border: 1px solid var(--surface-300);
+}
+
+.field-title {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 0.85rem;
+}
+
+.field-value {
   color: var(--text-color-secondary);
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  line-height: 1.4;
 }
 
 .booking-actions {
