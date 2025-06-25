@@ -44,7 +44,7 @@ export function useAuth() {
   const login = () => {
     // Se siamo già loggati, andiamo direttamente al dashboard
     if (isLoggedIn.value) {
-      router.push(LOGIN_REDIRECT_URL)
+      window.location.href = LOGIN_REDIRECT_URL
       return
     }
 
@@ -56,7 +56,7 @@ export function useAuth() {
     })
 
     // Redirect alla pagina di destinazione
-    router.push(LOGIN_REDIRECT_URL)
+    window.location.href = LOGIN_REDIRECT_URL
   }
 
   // Logout function - redirect to external OAuth logout
@@ -72,7 +72,7 @@ export function useAuth() {
     })
 
     // Redirect alla pagina di logout
-    router.push(LOGOUT_REDIRECT_URL)
+    window.location.href = LOGOUT_REDIRECT_URL
   }
 
   // Check if current route requires authentication
