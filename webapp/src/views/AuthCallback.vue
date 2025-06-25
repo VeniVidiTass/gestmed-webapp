@@ -4,31 +4,23 @@
       <div class="loading-spinner">
         <ProgressSpinner />
       </div>
-      
+
       <h2 class="callback-title">
         {{ callbackMessage }}
       </h2>
-      
+
       <p class="callback-description">
         {{ callbackDescription }}
       </p>
-      
+
       <div v-if="error" class="error-section">
         <Message severity="error" :closable="false">
           {{ error }}
         </Message>
-        
+
         <div class="error-actions">
-          <Button 
-            label="Torna alla Home" 
-            @click="goHome"
-            class="p-button-outlined"
-          />
-          <Button 
-            label="Riprova Login" 
-            @click="retryLogin"
-            icon="pi pi-refresh"
-          />
+          <Button label="Torna alla Home" @click="goHome" class="p-button-outlined" />
+          <Button label="Riprova Login" @click="retryLogin" icon="pi pi-refresh" />
         </div>
       </div>
     </div>
@@ -54,30 +46,21 @@ export default defineComponent({
   setup() {
     const route = useRoute()
     const router = useRouter()
-    const { handleAuthCallback, login } = useAuth()
+    const { login, initializeAuth } = useAuth()
     const appStore = useAppStore()
-    
+
     const callbackMessage = ref('Elaborazione autenticazione...')
     const callbackDescription = ref('Stiamo completando il processo di autenticazione.')
     const error = ref(null)
 
     const processAuthCallback = async () => {
       try {
-        // Con oauth2-proxy, non abbiamo più token nei parametri URL
-        // Il cookie _oauth2_proxy viene gestito automaticamente dal browser
-        /* const userData = route.query.user ? JSON.parse(decodeURIComponent(route.query.user)) : null
-        const errorParam = route.query.error
-        
-        if (errorParam) {
-          throw new Error(decodeURIComponent(errorParam))
-        } */
-
         callbackMessage.value = 'Autenticazione completata!'
         callbackDescription.value = 'Ti stiamo reindirizzando...'
-        
-        // Process the authentication - non passiamo più il token
-        await handleAuthCallback(userData)
-        
+
+        // Con oauth2-proxy, tentiamo di inizializzare l'autenticazione
+        await initializeAuth()
+
         // Get intended route from session storage
         let redirectTo = '/dashboard'
         if (typeof sessionStorage !== 'undefined') {
@@ -87,18 +70,18 @@ export default defineComponent({
             sessionStorage.removeItem('intended_route')
           }
         }
-        
+
         // Small delay to show success message
         setTimeout(() => {
           router.push(redirectTo)
         }, 1500)
-        
+
       } catch (err) {
         console.error('Auth callback error:', err)
         error.value = err.message || 'Errore durante l\'autenticazione'
         callbackMessage.value = 'Errore di autenticazione'
         callbackDescription.value = 'Si è verificato un problema durante il processo di autenticazione.'
-        
+
         appStore.addNotification({
           severity: 'error',
           summary: 'Errore Autenticazione',
@@ -185,12 +168,12 @@ export default defineComponent({
     padding: 2rem;
     margin: 1rem;
   }
-  
+
   .error-actions {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .error-actions .p-button {
     width: 100%;
     max-width: 200px;

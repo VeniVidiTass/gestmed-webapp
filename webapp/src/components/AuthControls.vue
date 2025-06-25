@@ -1,22 +1,24 @@
 <template>
     <div class="auth-controls">
-        <!-- Autenticazione Disabilitata -->
-        <div v-if="authDisabled" class="auth-disabled">
-            <Badge value="Demo Mode" severity="info" @click="showUserCard = !showUserCard" style="cursor: pointer;" />
-            <span class="demo-user">{{ userDisplayName }}</span>
-        </div>
-        <!-- Autenticazione Abilitata -->
-        <div v-else class="auth-enabled">
-            <div class="user-info">
+        <!-- User info when logged in -->
+        <div v-if="isLoggedIn" class="auth-enabled">
+            <div class="user-info" @click="showUserCard = !showUserCard">
                 <Avatar :label="userInitials" class="user-avatar" size="large" shape="circle" />
                 <span class="user-name">{{ userDisplayName }}</span>
             </div>
         </div>
+        <!-- Demo mode when not logged in -->
+        <div v-else class="auth-disabled">
+            <Badge value="Demo Mode" severity="info" @click="showUserCard = !showUserCard" style="cursor: pointer;" />
+            <span class="demo-user">{{ userDisplayName }}</span>
+        </div>
 
-        <!-- Bottone logout sempre visibile in modalità demo -->
-        <div class="demo-logout">
+        <!-- Logout button -->
+        <div class="logout-section">
             <Button icon="pi pi-sign-out" class="p-button-text logout-btn" @click="handleLogout" :loading="loading" />
         </div>
+
+        <!-- User card overlay -->
         <div v-if="showUserCard" class="user-card-overlay" @click="showUserCard = false">
             <div class="user-card-floating" @click.stop>
                 <UserInfoCard />
@@ -42,14 +44,13 @@ export default defineComponent({
         Badge,
         Avatar,
         UserInfoCard
-    }, setup() {
+    },
+    setup() {
         const {
             isLoggedIn,
-            authDisabled,
-            user,
-            login,
             logout,
-            initializeAuth
+            initializeAuth,
+            userStore
         } = useAuth()
 
         const appStore = useAppStore()
@@ -58,8 +59,8 @@ export default defineComponent({
 
         // Computed
         const userDisplayName = computed(() => {
-            if (user.value) {
-                return user.value.name || user.value.email || 'Utente'
+            if (userStore.userInfo) {
+                return userStore.userInfo.name || userStore.userInfo.displayName || userStore.userInfo.email || userStore.userName || 'Utente'
             }
             return 'Utente'
         })
@@ -96,8 +97,7 @@ export default defineComponent({
 
         return {
             isLoggedIn,
-            authDisabled,
-            user,
+            userStore,
             userDisplayName,
             userInitials,
             loading,
@@ -131,9 +131,23 @@ export default defineComponent({
     font-weight: 500;
 }
 
-.demo-logout {
+.demo-logout,
+.logout-section {
     display: flex;
     align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.user-name {
+    font-size: 0.875rem;
+    color: var(--text-color);
+    font-weight: 600;
 }
 
 .logout-btn {

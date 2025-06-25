@@ -13,12 +13,7 @@
         </div>
 
         <div class="cta-section">
-          <Button
-            label="Accedi alla Dashboard"
-            icon="pi pi-sign-in"
-            class="p-button-lg cta-button"
-            @click="goToDashboard"
-          />
+          <Button label="Login" icon="pi pi-sign-in" class="p-button-lg cta-button" @click="login" />
           <p class="login-note">
             Login demo - Clicca per accedere al sistema
           </p>
@@ -65,16 +60,21 @@
 
 <script>
 import { defineComponent } from 'vue'
+import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
+import { useAuth } from '../composables/useAuth'
 
 export default defineComponent({
   name: 'Home',
   components: {
     Button
   },
-  methods: {
-    goToDashboard() {
-      this.$router.push('/dashboard')
+  setup() {
+    const router = useRouter()
+    const { login } = useAuth()
+
+    return {
+      login
     }
   }
 })

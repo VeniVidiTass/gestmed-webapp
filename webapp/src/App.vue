@@ -8,12 +8,13 @@
 
 <script>
 import { defineComponent, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 import ConfirmDialog from 'primevue/confirmdialog'
 import AppNotifications from './components/AppNotifications.vue'
-import { useAppStore } from './stores'
+import { useAppStore, useUserStore } from './stores'
 import { useAuth } from './composables/useAuth'
-import { preloadAppData, setupDataPreloading, setupCacheWarming } from './utils/dataPreloader.js'
+import { usePrefetchCache } from './composables/usePrefetchCache'
+import { preloadAppData, setupDataPreloading, setupCacheWarming, areDataFresh } from './utils/dataPreloader.js'
 
 export default defineComponent({
   name: 'App',
@@ -23,14 +24,15 @@ export default defineComponent({
   },
   setup() {
     const appStore = useAppStore()
+    const userStore = useUserStore()
     const route = useRoute()
-    const { initializeAuth, getAuthUrls } = useAuth()    // Log auth URLs on app start for debugging
+    const { getAuthUrls } = useAuth()
+    const { shouldSkipPrefetch, markRouteVisited, clearCache } = usePrefetchCache()
+
+
+    // Log auth URLs on app start for debugging
     const authConfig = getAuthUrls()
     console.log('🔐 Auth Configuration:', authConfig)
-
-    if (!authConfig.authEnabled) {
-      console.log('🔓 Authentication is DISABLED - running in demo mode')
-    }
 
     const shouldPreloadData = (routeName) => {
       return routeName && routeName !== 'Home'
@@ -42,7 +44,14 @@ export default defineComponent({
         return
       }
 
+      if (shouldSkipPrefetch(routeName)) {
+        return
+      }
+
       console.log(`📊 Non-home route detected (${routeName}) - starting prefetch`)
+
+      // Marca la route come visitata PRIMA del prefetch
+      markRouteVisited(routeName)
 
       // Initial data preload
       const preloadSuccess = await preloadAppData()
@@ -65,8 +74,8 @@ export default defineComponent({
     }
 
     onMounted(async () => {
-      // Initialize authentication
-      initializeAuth()
+      // Initialize authentication (only load from storage, no fetch)
+      userStore.loadUserInfoFromStorage()
 
       // Initialize app theme
       appStore.initializeTheme()
@@ -76,6 +85,16 @@ export default defineComponent({
         console.log('🔄 Initializing data preloading and cache warming systems', route.name)
         setupDataPreloading()
         setupCacheWarming()
+
+        // Se non siamo sulla home e non abbiamo userinfo, li fetchamo
+        if (!userStore.userInfo) {
+          console.log('🔐 Fetching user info for non-home route')
+          try {
+            await userStore.fetchUserInfo()
+          } catch (error) {
+            console.log('User not authenticated or session expired')
+          }
+        }
       }
 
       // Prefetch iniziale basato sulla route corrente
@@ -89,11 +108,36 @@ export default defineComponent({
         console.log('🔄 Moving from Home to data page - initializing prefetch systems')
         setupDataPreloading()
         setupCacheWarming()
+
+        // Fetch userinfo solo quando navighiamo dalla home se non li abbiamo già
+        if (!userStore.userInfo) {
+          console.log('🔐 Fetching user info on navigation from Home')
+          try {
+            await userStore.fetchUserInfo()
+          } catch (error) {
+            console.log('User not authenticated or session expired')
+            appStore.addNotification({
+              severity: 'warn',
+              summary: 'Autenticazione',
+              detail: 'Impossibile recuperare le informazioni utente',
+              life: 4000
+            })
+          }
+        }
+
         await handleDataPreload(newRoute.name)
       }
-      // Se navighiamo verso una pagina che richiede dati, facciamo il prefetch
+      // Se navighiamo verso una pagina che richiede dati, facciamo il prefetch intelligente
       else if (shouldPreloadData(newRoute.name)) {
         await handleDataPreload(newRoute.name)
+      }
+    })
+
+    // Reset cache quando l'utente si disconnette o all'inizio di una nuova sessione
+    watch(() => userStore.isLoggedIn, (isLoggedIn) => {
+      if (!isLoggedIn) {
+        clearCache()
+        console.log('🧹 Prefetch cache cleared due to logout')
       }
     })
 

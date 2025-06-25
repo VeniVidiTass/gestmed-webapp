@@ -9,6 +9,12 @@ export async function preloadAppData() {
 
     console.log('🔄 Starting application data preload...')
 
+    // Verifica se i dati sono già freschi
+    if (areDataFresh()) {
+      console.log('✅ Data is already fresh - skipping preload')
+      return true
+    }
+
     // Preload critical data in parallel with improved error handling
     const preloadPromises = [
       // Doctors list (frequently accessed) - usando ensureDoctorsLoaded
@@ -178,6 +184,31 @@ export async function ensureFormDataLoaded() {
     }
   } catch (error) {
     console.warn('⚠️ Failed to ensure form data loaded:', error)
+    return false
+  }
+}
+
+// Funzione per verificare se i dati sono ancora freschi
+export function areDataFresh() {
+  try {
+    const doctorsStore = useDoctorsStore()
+    const patientsStore = usePatientsStore()
+    const servicesStore = useServicesStore()
+    const appointmentsStore = useAppointmentsStore()
+
+    // Controlla se almeno i dati principali sono freschi
+    const doctorsFresh = !doctorsStore.isDataStale && doctorsStore.doctors.length > 0
+    const patientsFresh = !patientsStore.isDataStale && patientsStore.patients.length > 0
+    const servicesFresh = !servicesStore.isDataStale && servicesStore.services.length > 0
+    
+    const freshCount = [doctorsFresh, patientsFresh, servicesFresh].filter(Boolean).length
+    
+    console.log(`📊 Data freshness check: ${freshCount}/3 stores have fresh data`)
+    
+    // Ritorna true se almeno 2 su 3 hanno dati freschi
+    return freshCount >= 2
+  } catch (error) {
+    console.warn('⚠️ Error checking data freshness:', error)
     return false
   }
 }
