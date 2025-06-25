@@ -6,6 +6,7 @@ export default defineConfig({
   server: {
     port: 5174,
     host: true,
+    allowedHosts: ['user-webapp', 'gestmed-user.127.0.0.1.nip.io'],
     watch: {
       usePolling: true
     },
